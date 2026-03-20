@@ -1,0 +1,452 @@
+{
+  "stripe": {
+    "name": "Stripe",
+    "slug": "stripe",
+    "category": "Payments",
+    "docsUrl": "https://docs.stripe.com",
+    "score": 96,
+    "grade": "A+",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 20,
+      "warn": 1,
+      "fail": 0
+    }
+  },
+  "elevenlabs": {
+    "name": "ElevenLabs",
+    "slug": "elevenlabs",
+    "category": "AI/ML",
+    "docsUrl": "https://elevenlabs.io/docs",
+    "score": 94,
+    "grade": "A+",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 20,
+      "warn": 1,
+      "fail": 0
+    }
+  },
+  "square": {
+    "name": "Square",
+    "slug": "square",
+    "category": "Payments",
+    "docsUrl": "https://developer.squareup.com/docs",
+    "score": 89,
+    "grade": "A",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 18,
+      "warn": 3,
+      "fail": 0
+    }
+  },
+  "cloudflare": {
+    "name": "Cloudflare",
+    "slug": "cloudflare",
+    "category": "Infrastructure",
+    "docsUrl": "https://developers.cloudflare.com",
+    "score": 88,
+    "grade": "A",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 18,
+      "warn": 3,
+      "fail": 0
+    }
+  },
+  "anthropic": {
+    "name": "Anthropic",
+    "slug": "anthropic",
+    "category": "AI/ML",
+    "docsUrl": "https://docs.anthropic.com",
+    "score": 86,
+    "grade": "A",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 18,
+      "warn": 3,
+      "fail": 0
+    }
+  },
+  "vercel": {
+    "name": "Vercel",
+    "slug": "vercel",
+    "category": "DevTools",
+    "docsUrl": "https://vercel.com/docs",
+    "score": 85,
+    "grade": "A",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 18,
+      "warn": 3,
+      "fail": 0
+    }
+  },
+  "cohere": {
+    "name": "Cohere",
+    "slug": "cohere",
+    "category": "AI/ML",
+    "docsUrl": "https://docs.cohere.com",
+    "score": 83,
+    "grade": "B",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 17,
+      "warn": 3,
+      "fail": 1
+    }
+  },
+  "supabase": {
+    "name": "Supabase",
+    "slug": "supabase",
+    "category": "Infrastructure",
+    "docsUrl": "https://supabase.com/docs",
+    "score": 81,
+    "grade": "B",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 17,
+      "warn": 3,
+      "fail": 1
+    }
+  },
+  "resend": {
+    "name": "Resend",
+    "slug": "resend",
+    "category": "Communication",
+    "docsUrl": "https://resend.com/docs",
+    "score": 79,
+    "grade": "B",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 16,
+      "warn": 4,
+      "fail": 1
+    }
+  },
+  "openai": {
+    "name": "OpenAI",
+    "slug": "openai",
+    "category": "AI/ML",
+    "docsUrl": "https://platform.openai.com/docs",
+    "score": 78,
+    "grade": "B",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 16,
+      "warn": 4,
+      "fail": 1
+    }
+  },
+  "plaid": {
+    "name": "Plaid",
+    "slug": "plaid",
+    "category": "Payments",
+    "docsUrl": "https://plaid.com/docs",
+    "score": 76,
+    "grade": "B",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 16,
+      "warn": 4,
+      "fail": 1
+    }
+  },
+  "pinecone": {
+    "name": "Pinecone",
+    "slug": "pinecone",
+    "category": "AI/ML",
+    "docsUrl": "https://docs.pinecone.io",
+    "score": 75,
+    "grade": "B",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 15,
+      "warn": 5,
+      "fail": 1
+    }
+  },
+  "twilio": {
+    "name": "Twilio",
+    "slug": "twilio",
+    "category": "Communication",
+    "docsUrl": "https://www.twilio.com/docs",
+    "score": 73,
+    "grade": "B",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 15,
+      "warn": 5,
+      "fail": 1
+    }
+  },
+  "launchdarkly": {
+    "name": "LaunchDarkly",
+    "slug": "launchdarkly",
+    "category": "DevTools",
+    "docsUrl": "https://docs.launchdarkly.com",
+    "score": 71,
+    "grade": "B",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 15,
+      "warn": 5,
+      "fail": 1
+    }
+  },
+  "modern-treasury": {
+    "name": "Modern Treasury",
+    "slug": "modern-treasury",
+    "category": "Payments",
+    "docsUrl": "https://docs.moderntreasury.com",
+    "score": 70,
+    "grade": "B",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 15,
+      "warn": 5,
+      "fail": 1
+    }
+  },
+  "clerk": {
+    "name": "Clerk",
+    "slug": "clerk",
+    "category": "DevTools",
+    "docsUrl": "https://clerk.com/docs",
+    "score": 68,
+    "grade": "C",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 14,
+      "warn": 5,
+      "fail": 2
+    }
+  },
+  "deepgram": {
+    "name": "Deepgram",
+    "slug": "deepgram",
+    "category": "AI/ML",
+    "docsUrl": "https://developers.deepgram.com/docs",
+    "score": 65,
+    "grade": "C",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 14,
+      "warn": 5,
+      "fail": 2
+    }
+  },
+  "sentry": {
+    "name": "Sentry",
+    "slug": "sentry",
+    "category": "DevTools",
+    "docsUrl": "https://docs.sentry.io",
+    "score": 63,
+    "grade": "C",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 13,
+      "warn": 6,
+      "fail": 2
+    }
+  },
+  "datadog": {
+    "name": "Datadog",
+    "slug": "datadog",
+    "category": "DevTools",
+    "docsUrl": "https://docs.datadoghq.com",
+    "score": 61,
+    "grade": "C",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 13,
+      "warn": 6,
+      "fail": 2
+    }
+  },
+  "mongodb": {
+    "name": "MongoDB",
+    "slug": "mongodb",
+    "category": "Infrastructure",
+    "docsUrl": "https://www.mongodb.com/docs",
+    "score": 58,
+    "grade": "C",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 12,
+      "warn": 6,
+      "fail": 3
+    }
+  },
+  "shopify": {
+    "name": "Shopify",
+    "slug": "shopify",
+    "category": "Commerce",
+    "docsUrl": "https://shopify.dev/docs",
+    "score": 55,
+    "grade": "C",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 12,
+      "warn": 6,
+      "fail": 3
+    }
+  },
+  "sendgrid": {
+    "name": "SendGrid",
+    "slug": "sendgrid",
+    "category": "Communication",
+    "docsUrl": "https://docs.sendgrid.com",
+    "score": 52,
+    "grade": "C",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 12,
+      "warn": 7,
+      "fail": 2
+    }
+  },
+  "auth0": {
+    "name": "Auth0",
+    "slug": "auth0",
+    "category": "DevTools",
+    "docsUrl": "https://auth0.com/docs",
+    "score": 49,
+    "grade": "D",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 11,
+      "warn": 5,
+      "fail": 5
+    }
+  },
+  "salesforce": {
+    "name": "Salesforce",
+    "slug": "salesforce",
+    "category": "Business",
+    "docsUrl": "https://developer.salesforce.com/docs",
+    "score": 45,
+    "grade": "D",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 10,
+      "warn": 5,
+      "fail": 6
+    }
+  },
+  "aws": {
+    "name": "AWS",
+    "slug": "aws",
+    "category": "Infrastructure",
+    "docsUrl": "https://docs.aws.amazon.com",
+    "score": 42,
+    "grade": "D",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 9,
+      "warn": 6,
+      "fail": 6
+    }
+  },
+  "slack": {
+    "name": "Slack",
+    "slug": "slack",
+    "category": "Communication",
+    "docsUrl": "https://api.slack.com/docs",
+    "score": 39,
+    "grade": "D",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 9,
+      "warn": 5,
+      "fail": 7
+    }
+  },
+  "hubspot": {
+    "name": "HubSpot",
+    "slug": "hubspot",
+    "category": "Business",
+    "docsUrl": "https://developers.hubspot.com/docs",
+    "score": 35,
+    "grade": "D",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 8,
+      "warn": 6,
+      "fail": 7
+    }
+  },
+  "zendesk": {
+    "name": "Zendesk",
+    "slug": "zendesk",
+    "category": "Business",
+    "docsUrl": "https://developer.zendesk.com/docs",
+    "score": 31,
+    "grade": "D",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 8,
+      "warn": 5,
+      "fail": 8
+    }
+  },
+  "oracle-cloud": {
+    "name": "Oracle Cloud",
+    "slug": "oracle-cloud",
+    "category": "Infrastructure",
+    "docsUrl": "https://docs.oracle.com/en/cloud",
+    "score": 22,
+    "grade": "F",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 5,
+      "warn": 4,
+      "fail": 12
+    }
+  },
+  "sap": {
+    "name": "SAP",
+    "slug": "sap",
+    "category": "Business",
+    "docsUrl": "https://developers.sap.com",
+    "score": 18,
+    "grade": "F",
+    "scoredAt": "2026-03-17T00:00:00.000Z",
+    "checks": {
+      "total": 21,
+      "pass": 4,
+      "warn": 3,
+      "fail": 14
+    }
+  }
+}

@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGENT_SCORE // DOC READINESS SYSTEM</title>
+  <style>
+    :root {
+      --bg: #030303;
+      --bg-body: #0a0a0a;
+      --grid-line: #1a1a1a;
+      --text-main: #b0b0b0;
+      --text-dim: #444;
+      --text-high: #ffffff;
+      --accent: #00ff66;
+      --accent-dim: #0a1a0e;
+      --font-mono: 'Courier New', Courier, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-font-smoothing: antialiased; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-body);
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--text-dim); text-decoration: none; }
+    a:hover { color: var(--text-main); }
+
+    /* ---- Outer frame ---- */
+    .frame {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Global header bar ---- */
+    .global-header {
+      border-bottom: 1px solid var(--grid-line);
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      justify-content: space-between;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .gh-left { display: flex; gap: 28px; align-items: center; }
+    .gh-right { display: flex; gap: 28px; align-items: center; }
+
+    .gh-item { display: flex; gap: 8px; align-items: center; }
+    .gh-item .key { color: var(--text-dim); }
+    .gh-item .val { color: var(--text-high); }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .blink { animation: blinker 1s step-end infinite; }
+    @keyframes blinker { 50% { opacity: 0; } }
+
+    /* ---- Hero section ---- */
+    .hero-section {
+      display: grid;
+      grid-template-columns: 320px 1fr 240px;
+      border-bottom: 1px solid var(--grid-line);
+    }
+
+    /* Left panel: headline */
+    .hero-left {
+      border-right: 1px solid var(--grid-line);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .section-title {
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: 10px;
+      border-bottom: 1px solid var(--grid-line);
+      padding-bottom: 8px;
+      margin-bottom: 4px;
+    }
+
+    .hero-headline {
+      font-size: 18px;
+      color: var(--text-high);
+      line-height: 1.4;
+      letter-spacing: -0.5px;
+      font-family: var(--font-mono);
+    }
+
+    .hero-headline .accent { color: var(--accent); }
+
+    .hero-sub {
+      color: var(--text-main);
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    .hero-byline {
+      color: var(--text-dim);
+      font-size: 10px;
+      margin-top: auto;
+      border-top: 1px solid var(--grid-line);
+      padding-top: 12px;
+    }
+
+    .hero-byline a { color: var(--text-dim); }
+    .hero-byline a:hover { color: var(--text-main); }
+
+    /* Center panel: score checker + matrix */
+    .hero-center {
+      border-right: 1px solid var(--grid-line);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .checker-bar {
+      border-bottom: 1px solid var(--grid-line);
+      display: flex;
+      height: 36px;
+      align-items: stretch;
+    }
+
+    .checker-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 0 16px;
+      color: var(--text-high);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      outline: none;
+      letter-spacing: 0.5px;
+      border-right: 1px solid var(--grid-line);
+    }
+    .checker-input::placeholder { color: var(--text-dim); }
+
+    .checker-btn {
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 0 20px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      transition: background 0.15s;
+    }
+    .checker-btn:hover { background: var(--accent-dim); }
+
+    .matrix-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .matrix-col-headers {
+      display: grid;
+      grid-template-columns: 40px 1fr 80px 56px 48px;
+      border-bottom: 1px solid var(--grid-line);
+      height: 24px;
+      align-items: center;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 10px;
+    }
+
+    .mch-cell {
+      padding: 0 12px;
+      border-right: 1px solid var(--grid-line);
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+    .mch-cell:last-child { border-right: none; }
+
+    .matrix-rows { position: relative; }
+
+    .matrix-row {
+      display: grid;
+      grid-template-columns: 40px 1fr 80px 56px 48px;
+      height: 28px;
+      align-items: center;
+      border-bottom: 1px solid var(--grid-line);
+      transition: background 0.1s;
+      cursor: default;
+    }
+
+    .matrix-row:hover { background: rgba(255,255,255,0.02); }
+
+    .matrix-row.active {
+      background: rgba(0,255,102,0.04);
+      border-left: 2px solid var(--accent);
+    }
+
+    .mr-idx {
+      color: var(--text-dim);
+      text-align: center;
+      border-right: 1px solid var(--grid-line);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    .mr-name {
+      padding-left: 14px;
+      color: var(--text-high);
+      letter-spacing: 0.5px;
+      border-right: 1px solid var(--grid-line);
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .mr-cat {
+      padding-left: 12px;
+      color: var(--text-dim);
+      border-right: 1px solid var(--grid-line);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .mr-bar {
+      padding: 0 12px;
+      border-right: 1px solid var(--grid-line);
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 2px;
+      background: #1a1a1a;
+    }
+
+    .bar-fill { height: 100%; }
+
+    .mr-score {
+      text-align: center;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      letter-spacing: -0.5px;
+    }
+
+    .scanner-bar {
+      position: absolute;
+      left: 0; right: 0;
+      height: 28px;
+      background: rgba(255,255,255,0.015);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      pointer-events: none;
+      transition: top 0.08s steps(1);
+    }
+
+    /* Right panel: stats */
+    .hero-right {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .stat-block {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--grid-line);
+    }
+
+    .stat-block:last-child { border-bottom: none; }
+
+    .stat-key {
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+
+    .stat-val {
+      font-size: 28px;
+      color: var(--text-high);
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .stat-val.accent { color: var(--accent); }
+
+    .stat-sub {
+      color: var(--text-dim);
+      font-size: 10px;
+      margin-top: 6px;
+    }
+
+    /* ---- Why section ---- */
+    .why-section {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--grid-line);
+    }
+
+    .why-panel {
+      border-right: 1px solid var(--grid-line);
+      padding: 20px;
+    }
+    .why-panel:last-child { border-right: none; }
+
+    .why-idx {
+      color: var(--text-dim);
+      font-size: 10px;
+      margin-bottom: 14px;
+      letter-spacing: 1px;
+    }
+
+    .why-title {
+      color: var(--text-high);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+
+    .why-body {
+      color: var(--text-main);
+      line-height: 1.7;
+      font-size: 10px;
+    }
+
+    /* ---- Methodology section ---- */
+    .method-section {
+      border-bottom: 1px solid var(--grid-line);
+    }
+
+    .method-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--grid-line);
+      height: 32px;
+      padding: 0 20px;
+    }
+
+    .method-header-title {
+      color: var(--text-high);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: 11px;
+    }
+
+    .method-header-meta { color: var(--text-dim); font-size: 10px; }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .method-cell {
+      border-right: 1px solid var(--grid-line);
+      border-bottom: 1px solid var(--grid-line);
+      padding: 16px 20px;
+    }
+
+    .method-cell:nth-child(4n) { border-right: none; }
+    .method-cell:nth-last-child(-n+4) { border-bottom: none; }
+
+    .mc-num {
+      color: var(--text-dim);
+      font-size: 10px;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .mc-name {
+      color: var(--text-high);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      font-size: 11px;
+    }
+
+    .mc-checks {
+      color: var(--accent);
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+
+    .mc-desc {
+      color: var(--text-dim);
+      font-size: 10px;
+      line-height: 1.6;
+    }
+
+    /* ---- CTA section ---- */
+    .cta-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--grid-line);
+    }
+
+    .cta-left {
+      border-right: 1px solid var(--grid-line);
+      padding: 28px 24px;
+    }
+
+    .cta-title {
+      color: var(--text-high);
+      font-size: 15px;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .cta-title .accent { color: var(--accent); }
+    .cta-sub { color: var(--text-dim); line-height: 1.7; }
+
+    .cta-right {
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .cta-input-row {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--grid-line);
+    }
+
+    .cta-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 10px 14px;
+      color: var(--text-high);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      outline: none;
+    }
+    .cta-input::placeholder { color: var(--text-dim); }
+
+    .cta-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: bold;
+    }
+    .cta-btn:hover { opacity: 0.85; }
+
+    .cta-note { color: var(--text-dim); font-size: 10px; }
+
+    /* ---- Footer bar ---- */
+    .footer-bar {
+      border-top: 1px solid var(--grid-line);
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      justify-content: space-between;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      font-size: 10px;
+      background: var(--bg);
+      margin-top: auto;
+    }
+
+    .fb-links { display: flex; gap: 20px; }
+    .fb-links a { color: var(--text-dim); }
+    .fb-links a:hover { color: var(--text-main); }
+
+    /* ---- Ticker row ---- */
+    .ticker-row {
+      height: 28px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--grid-line);
+      display: flex;
+      align-items: center;
+    }
+
+    .ticker-track {
+      display: flex;
+      align-items: center;
+      animation: scroll 32s linear infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes scroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .tick-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 20px;
+      color: var(--text-dim);
+      border-right: 1px solid var(--grid-line);
+      height: 28px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .tick-score { color: var(--text-main); }
+    .tick-item.low .tick-score { color: #ffc800; }
+    .tick-item.fail .tick-score { color: #ff4400; }
+
+    /* ---- Score result display ---- */
+    .result-row {
+      display: none;
+      border-top: 1px solid var(--grid-line);
+      padding: 12px 16px;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .result-row.visible { display: flex; }
+
+    .result-score {
+      font-size: 32px;
+      color: var(--accent);
+      letter-spacing: -1px;
+    }
+
+    .result-label {
+      color: var(--text-dim);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- Global header -->
+  <div class="global-header">
+    <div class="gh-left">
+      <div class="gh-item">
+        <div class="status-dot"></div>
+        <span class="val">AGENT_SCORE</span>
+      </div>
+      <div class="gh-item">
+        <span class="key">SYS</span>
+        <span class="val">DOC_READINESS_V1</span>
+      </div>
+      <div class="gh-item">
+        <span class="blink">►</span>&nbsp;
+        <span class="val">RUNNING</span>
+      </div>
+    </div>
+    <div class="gh-right">
+      <div class="gh-item"><span class="key">COMPANIES</span> <span class="val">30</span></div>
+      <div class="gh-item"><span class="key">CHECKS</span> <span class="val">21</span></div>
+      <div class="gh-item"><span class="key">AVG</span> <span class="val">58</span></div>
+      <a href="#methodology">METHODOLOGY</a>
+    </div>
+  </div>
+
+  <!-- Ticker -->
+  <div class="ticker-row">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+
+  <!-- Hero section -->
+  <div class="hero-section">
+
+    <!-- Left: headline -->
+    <div class="hero-left">
+      <div>
+        <div class="section-title">// intro</div>
+        <h1 class="hero-headline">
+          Is your documentation<br>
+          ready for<br>
+          <span class="accent">AI_AGENTS</span>?
+        </h1>
+      </div>
+      <p class="hero-sub">
+        AGENT_SCORE evaluates how well your API docs serve AI coding agents — Cursor, Claude, ChatGPT. 21 automated checks across 8 categories. Score 0–100.
+      </p>
+      <p class="hero-sub" style="color: var(--text-dim); font-size: 10px;">
+        73% of top API docs still lack an llms.txt. Agent readiness is the new SEO.
+      </p>
+      <div class="hero-byline">
+        DEVELOPED BY <a href="https://buildwithfern.com" target="_blank">FERN_LABS</a><br>
+        IN PARTNERSHIP WITH <a href="https://github.com/dacharyc" target="_blank">DACHARY_CAREY</a>
+      </div>
+    </div>
+
+    <!-- Center: score checker + leaderboard matrix -->
+    <div class="hero-center">
+      <div class="checker-bar">
+        <input class="checker-input" type="url" id="urlInput" placeholder="ENTER_DOCS_URL: https://docs.your-company.com" />
+        <button class="checker-btn" onclick="checkScore()">RUN_CHECK ►</button>
+      </div>
+      <div id="resultRow" class="result-row">
+        <div class="result-score" id="resultScore">—</div>
+        <div class="result-label" id="resultLabel">AWAITING INPUT</div>
+      </div>
+      <div class="matrix-area">
+        <div class="matrix-col-headers">
+          <div class="mch-cell">IDX</div>
+          <div class="mch-cell">COMPANY</div>
+          <div class="mch-cell">CAT</div>
+          <div class="mch-cell">SCORE_BAR</div>
+          <div class="mch-cell">SC</div>
+        </div>
+        <div class="matrix-rows" id="matrixRows">
+          <div class="scanner-bar" id="scanner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: stats -->
+    <div class="hero-right">
+      <div class="stat-block">
+        <div class="stat-key">// Companies</div>
+        <div class="stat-val">30</div>
+        <div class="stat-sub">SCORED_AND_RANKED</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-key">// Passing (80+)</div>
+        <div class="stat-val accent">7</div>
+        <div class="stat-sub">GRADE_A_OR_BETTER</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-key">// Average score</div>
+        <div class="stat-val">58</div>
+        <div class="stat-sub">OUT_OF_100</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-key">// Checks run</div>
+        <div class="stat-val">21</div>
+        <div class="stat-sub">ACROSS_8_CATEGORIES</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-key">// Top score</div>
+        <div class="stat-val accent">96</div>
+        <div class="stat-sub">STRIPE_PAYMENTS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Why section -->
+  <div id="why" class="why-section">
+    <div class="why-panel">
+      <div class="why-idx">01 // INVISIBLE_AUDIENCE</div>
+      <div class="why-title">The invisible audience</div>
+      <p class="why-body">AI coding agents read your API docs millions of times a day. If your docs aren't optimized, you're invisible to the fastest-growing segment of your user base.</p>
+    </div>
+    <div class="why-panel">
+      <div class="why-idx">02 // BENCHMARK</div>
+      <div class="why-title">Lighthouse for AI</div>
+      <p class="why-body">Agent Score is the first industry benchmark for AI-agent readiness. Think Lighthouse, but for how effectively AI agents can discover, parse, and use your docs. 0–100, 21 checks.</p>
+    </div>
+    <div class="why-panel">
+      <div class="why-idx">03 // COMPETITIVE_MOAT</div>
+      <div class="why-title">Agent readiness = moat</div>
+      <p class="why-body">API platforms with higher agent readability are seeing outsized adoption. Agent readiness isn't a nice-to-have. It's the new SEO. 73% of top API docs still lack llms.txt.</p>
+    </div>
+    <div class="why-panel">
+      <div class="why-idx">04 // OPEN_SOURCE</div>
+      <div class="why-title">No black boxes</div>
+      <p class="why-body">Built on the open-source Agent-Friendly Docs Spec. No gatekeeping, no black boxes. Every check is transparent and community-driven.</p>
+    </div>
+  </div>
+
+  <!-- Methodology -->
+  <div id="methodology" class="method-section">
+    <div class="method-header">
+      <span class="method-header-title">// Methodology: 21 checks across 8 categories</span>
+      <span class="method-header-meta">FRAMEWORK: AGENT_FRIENDLY_DOCS_SPEC v1.0</span>
+    </div>
+    <div class="method-grid">
+      <div class="method-cell">
+        <div class="mc-num">CAT_01</div>
+        <div class="mc-name">llms.txt</div>
+        <div class="mc-checks">5 CHECKS</div>
+        <div class="mc-desc">Can agents discover and parse your documentation index?</div>
+      </div>
+      <div class="method-cell">
+        <div class="mc-num">CAT_02</div>
+        <div class="mc-name">Markdown availability</div>
+        <div class="mc-checks">2 CHECKS</div>
+        <div class="mc-desc">Can agents get clean markdown instead of bloated HTML?</div>
+      </div>
+      <div class="method-cell">
+        <div class="mc-num">CAT_03</div>
+        <div class="mc-name">Page size</div>
+        <div class="mc-checks">3 CHECKS</div>
+        <div class="mc-desc">Will your pages fit in an agent's context window?</div>
+      </div>
+      <div class="method-cell">
+        <div class="mc-num">CAT_04</div>
+        <div class="mc-name">Content structure</div>
+        <div class="mc-checks">3 CHECKS</div>
+        <div class="mc-desc">Are tabs, headers, and code fences agent-parseable?</div>
+      </div>
+      <div class="method-cell">
+        <div class="mc-num">CAT_05</div>
+        <div class="mc-name">URL stability</div>
+        <div class="mc-checks">2 CHECKS</div>
+        <div class="mc-desc">Do your URLs resolve cleanly without traps?</div>
+      </div>
+      <div class="method-cell">
+        <div class="mc-num">CAT_06</div>
+        <div class="mc-name">Agent discoverability</div>
+        <div class="mc-checks">1 CHECK</div>
+        <div class="mc-desc">Can agents find your llms.txt from any page?</div>
+      </div>
+      <div class="method-cell">
+        <div class="mc-num">CAT_07</div>
+        <div class="mc-name">Observability</div>
+        <div class="mc-checks">3 CHECKS</div>
+        <div class="mc-desc">Is your agent-facing content fresh and accurate?</div>
+      </div>
+      <div class="method-cell">
+        <div class="mc-num">CAT_08</div>
+        <div class="mc-name">Authentication</div>
+        <div class="mc-checks">2 CHECKS</div>
+        <div class="mc-desc">Can agents access your docs without hitting auth walls?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA section -->
+  <div class="cta-section">
+    <div class="cta-left">
+      <div class="cta-title">
+        Check your documentation <span class="accent">agent-readiness</span>
+      </div>
+      <p class="cta-sub">Enter your docs URL to see exactly where you stand. Free, instant, actionable. See all 21 checks and where you can improve.</p>
+    </div>
+    <div class="cta-right">
+      <div class="section-title" style="margin-bottom: 8px;">// RUN_ANALYSIS</div>
+      <div class="cta-input-row">
+        <input class="cta-input" type="url" id="ctaUrlInput" placeholder="https://docs.your-company.com" />
+        <button class="cta-btn" onclick="checkScoreCTA()">EXECUTE ►</button>
+      </div>
+      <div class="cta-note">FREE · NO SIGNUP REQUIRED · RESULTS IN ~3 SECONDS</div>
+    </div>
+  </div>
+
+  <!-- Footer bar -->
+  <div class="footer-bar">
+    <div>© 2025 FERN_LABS // AGENT_SCORE SYSTEM</div>
+    <div class="fb-links">
+      <a href="https://buildwithfern.com" target="_blank">FERN</a>
+      <a href="https://github.com/agent-ecosystem/agent-docs-spec" target="_blank">GITHUB</a>
+      <a href="#methodology">METHODOLOGY</a>
+    </div>
+  </div>
+
+</div>
+<script>
+  const companies = [
+    { name: 'STRIPE', cat: 'PAYMENTS', score: 96 },
+    { name: 'ELEVENLABS', cat: 'AI/ML', score: 94 },
+    { name: 'SQUARE', cat: 'PAYMENTS', score: 89 },
+    { name: 'CLOUDFLARE', cat: 'INFRA', score: 88 },
+    { name: 'ANTHROPIC', cat: 'AI/ML', score: 86 },
+    { name: 'VERCEL', cat: 'DEVTOOLS', score: 85 },
+    { name: 'COHERE', cat: 'AI/ML', score: 83 },
+    { name: 'OPENAI', cat: 'AI/ML', score: 78 },
+    { name: 'SENTRY', cat: 'DEVTOOLS', score: 71 },
+    { name: 'DATADOG', cat: 'DEVTOOLS', score: 70 },
+    { name: 'RESEND', cat: 'COMMS', score: 65 },
+    { name: 'SUPABASE', cat: 'INFRA', score: 62 },
+    { name: 'CLERK', cat: 'DEVTOOLS', score: 58 },
+    { name: 'SHOPIFY', cat: 'COMMERCE', score: 52 },
+    { name: 'HUBSPOT', cat: 'COMMERCE', score: 48 },
+    { name: 'AWS', cat: 'INFRA', score: 42 },
+    { name: 'SLACK', cat: 'COMMS', score: 39 },
+    { name: 'TWILIO', cat: 'COMMS', score: 35 },
+    { name: 'ZENDESK', cat: 'COMMERCE', score: 30 },
+    { name: 'SALESFORCE', cat: 'COMMERCE', score: 25 },
+    { name: 'SAP', cat: 'COMMERCE', score: 18 },
+  ];
+
+  // Build ticker
+  const tickerTrack = document.getElementById('tickerTrack');
+  let tickHtml = '';
+  for (let i = 0; i < 2; i++) {
+    companies.forEach(c => {
+      const cls = c.score < 30 ? ' fail' : c.score < 50 ? ' low' : '';
+      tickHtml += `<span class="tick-item${cls}">${c.name} <span class="tick-score">${c.score}</span></span>`;
+    });
+  }
+  tickerTrack.innerHTML = tickHtml;
+
+  // Build matrix
+  const matrixRows = document.getElementById('matrixRows');
+  const scanner = document.getElementById('scanner');
+
+  const scoreColor = s => {
+    if (s >= 80) return '#00ff66';
+    if (s >= 65) return '#ffc800';
+    if (s >= 45) return '#ff8c00';
+    if (s >= 30) return '#ff5050';
+    return '#cc3333';
+  };
+
+  companies.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'matrix-row';
+    row.innerHTML = `
+      <div class="mr-idx">${i.toString(16).toUpperCase().padStart(2,'0')}</div>
+      <div class="mr-name">${c.name}</div>
+      <div class="mr-cat">${c.cat}</div>
+      <div class="mr-bar">
+        <div class="bar-track"><div class="bar-fill" style="width:${c.score}%;background:${scoreColor(c.score)}"></div></div>
+      </div>
+      <div class="mr-score" style="color:${scoreColor(c.score)}">${c.score}</div>
+    `;
+    matrixRows.insertBefore(row, scanner);
+  });
+
+  // Scanner animation
+  let scanRow = 0;
+  const rows = matrixRows.querySelectorAll('.matrix-row');
+  function animateScanner() {
+    scanner.style.top = `${scanRow * 28}px`;
+    rows.forEach(r => r.classList.remove('active'));
+    if (rows[scanRow]) rows[scanRow].classList.add('active');
+    scanRow = (scanRow + 1) % rows.length;
+  }
+  setInterval(animateScanner, 200);
+
+  // Score checker (mock)
+  function checkScore() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) return;
+    const row = document.getElementById('resultRow');
+    const scoreEl = document.getElementById('resultScore');
+    const lblEl = document.getElementById('resultLabel');
+    row.classList.add('visible');
+    scoreEl.textContent = '...';
+    lblEl.textContent = 'ANALYZING // PLEASE_WAIT';
+    setTimeout(() => {
+      const mock = Math.floor(Math.random() * 40) + 35;
+      scoreEl.textContent = mock;
+      lblEl.textContent = mock >= 80 ? 'STATUS: PASS // GOOD_AGENT_READINESS' : mock >= 60 ? 'STATUS: WARN // IMPROVEMENTS_RECOMMENDED' : 'STATUS: FAIL // SIGNIFICANT_GAPS_FOUND';
+      scoreEl.style.color = scoreColor(mock);
+    }, 1200);
+  }
+
+  function checkScoreCTA() {
+    const url = document.getElementById('ctaUrlInput').value.trim();
+    if (!url) return;
+    document.getElementById('urlInput').value = url;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(checkScore, 600);
+  }
+
+  document.getElementById('urlInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkScore();
+  });
+
+  document.getElementById('ctaUrlInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkScoreCTA();
+  });
+</script>
+</body>
+</html>

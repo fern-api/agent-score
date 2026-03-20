@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Score — Is your documentation ready for AI agents?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-body: #050505;
+      --bg-card: #0A0A0A;
+      --bg-card-hover: #111111;
+      --border-color: #222222;
+      --border-active: #444444;
+      --text-primary: #FFFFFF;
+      --text-secondary: #888888;
+      --text-tertiary: #444444;
+      --accent: #00FF66;
+      --accent-dim: rgba(0, 255, 102, 0.08);
+      --accent-orange: #FF4400;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 8px;
+      --gap: 16px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ---- Layout ---- */
+    .page-wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+
+    /* ---- Nav ---- */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 32px;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .nav-logo-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text-primary); text-decoration: none; }
+
+    .nav-cta {
+      background: var(--accent);
+      color: #000 !important;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none !important;
+      transition: opacity 0.2s;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ---- Cards ---- */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover { border-color: var(--border-active); }
+
+    /* ---- Labels ---- */
+    .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .display-text {
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .mono { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+    .accent { color: var(--accent); }
+
+    /* ============================
+       HERO GRID
+    ============================= */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: auto auto;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+
+    /* Bio module — spans 2x2 */
+    .bio-module {
+      grid-column: span 2;
+      grid-row: span 2;
+      justify-content: space-between;
+      min-height: 360px;
+    }
+
+    .bio-headline {
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+
+    .bio-headline .hl { color: var(--accent); }
+
+    .bio-sub {
+      color: var(--text-secondary);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .bio-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .pill {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+    .bio-form {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .bio-input {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .bio-input:focus { border-color: var(--border-active); }
+    .bio-input::placeholder { color: var(--text-tertiary); }
+
+    .bio-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    .bio-btn:hover { opacity: 0.85; }
+
+    .bio-stats {
+      display: flex;
+      gap: 32px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 24px;
+      margin-top: 28px;
+    }
+
+    .stat-item strong {
+      display: block;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-item span {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Score preview card */
+    .score-card {
+      grid-column: span 2;
+      background: #000;
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .score-card-inner {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      justify-content: space-between;
+    }
+
+    .score-big {
+      font-size: 80px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+
+    .score-company { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .score-label-sub { font-size: 12px; color: var(--text-secondary); }
+
+    .score-bar-wrap {
+      margin-top: 16px;
+    }
+
+    .score-bar-track {
+      width: 100%;
+      height: 2px;
+      background: var(--border-color);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 1px;
+      transition: width 1s ease;
+    }
+
+    .score-rank-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .score-rank-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .srr-name { flex: 1; color: var(--text-secondary); }
+    .srr-score { font-family: var(--font-mono); color: var(--text-primary); }
+    .srr-grade {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+    }
+
+    .grade-a { background: rgba(0,255,102,0.1); color: var(--accent); }
+    .grade-b { background: rgba(255,200,0,0.1); color: #ffc800; }
+    .grade-c { background: rgba(255,100,0,0.1); color: #ff6400; }
+    .grade-d { background: rgba(255,50,50,0.1); color: #ff5050; }
+    .grade-f { background: rgba(200,0,0,0.1); color: #cc3333; }
+
+    /* Ticker module */
+    .ticker-module {
+      grid-column: span 4;
+      padding: 0;
+      overflow: hidden;
+      height: 44px;
+      display: flex;
+      align-items: center;
+    }
+
+    .ticker-track {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      animation: tickerScroll 28s linear infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 20px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-right: 1px solid var(--border-color);
+    }
+
+    .ticker-item strong { color: var(--text-primary); font-family: var(--font-mono); }
+    .ticker-item.low strong { color: #ffc800; }
+    .ticker-item.fail strong { color: var(--accent-orange); }
+
+    /* ============================
+       WHY GRID
+    ============================= */
+    .why-section { margin: var(--gap) 0; }
+
+    .section-header {
+      margin-bottom: var(--gap);
+    }
+
+    .section-tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .section-sub {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 6px;
+    }
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap);
+    }
+
+    .why-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      transition: border-color 0.25s;
+    }
+
+    .why-card:hover { border-color: var(--border-active); }
+
+    .why-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      background: var(--accent-dim);
+      border: 1px solid rgba(0,255,102,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .why-card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .why-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ============================
+       LEADERBOARD
+    ============================= */
+    .lb-section { margin: var(--gap) 0; }
+
+    .lb-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap);
+    }
+
+    .lb-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: border-color 0.25s;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .lb-card:hover { border-color: var(--border-active); }
+
+    .lb-rank {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      width: 20px;
+      flex-shrink: 0;
+    }
+
+    .lb-info { flex: 1; min-width: 0; }
+
+    .lb-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lb-cat {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .lb-score-wrap { text-align: right; flex-shrink: 0; }
+
+    .lb-score {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .lb-bar-mini {
+      width: 40px;
+      height: 2px;
+      background: var(--border-color);
+      border-radius: 1px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .lb-bar-mini-fill {
+      height: 100%;
+      border-radius: 1px;
+      background: var(--accent);
+    }
+
+    /* ============================
+       METHODOLOGY
+    ============================= */
+    .method-section { margin: var(--gap) 0; }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap);
+    }
+
+    .method-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: border-color 0.25s;
+    }
+
+    .method-card:hover { border-color: var(--border-active); }
+
+    .method-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background: var(--accent-dim);
+      border: 1px solid rgba(0,255,102,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .method-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .method-checks {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .method-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ============================
+       CTA / FOOTER
+    ============================= */
+    .cta-section {
+      margin: var(--gap) 0;
+    }
+
+    .cta-card {
+      background: linear-gradient(135deg, #0a0a0a 0%, #080808 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(0,255,102,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .cta-sub { color: var(--text-secondary); font-size: 14px; }
+
+    .cta-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .cta-btn:hover { opacity: 0.85; }
+
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding-top: 32px;
+      margin-top: var(--gap);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-text { font-size: 12px; color: var(--text-tertiary); }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 12px; color: var(--text-secondary); }
+    .footer-links a:hover { color: var(--text-primary); }
+
+    /* ============================
+       SCORE RESULT OVERLAY
+    ============================= */
+    .score-result {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(0,255,102,0.04);
+      border: 1px solid rgba(0,255,102,0.15);
+      border-radius: var(--radius-md);
+    }
+
+    .score-result-num {
+      font-size: 40px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .score-result-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap">
+  <!-- Nav -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-dot"></div>
+      Agent Score
+    </a>
+    <ul class="nav-links">
+      <li><a href="#why">Why it matters</a></li>
+      <li><a href="#leaderboard">Directory</a></li>
+      <li><a href="#methodology">Methodology</a></li>
+    </ul>
+    <a href="#score-checker" class="nav-cta">Check your score →</a>
+  </nav>
+
+  <!-- ====== HERO GRID ====== -->
+  <div class="hero-grid">
+    <!-- Bio module (2x2) -->
+    <div class="card bio-module" id="score-checker">
+      <div>
+        <span class="label">Fern Agent Score</span>
+        <h1 class="bio-headline">
+          Is your documentation<br>
+          ready for <span class="hl">AI agents</span>?
+        </h1>
+        <p class="bio-sub">
+          Agent Score evaluates how well your API docs serve AI coding agents like Cursor, Claude, and ChatGPT. 21 checks across 8 categories.
+        </p>
+        <p class="bio-sub" style="font-size:12px; margin-top:-12px;">
+          Developed by <a href="https://buildwithfern.com" target="_blank">Fern Labs</a> in partnership with <a href="https://github.com/dacharyc" target="_blank">Dachary Carey</a>
+        </p>
+        <div class="bio-pills">
+          <div class="pill"><div class="pill-dot"></div> Cursor</div>
+          <div class="pill"><div class="pill-dot"></div> Claude</div>
+          <div class="pill"><div class="pill-dot"></div> ChatGPT</div>
+          <div class="pill"><div class="pill-dot"></div> Copilot</div>
+        </div>
+      </div>
+      <div>
+        <div class="bio-form">
+          <input class="bio-input" type="url" id="urlInput" placeholder="https://docs.your-company.com" />
+          <button class="bio-btn" onclick="checkScore()">Check Score</button>
+        </div>
+        <div class="score-result" id="scoreResult">
+          <div class="score-result-num" id="scoreNum">—</div>
+          <div class="score-result-label" id="scoreLabel">Enter a URL above to check agent-readiness</div>
+        </div>
+        <div class="bio-stats">
+          <div class="stat-item"><strong>30</strong><span>Companies scored</span></div>
+          <div class="stat-item"><strong>7</strong><span>Passing (80+)</span></div>
+          <div class="stat-item"><strong>58</strong><span>Average score</span></div>
+          <div class="stat-item"><strong>21</strong><span>Checks run</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score preview (2x2) -->
+    <div class="score-card" style="grid-column: span 2; grid-row: span 2;">
+      <div class="score-card-inner">
+        <div>
+          <span class="label">#1 ranked</span>
+          <div class="score-company">Stripe</div>
+          <div class="score-label-sub">Payments · docs.stripe.com</div>
+          <div class="score-big">96</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar-track"><div class="score-bar-fill" style="width:96%"></div></div>
+          </div>
+        </div>
+        <div class="score-rank-list">
+          <div class="score-rank-row">
+            <span class="mono" style="width:20px; flex-shrink:0;">01</span>
+            <span class="srr-name">Stripe</span>
+            <span class="srr-score">96</span>
+            <span class="srr-grade grade-a">A</span>
+          </div>
+          <div class="score-rank-row">
+            <span class="mono" style="width:20px; flex-shrink:0;">02</span>
+            <span class="srr-name">ElevenLabs</span>
+            <span class="srr-score">94</span>
+            <span class="srr-grade grade-a">A</span>
+          </div>
+          <div class="score-rank-row">
+            <span class="mono" style="width:20px; flex-shrink:0;">03</span>
+            <span class="srr-name">Square</span>
+            <span class="srr-score">89</span>
+            <span class="srr-grade grade-a">A</span>
+          </div>
+          <div class="score-rank-row">
+            <span class="mono" style="width:20px; flex-shrink:0;">04</span>
+            <span class="srr-name">Cloudflare</span>
+            <span class="srr-score">88</span>
+            <span class="srr-grade grade-a">A</span>
+          </div>
+          <div class="score-rank-row">
+            <span class="mono" style="width:20px; flex-shrink:0;">05</span>
+            <span class="srr-name">Anthropic</span>
+            <span class="srr-score">86</span>
+            <span class="srr-grade grade-a">A</span>
+          </div>
+          <div class="score-rank-row">
+            <span class="mono" style="width:20px; flex-shrink:0;">27</span>
+            <span class="srr-name">Slack</span>
+            <span class="srr-score">39</span>
+            <span class="srr-grade grade-d">D</span>
+          </div>
+          <div class="score-rank-row">
+            <span class="mono" style="width:20px; flex-shrink:0;">30</span>
+            <span class="srr-name">SAP</span>
+            <span class="srr-score">18</span>
+            <span class="srr-grade grade-f">F</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ticker (4 cols) -->
+    <div class="ticker-module card" style="padding:0; align-items:center; justify-content:center;">
+      <div class="ticker-track" id="tickerTrack"></div>
+    </div>
+  </div>
+
+  <!-- ====== WHY SECTION ====== -->
+  <div class="why-section" id="why">
+    <div class="section-header">
+      <span class="section-tag">Why it matters</span>
+      <h2 class="section-title">Your docs have a new audience: <span class="accent">AI is reading them now</span></h2>
+    </div>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <h3>The invisible audience</h3>
+        <p>AI coding agents are reading your API docs millions of times a day. If your docs aren't optimized, you're invisible to the fastest-growing segment of your user base.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+          </svg>
+        </div>
+        <h3>Lighthouse for AI agents</h3>
+        <p>Agent Score is the first industry benchmark for AI-agent readiness. Think Lighthouse, but for how effectively AI agents can discover, parse, and use your documentation.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+          </svg>
+        </div>
+        <h3>Agent readiness = moat</h3>
+        <p>API platforms with higher agent readability are seeing outsized adoption. Agent readiness is the new SEO. 73% of top API docs still lack an llms.txt.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 019.9-1"/>
+          </svg>
+        </div>
+        <h3>Open source, no black boxes</h3>
+        <p>Built on the open-source Agent-Friendly Docs Spec. No gatekeeping, no black boxes. Every check is transparent and community-driven.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== LEADERBOARD ====== -->
+  <div class="lb-section" id="leaderboard">
+    <div class="section-header">
+      <span class="section-tag">Directory</span>
+      <h2 class="section-title">Agent score leaderboard</h2>
+      <p class="section-sub">How the top API documentation sites score on agent-readiness</p>
+    </div>
+    <div class="lb-grid" id="lbGrid"></div>
+  </div>
+
+  <!-- ====== METHODOLOGY ====== -->
+  <div class="method-section" id="methodology">
+    <div class="section-header">
+      <span class="section-tag">Methodology</span>
+      <h2 class="section-title">21 checks across 8 categories</h2>
+      <p class="section-sub">A comprehensive framework for evaluating agent-readiness</p>
+    </div>
+    <div class="method-grid">
+      <div class="method-card">
+        <div class="method-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="method-name">llms.txt</div>
+        <div class="method-checks">5 checks</div>
+        <div class="method-desc">Can agents discover and parse your documentation index?</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+        </div>
+        <div class="method-name">Markdown availability</div>
+        <div class="method-checks">2 checks</div>
+        <div class="method-desc">Can agents get clean markdown instead of bloated HTML?</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+        </div>
+        <div class="method-name">Page size</div>
+        <div class="method-checks">3 checks</div>
+        <div class="method-desc">Will your pages fit in an agent's context window?</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+        </div>
+        <div class="method-name">Content structure</div>
+        <div class="method-checks">3 checks</div>
+        <div class="method-desc">Are tabs, headers, and code fences agent-parseable?</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+          </svg>
+        </div>
+        <div class="method-name">URL stability</div>
+        <div class="method-checks">2 checks</div>
+        <div class="method-desc">Do your URLs resolve cleanly without traps?</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <div class="method-name">Agent discoverability</div>
+        <div class="method-checks">1 check</div>
+        <div class="method-desc">Can agents find your llms.txt from any page?</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="method-name">Observability</div>
+        <div class="method-checks">3 checks</div>
+        <div class="method-desc">Is your agent-facing content fresh and accurate?</div>
+      </div>
+      <div class="method-card">
+        <div class="method-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+        </div>
+        <div class="method-name">Authentication</div>
+        <div class="method-checks">2 checks</div>
+        <div class="method-desc">Can agents access your docs without hitting auth walls?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== CTA ====== -->
+  <div class="cta-section">
+    <div class="cta-card">
+      <div>
+        <span class="label">Get started</span>
+        <h2 class="cta-title">Check your documentation score</h2>
+        <p class="cta-sub">See exactly how AI agents experience your API docs. Free, instant, and actionable.</p>
+      </div>
+      <a href="#score-checker" class="cta-btn">Run a free check →</a>
+    </div>
+  </div>
+
+  <!-- ====== FOOTER ====== -->
+  <footer>
+    <div class="footer-text">© 2025 Fern Labs. Built with the Agent-Friendly Docs Spec.</div>
+    <div class="footer-links">
+      <a href="https://buildwithfern.com" target="_blank">Fern</a>
+      <a href="https://github.com/agent-ecosystem/agent-docs-spec" target="_blank">GitHub</a>
+      <a href="#methodology">Methodology</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // ---- Ticker ----
+  const companies = [
+    { name: 'Stripe', score: 96 },
+    { name: 'ElevenLabs', score: 94 },
+    { name: 'Square', score: 89 },
+    { name: 'Cloudflare', score: 88 },
+    { name: 'Anthropic', score: 86 },
+    { name: 'Vercel', score: 85 },
+    { name: 'Cohere', score: 83 },
+    { name: 'OpenAI', score: 78 },
+    { name: 'Sentry', score: 71 },
+    { name: 'Datadog', score: 70 },
+    { name: 'Resend', score: 65 },
+    { name: 'Supabase', score: 62 },
+    { name: 'Clerk', score: 58 },
+    { name: 'Shopify', score: 52 },
+    { name: 'HubSpot', score: 48 },
+    { name: 'AWS', score: 42, tier: 'low' },
+    { name: 'Slack', score: 39, tier: 'low' },
+    { name: 'Twilio', score: 35, tier: 'low' },
+    { name: 'Zendesk', score: 30, tier: 'low' },
+    { name: 'Salesforce', score: 25, tier: 'fail' },
+    { name: 'SAP', score: 18, tier: 'fail' },
+  ];
+
+  const track = document.getElementById('tickerTrack');
+  const buildTicker = () => {
+    let html = '';
+    for (let i = 0; i < 2; i++) {
+      companies.forEach(c => {
+        const cls = c.tier === 'fail' ? ' fail' : c.tier === 'low' ? ' low' : '';
+        html += `<div class="ticker-item${cls}">${c.name} <strong>${c.score}</strong></div>`;
+      });
+    }
+    track.innerHTML = html;
+  };
+  buildTicker();
+
+  // ---- Leaderboard ----
+  const lbGrid = document.getElementById('lbGrid');
+  const categories = {
+    'Stripe': 'Payments', 'ElevenLabs': 'AI/ML', 'Square': 'Payments',
+    'Cloudflare': 'Infrastructure', 'Anthropic': 'AI/ML', 'Vercel': 'DevTools',
+    'Cohere': 'AI/ML', 'OpenAI': 'AI/ML', 'Sentry': 'DevTools',
+    'Datadog': 'DevTools', 'Resend': 'Comms', 'Supabase': 'Infrastructure',
+    'Clerk': 'DevTools', 'Shopify': 'Commerce', 'HubSpot': 'Commerce',
+    'AWS': 'Infrastructure', 'Slack': 'Comms', 'Twilio': 'Comms',
+    'Zendesk': 'Commerce', 'Salesforce': 'Commerce', 'SAP': 'Commerce',
+  };
+
+  const gradeClass = s => {
+    if (s >= 90) return 'grade-a';
+    if (s >= 80) return 'grade-a';
+    if (s >= 70) return 'grade-b';
+    if (s >= 60) return 'grade-b';
+    if (s >= 50) return 'grade-c';
+    if (s >= 40) return 'grade-c';
+    if (s >= 30) return 'grade-d';
+    return 'grade-f';
+  };
+  const gradeLabel = s => {
+    if (s >= 80) return 'A';
+    if (s >= 70) return 'B';
+    if (s >= 55) return 'C';
+    if (s >= 35) return 'D';
+    return 'F';
+  };
+  const gradeColor = s => {
+    if (s >= 80) return '#00FF66';
+    if (s >= 65) return '#ffc800';
+    if (s >= 45) return '#ff8c00';
+    if (s >= 30) return '#ff5050';
+    return '#cc3333';
+  };
+
+  companies.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'lb-card';
+    el.innerHTML = `
+      <span class="lb-rank">${String(i + 1).padStart(2, '0')}</span>
+      <div class="lb-info">
+        <div class="lb-name">${c.name}</div>
+        <div class="lb-cat">${categories[c.name] || ''}</div>
+      </div>
+      <div class="lb-score-wrap">
+        <div class="lb-score" style="color: ${gradeColor(c.score)}">${c.score}</div>
+        <div class="lb-bar-mini"><div class="lb-bar-mini-fill" style="width:${c.score}%; background:${gradeColor(c.score)}"></div></div>
+      </div>
+    `;
+    lbGrid.appendChild(el);
+  });
+
+  // ---- Score checker (mock) ----
+  function checkScore() {
+    const url = document.getElementById('urlInput').value.trim();
+    const result = document.getElementById('scoreResult');
+    const num = document.getElementById('scoreNum');
+    const lbl = document.getElementById('scoreLabel');
+    if (!url) return;
+    result.style.display = 'block';
+    num.textContent = '...';
+    lbl.textContent = 'Analyzing documentation...';
+    setTimeout(() => {
+      const mock = Math.floor(Math.random() * 40) + 40;
+      num.textContent = mock;
+      lbl.textContent = mock >= 80 ? '✓ Great agent-readiness' : mock >= 60 ? '⚠ Some improvements needed' : '✗ Significant gaps found';
+    }, 1200);
+  }
+
+  document.getElementById('urlInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') checkScore();
+  });
+</script>
+
+</body>
+</html>

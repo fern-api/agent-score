@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGENT SCORE // SYS.INIT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --fg: #FFFFFF;
+      --fg-dim: #555555;
+      --fg-mid: #999999;
+      --accent: #00ff66;
+      --accent-dim: rgba(0, 255, 102, 0.08);
+      --grid: #0d0d0d;
+      --border: #1a1a1a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'VT323', monospace;
+      -webkit-font-smoothing: none;
+      image-rendering: pixelated;
+      overflow-x: hidden;
+    }
+
+    /* CRT scanline effect */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      background-image: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.04) 50%
+      );
+      background-size: 100% 4px;
+    }
+
+    a { color: var(--fg-dim); text-decoration: none; }
+    a:hover { color: var(--fg); }
+
+    /* ==================
+       SECTION 1: HERO SPLIT
+    ================== */
+    .hero {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Left panel */
+    .hero-left {
+      border-right: 1px solid var(--border);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sys-label {
+      position: absolute;
+      font-size: 14px;
+      color: var(--fg-dim);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .label-tl { top: 24px; left: 24px; }
+    .label-bl { bottom: 24px; left: 24px; }
+    .label-br { bottom: 24px; right: 24px; text-align: right; }
+    .label-tr { top: 24px; right: 24px; text-align: right; }
+
+    .hero-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      text-align: center;
+    }
+
+    .hero-logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Pixel art icon */
+    #logo-canvas { image-rendering: pixelated; display: block; }
+
+    .hero-logo-text {
+      font-size: 48px;
+      letter-spacing: 6px;
+      color: var(--fg);
+      line-height: 1;
+    }
+
+    .hero-logo-text .accent { color: var(--accent); }
+
+    .hero-tagline {
+      font-size: 20px;
+      color: var(--fg-mid);
+      letter-spacing: 2px;
+      line-height: 1.4;
+    }
+
+    .hero-tagline .accent { color: var(--accent); }
+
+    .hero-score-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .hsf-label {
+      font-size: 14px;
+      color: var(--fg-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .hsf-row {
+      display: flex;
+    }
+
+    .hsf-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-right: none;
+      padding: 8px 12px;
+      color: var(--fg);
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      letter-spacing: 1px;
+      outline: none;
+    }
+    .hsf-input::placeholder { color: var(--fg-dim); }
+    .hsf-input:focus { border-color: var(--accent); }
+
+    .hsf-btn {
+      background: var(--accent);
+      color: #000;
+      border: 1px solid var(--accent);
+      padding: 8px 16px;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .hsf-btn:hover { background: #00cc55; }
+
+    .hsf-result {
+      display: none;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+
+    .hsf-result.visible { display: block; }
+
+    /* Right panel: canvas */
+    .hero-right {
+      position: relative;
+      background: var(--bg);
+      background-image: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.1) 50%
+      );
+      background-size: 100% 4px;
+    }
+
+    #matrix-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    /* ==================
+       SECTION 2: TICKER
+    ================== */
+    .ticker-section {
+      height: 36px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+    }
+
+    .ticker-track {
+      display: flex;
+      animation: tickScroll 40s linear infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes tickScroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .tick-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 24px;
+      font-size: 18px;
+      color: var(--fg-dim);
+      letter-spacing: 2px;
+      border-right: 1px solid var(--border);
+      height: 36px;
+    }
+
+    .tick-score { color: var(--fg-mid); }
+    .tick-item.hi .tick-score { color: var(--accent); }
+    .tick-item.lo .tick-score { color: #ff4444; }
+
+    /* ==================
+       SECTION 3: WHY (4-panel)
+    ================== */
+    .why-section {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .why-panel {
+      border-right: 1px solid var(--border);
+      padding: 28px 24px;
+    }
+    .why-panel:last-child { border-right: none; }
+
+    .panel-num {
+      font-size: 14px;
+      color: var(--fg-dim);
+      letter-spacing: 3px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .panel-title {
+      font-size: 22px;
+      color: var(--fg);
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .panel-title .accent { color: var(--accent); }
+
+    .panel-body {
+      font-size: 16px;
+      color: var(--fg-mid);
+      letter-spacing: 1px;
+      line-height: 1.5;
+    }
+
+    /* ==================
+       SECTION 4: LEADERBOARD
+    ================== */
+    .lb-section {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-header {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-header-title {
+      font-size: 24px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+
+    .section-header-meta {
+      font-size: 16px;
+      color: var(--fg-dim);
+      letter-spacing: 2px;
+    }
+
+    .lb-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .lb-item {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: default;
+      transition: background 0.1s;
+    }
+
+    .lb-item:hover { background: rgba(255,255,255,0.02); }
+    .lb-item:nth-child(4n) { border-right: none; }
+
+    .lb-rank {
+      font-size: 14px;
+      color: var(--fg-dim);
+      letter-spacing: 2px;
+      width: 28px;
+      flex-shrink: 0;
+    }
+
+    .lb-info { flex: 1; min-width: 0; }
+
+    .lb-name {
+      font-size: 18px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lb-cat {
+      font-size: 14px;
+      color: var(--fg-dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .lb-score {
+      font-size: 28px;
+      letter-spacing: -1px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    /* ==================
+       SECTION 5: METHODOLOGY
+    ================== */
+    .method-section {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .method-cell {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 20px;
+    }
+
+    .method-cell:nth-child(4n) { border-right: none; }
+    .method-cell:nth-last-child(-n+4) { border-bottom: none; }
+
+    .mc-id {
+      font-size: 14px;
+      color: var(--fg-dim);
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .mc-name {
+      font-size: 20px;
+      color: var(--fg);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .mc-checks {
+      font-size: 16px;
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .mc-desc {
+      font-size: 14px;
+      color: var(--fg-dim);
+      letter-spacing: 1px;
+      line-height: 1.5;
+    }
+
+    /* ==================
+       SECTION 6: CTA
+    ================== */
+    .cta-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cta-left {
+      border-right: 1px solid var(--border);
+      padding: 40px 32px;
+    }
+
+    .cta-title {
+      font-size: 36px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .cta-title .accent { color: var(--accent); }
+
+    .cta-sub {
+      font-size: 18px;
+      color: var(--fg-mid);
+      letter-spacing: 1px;
+      line-height: 1.5;
+    }
+
+    .cta-right {
+      padding: 40px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .cta-label {
+      font-size: 16px;
+      color: var(--fg-dim);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .cta-form-row { display: flex; }
+
+    .cta-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-right: none;
+      padding: 10px 14px;
+      color: var(--fg);
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      letter-spacing: 1px;
+      outline: none;
+    }
+    .cta-input::placeholder { color: var(--fg-dim); }
+
+    .cta-btn {
+      background: var(--accent);
+      color: #000;
+      border: 1px solid var(--accent);
+      padding: 10px 20px;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .cta-btn:hover { background: #00cc55; }
+
+    .cta-note {
+      font-size: 14px;
+      color: var(--fg-dim);
+      letter-spacing: 1px;
+    }
+
+    /* ==================
+       FOOTER
+    ================== */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-text {
+      font-size: 16px;
+      color: var(--fg-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 16px;
+      color: var(--fg-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .footer-links a:hover { color: var(--fg); }
+
+    /* Blinking cursor */
+    .cursor {
+      display: inline-block;
+      width: 10px;
+      height: 18px;
+      background: var(--fg);
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+  </style>
+</head>
+<body>
+
+<!-- ====== HERO: SPLIT PANE ====== -->
+<section class="hero">
+  <!-- Left: brand + checker -->
+  <div class="hero-left">
+    <div class="sys-label label-tl">SYS.INIT // AGENT_SCORE_V1</div>
+
+    <div class="hero-brand">
+      <div class="hero-logo">
+        <canvas id="logo-canvas" width="44" height="44"></canvas>
+        <div class="hero-logo-text">AGENT<br><span class="accent">SCORE</span></div>
+      </div>
+
+      <p class="hero-tagline">
+        IS YOUR DOCUMENTATION<br>
+        READY FOR <span class="accent">AI_AGENTS</span>?
+        <span class="cursor"></span>
+      </p>
+
+      <div class="hero-score-form">
+        <div class="hsf-label">// RUN_ANALYSIS</div>
+        <div class="hsf-row">
+          <input class="hsf-input" type="url" id="urlInput" placeholder="https://docs.your-company.com" />
+          <button class="hsf-btn" onclick="checkScore()">RUN►</button>
+        </div>
+        <div class="hsf-result" id="scoreResult">
+          <span id="scoreNum" style="font-size:32px; color:var(--accent)">—</span>
+          <span id="scoreLabel" style="font-size:16px; color:var(--fg-dim); margin-left:12px;">ENTER URL TO ANALYZE</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sys-label label-bl">
+      BY FERN_LABS // DACHARY_CAREY<br>
+      <span style="color: var(--fg-dim); font-size: 12px; letter-spacing: 2px;">21 CHECKS // 8 CATEGORIES // 0-100</span>
+    </div>
+  </div>
+
+  <!-- Right: matrix canvas -->
+  <div class="hero-right">
+    <canvas id="matrix-canvas"></canvas>
+    <div class="sys-label label-tr">
+      COMPANIES_SCORED: <span id="countEl" style="color:var(--fg)">21</span><br>
+      AVG_SCORE: <span style="color:var(--fg)">58</span>
+    </div>
+    <div class="sys-label label-br">
+      SIMULATION: <span id="simStatus" style="color:var(--accent)">BOOTING...</span><br>
+      TOP_SCORE: <span style="color:var(--fg)">STRIPE // 96</span>
+    </div>
+  </div>
+</section>
+
+<!-- ====== TICKER ====== -->
+<div class="ticker-section">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<!-- ====== WHY SECTION ====== -->
+<section class="why-section">
+  <div class="why-panel">
+    <span class="panel-num">// 01</span>
+    <div class="panel-title">THE <span class="accent">INVISIBLE</span> AUDIENCE</div>
+    <p class="panel-body">AI coding agents read your API docs millions of times daily. If your docs aren't optimized, you're invisible to the fastest-growing segment of your user base.</p>
+  </div>
+  <div class="why-panel">
+    <span class="panel-num">// 02</span>
+    <div class="panel-title">LIGHTHOUSE FOR <span class="accent">AI</span></div>
+    <p class="panel-body">Agent Score is the first industry benchmark for AI-agent readiness. 0 to 100, 21 checks, 8 categories. Think Lighthouse, but for how AI agents experience your docs.</p>
+  </div>
+  <div class="why-panel">
+    <span class="panel-num">// 03</span>
+    <div class="panel-title">READINESS = <span class="accent">MOAT</span></div>
+    <p class="panel-body">API platforms with higher agent readability are seeing outsized adoption. Agent readiness isn't a nice-to-have — it's the new SEO. 73% of top docs still lack llms.txt.</p>
+  </div>
+  <div class="why-panel">
+    <span class="panel-num">// 04</span>
+    <div class="panel-title">NO <span class="accent">BLACK</span> BOXES</div>
+    <p class="panel-body">Built on the open-source Agent-Friendly Docs Spec. No gatekeeping, no hidden scoring. Every check is transparent and community-driven.</p>
+  </div>
+</section>
+
+<!-- ====== LEADERBOARD ====== -->
+<section class="lb-section" id="leaderboard">
+  <div class="section-header">
+    <div class="section-header-title">// AGENT SCORE DIRECTORY</div>
+    <div class="section-header-meta">30 COMPANIES // RANKED BY AGENT_READINESS</div>
+  </div>
+  <div class="lb-grid" id="lbGrid"></div>
+</section>
+
+<!-- ====== METHODOLOGY ====== -->
+<section class="method-section" id="methodology">
+  <div class="section-header">
+    <div class="section-header-title">// METHODOLOGY</div>
+    <div class="section-header-meta">21 CHECKS // 8 CATEGORIES // FRAMEWORK: AGENT_FRIENDLY_DOCS_SPEC</div>
+  </div>
+  <div class="method-grid">
+    <div class="method-cell">
+      <span class="mc-id">CAT_01</span>
+      <div class="mc-name">LLMS.TXT</div>
+      <div class="mc-checks">5 CHECKS</div>
+      <div class="mc-desc">Can agents discover and parse your documentation index?</div>
+    </div>
+    <div class="method-cell">
+      <span class="mc-id">CAT_02</span>
+      <div class="mc-name">MARKDOWN</div>
+      <div class="mc-checks">2 CHECKS</div>
+      <div class="mc-desc">Can agents get clean markdown instead of bloated HTML?</div>
+    </div>
+    <div class="method-cell">
+      <span class="mc-id">CAT_03</span>
+      <div class="mc-name">PAGE SIZE</div>
+      <div class="mc-checks">3 CHECKS</div>
+      <div class="mc-desc">Will your pages fit in an agent's context window?</div>
+    </div>
+    <div class="method-cell">
+      <span class="mc-id">CAT_04</span>
+      <div class="mc-name">CONTENT STRUCTURE</div>
+      <div class="mc-checks">3 CHECKS</div>
+      <div class="mc-desc">Are tabs, headers, and code fences agent-parseable?</div>
+    </div>
+    <div class="method-cell">
+      <span class="mc-id">CAT_05</span>
+      <div class="mc-name">URL STABILITY</div>
+      <div class="mc-checks">2 CHECKS</div>
+      <div class="mc-desc">Do your URLs resolve cleanly without traps?</div>
+    </div>
+    <div class="method-cell">
+      <span class="mc-id">CAT_06</span>
+      <div class="mc-name">DISCOVERABILITY</div>
+      <div class="mc-checks">1 CHECK</div>
+      <div class="mc-desc">Can agents find your llms.txt from any page?</div>
+    </div>
+    <div class="method-cell">
+      <span class="mc-id">CAT_07</span>
+      <div class="mc-name">OBSERVABILITY</div>
+      <div class="mc-checks">3 CHECKS</div>
+      <div class="mc-desc">Is your agent-facing content fresh and accurate?</div>
+    </div>
+    <div class="method-cell">
+      <span class="mc-id">CAT_08</span>
+      <div class="mc-name">AUTHENTICATION</div>
+      <div class="mc-checks">2 CHECKS</div>
+      <div class="mc-desc">Can agents access your docs without hitting auth walls?</div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== CTA ====== -->
+<section class="cta-section">
+  <div class="cta-left">
+    <div class="cta-title">CHECK YOUR<br><span class="accent">AGENT SCORE</span></div>
+    <p class="cta-sub">Enter your docs URL. Get instant results. See exactly where your documentation stands on all 21 checks. Free, no signup required.</p>
+  </div>
+  <div class="cta-right">
+    <div class="cta-label">// RUN_ANALYSIS</div>
+    <div class="cta-form-row">
+      <input class="cta-input" type="url" id="ctaUrlInput" placeholder="https://docs.your-company.com" />
+      <button class="cta-btn" onclick="checkScoreCTA()">EXECUTE ►</button>
+    </div>
+    <div class="cta-note">FREE · NO SIGNUP · RESULTS IN ~3 SECONDS</div>
+  </div>
+</section>
+
+<!-- ====== FOOTER ====== -->
+<footer class="footer">
+  <div class="footer-text">© 2025 FERN_LABS // AGENT_SCORE</div>
+  <div class="footer-links">
+    <a href="https://buildwithfern.com" target="_blank">FERN</a>
+    <a href="https://github.com/agent-ecosystem/agent-docs-spec" target="_blank">GITHUB</a>
+    <a href="#methodology">METHODOLOGY</a>
+    <a href="#leaderboard">DIRECTORY</a>
+  </div>
+</footer>
+
+<script>
+  // ---- Data ----
+  const companies = [
+    { name: 'Stripe', cat: 'Payments', score: 96 },
+    { name: 'ElevenLabs', cat: 'AI/ML', score: 94 },
+    { name: 'Square', cat: 'Payments', score: 89 },
+    { name: 'Cloudflare', cat: 'Infra', score: 88 },
+    { name: 'Anthropic', cat: 'AI/ML', score: 86 },
+    { name: 'Vercel', cat: 'DevTools', score: 85 },
+    { name: 'Cohere', cat: 'AI/ML', score: 83 },
+    { name: 'OpenAI', cat: 'AI/ML', score: 78 },
+    { name: 'Sentry', cat: 'DevTools', score: 71 },
+    { name: 'Datadog', cat: 'DevTools', score: 70 },
+    { name: 'Resend', cat: 'Comms', score: 65 },
+    { name: 'Supabase', cat: 'Infra', score: 62 },
+    { name: 'Clerk', cat: 'DevTools', score: 58 },
+    { name: 'Shopify', cat: 'Commerce', score: 52 },
+    { name: 'HubSpot', cat: 'Commerce', score: 48 },
+    { name: 'AWS', cat: 'Infra', score: 42 },
+    { name: 'Slack', cat: 'Comms', score: 39 },
+    { name: 'Twilio', cat: 'Comms', score: 35 },
+    { name: 'Zendesk', cat: 'Commerce', score: 30 },
+    { name: 'Salesforce', cat: 'Commerce', score: 25 },
+    { name: 'SAP', cat: 'Commerce', score: 18 },
+  ];
+
+  const scoreColor = s => {
+    if (s >= 80) return '#00ff66';
+    if (s >= 65) return '#ccff44';
+    if (s >= 45) return '#ffcc00';
+    if (s >= 30) return '#ff8800';
+    return '#ff4444';
+  };
+
+  // ---- Pixel logo ----
+  const logoCanvas = document.getElementById('logo-canvas');
+  const lctx = logoCanvas.getContext('2d');
+  lctx.imageSmoothingEnabled = false;
+  const logoPixels = [
+    [0,0,0,1,0,1,0,0,0,0,0],
+    [0,0,1,1,1,1,1,0,0,0,0],
+    [0,1,1,0,1,0,1,1,0,0,0],
+    [1,1,0,0,0,0,0,1,1,0,0],
+    [1,0,0,1,1,1,0,0,1,0,0],
+    [0,1,1,0,1,0,1,1,0,0,0],
+    [1,1,0,0,0,0,0,1,1,0,0],
+    [0,1,1,0,1,0,1,1,0,0,0],
+    [0,0,1,1,0,1,0,1,0,0,0],
+    [0,0,0,1,1,1,1,0,0,0,0],
+    [0,0,0,0,1,0,1,0,0,0,0],
+  ];
+  const px = 4;
+  logoPixels.forEach((row, y) => {
+    row.forEach((val, x) => {
+      if (val) {
+        lctx.fillStyle = '#00ff66';
+        lctx.fillRect(x * px, y * px, px, px);
+      }
+    });
+  });
+
+  // ---- Ticker ----
+  const tickerTrack = document.getElementById('tickerTrack');
+  let tickHtml = '';
+  for (let i = 0; i < 2; i++) {
+    companies.forEach(c => {
+      const cls = c.score >= 80 ? ' hi' : c.score < 40 ? ' lo' : '';
+      tickHtml += `<span class="tick-item${cls}">${c.name.toUpperCase()} <span class="tick-score">${c.score}</span></span>`;
+    });
+  }
+  tickerTrack.innerHTML = tickHtml;
+
+  // ---- Leaderboard ----
+  const lbGrid = document.getElementById('lbGrid');
+  companies.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'lb-item';
+    el.innerHTML = `
+      <div class="lb-rank">${String(i+1).padStart(2,'0')}</div>
+      <div class="lb-info">
+        <div class="lb-name">${c.name}</div>
+        <div class="lb-cat">${c.cat}</div>
+      </div>
+      <div class="lb-score" style="color:${scoreColor(c.score)}">${c.score}</div>
+    `;
+    lbGrid.appendChild(el);
+  });
+
+  // ---- Matrix canvas animation ----
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.imageSmoothingEnabled = false;
+
+  const CELL = 14;
+  let cols, rows, time = 0;
+  const chars = ['@', '#', '&', '%', '*', '+', '=', '-', ':', '.', ' '];
+
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    cols = Math.ceil(canvas.width / CELL);
+    rows = Math.ceil(canvas.height / CELL);
+    ctx.font = `${CELL}px "VT323", monospace`;
+    ctx.textBaseline = 'top';
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  let simStart = Date.now() + 1000;
+  let phase = 'INIT';
+
+  function noise(x, y, t) {
+    return Math.sin(x * 0.1 + t) + Math.cos(y * 0.1 - t) + Math.sin((x + y) * 0.05 + t * 0.5);
+  }
+
+  // Sprout data (company scores plotted as growing plant)
+  const sproutData = [
+    {x:0,y:0,t:0.05},{x:0,y:-1,t:0.10},{x:0,y:-2,t:0.15},{x:0,y:-3,t:0.20},
+    {x:0,y:-4,t:0.25},{x:0,y:-5,t:0.30},{x:0,y:-6,t:0.35},{x:0,y:-7,t:0.40},
+    {x:-1,y:-4,t:0.50},{x:-2,y:-5,t:0.55},{x:-3,y:-5,t:0.60},
+    {x:1,y:-5,t:0.52},{x:2,y:-6,t:0.57},{x:3,y:-6,t:0.62},
+    {x:-1,y:-8,t:0.75},{x:1,y:-8,t:0.75},{x:0,y:-9,t:0.80},
+    {x:-1,y:-10,t:0.85},{x:1,y:-10,t:0.85},{x:0,y:-11,t:0.90},
+    {x:0,y:-13,t:0.98},
+  ];
+
+  function draw() {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const now = Date.now();
+    let progress = 0;
+
+    if (now > simStart) {
+      const duration = 14000;
+      progress = Math.min((now - simStart) / duration, 1.0);
+      if (phase === 'INIT' && progress > 0) {
+        phase = 'GROWING';
+        document.getElementById('simStatus').textContent = 'ACTIVE // BIOGENESIS';
+        document.getElementById('simStatus').style.color = '#00ff66';
+      } else if (phase === 'GROWING' && progress >= 1.0) {
+        phase = 'STABLE';
+        document.getElementById('simStatus').textContent = 'STABLE // CYCLE_RUNNING';
+        document.getElementById('simStatus').style.color = '#fff';
+      }
+    }
+
+    const baseSoil = Math.floor(rows * 0.65);
+    const rootX = Math.floor(cols / 2);
+
+    // Draw soil
+    for (let x = 0; x < cols; x++) {
+      const surfOff = Math.sin(x * 0.1 + time * 0.02) * 2 + Math.cos(x * 0.05) * 2;
+      const surf = Math.floor(baseSoil + surfOff);
+
+      for (let y = surf; y < rows; y++) {
+        const depth = y - surf;
+        const flowVal = noise(x, y, time * 0.03);
+        let ci = Math.floor(depth * 0.5 + flowVal * 3 + 2);
+        ci = Math.max(0, Math.min(ci, chars.length - 2));
+
+        if (depth < 2) ctx.fillStyle = 'rgba(85,85,85,0.9)';
+        else if (depth < 6) ctx.fillStyle = 'rgba(51,51,51,0.9)';
+        else ctx.fillStyle = 'rgba(17,17,17,0.9)';
+
+        ctx.fillText(chars[ci], x * CELL, y * CELL);
+      }
+    }
+
+    // Draw sprout (represents growth/improvement)
+    if (progress > 0) {
+      ctx.fillStyle = '#FFFFFF';
+      const curSurf = Math.floor(baseSoil + (Math.sin(rootX * 0.1 + time * 0.02) * 2 + Math.cos(rootX * 0.05) * 2));
+
+      sproutData.forEach(block => {
+        if (progress >= block.t) {
+          let swayX = 0;
+          if (block.y < -4) {
+            swayX = Math.round(Math.sin(time * 0.05 + block.y * 0.1) * 0.6);
+          }
+          const drawX = (rootX + block.x + swayX) * CELL;
+          const drawY = (curSurf + block.y) * CELL;
+          ctx.fillRect(drawX + 1, drawY + 1, CELL - 2, CELL - 2);
+        }
+      });
+    }
+
+    time++;
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+
+  // ---- Score checker (mock) ----
+  function checkScore() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) return;
+    const result = document.getElementById('scoreResult');
+    const num = document.getElementById('scoreNum');
+    const lbl = document.getElementById('scoreLabel');
+    result.classList.add('visible');
+    num.textContent = '...';
+    num.style.color = '#fff';
+    lbl.textContent = 'ANALYZING...';
+    setTimeout(() => {
+      const mock = Math.floor(Math.random() * 45) + 30;
+      num.textContent = mock;
+      num.style.color = scoreColor(mock);
+      lbl.textContent = mock >= 80 ? 'PASS // GOOD_READINESS' : mock >= 55 ? 'WARN // IMPROVEMENTS_NEEDED' : 'FAIL // GAPS_FOUND';
+    }, 1400);
+  }
+
+  function checkScoreCTA() {
+    const url = document.getElementById('ctaUrlInput').value.trim();
+    if (!url) return;
+    document.getElementById('urlInput').value = url;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(checkScore, 700);
+  }
+
+  document.getElementById('urlInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkScore();
+  });
+  document.getElementById('ctaUrlInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkScoreCTA();
+  });
+</script>
+</body>
+</html>
