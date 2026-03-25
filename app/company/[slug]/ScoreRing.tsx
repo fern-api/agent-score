@@ -1,34 +1,24 @@
-const GRADE_COLORS: Record<string, string> = {
-  'A+': 'var(--color-accent)',
-  'A':  'var(--color-accent)',
-  'B':  '#eab308',
-  'C':  '#f97316',
-  'D':  '#ef4444',
-  'F':  '#888888',
-};
-
 interface ScoreRingProps {
   score: number;
   grade: string;
 }
 
+function scoreColorClass(score: number): string {
+  if (score >= 80) return 'score-color-hi';
+  if (score >= 65) return 'score-color-good';
+  if (score >= 45) return 'score-color-mid';
+  if (score >= 30) return 'score-color-low';
+  return 'score-color-fail';
+}
+
 export default function ScoreRing({ score, grade }: ScoreRingProps) {
-  const ringTarget = ((1 - score / 100) * 565.48).toFixed(2);
-  const ringColor = GRADE_COLORS[grade] ?? 'var(--color-accent)';
+  const colorCls = scoreColorClass(score);
 
   return (
-    <div className="score-ring-wrapper">
-      <svg className="score-ring-svg" viewBox="0 0 200 200">
-        <circle className="score-ring-bg" cx="100" cy="100" r="90" />
-        <circle
-          className="score-ring-fill animated"
-          cx="100"
-          cy="100"
-          r="90"
-          style={{ '--ring-target': ringTarget, stroke: ringColor } as React.CSSProperties}
-        />
-      </svg>
-      <span className="score-number">{score}</span>
+    <div className="score-display">
+      <div className={`score-big-number ${colorCls}`}>{score}</div>
+      <div className="score-out-of">// OUT_OF_100</div>
+      <div className="score-grade-badge">GRADE_{grade}</div>
     </div>
   );
 }

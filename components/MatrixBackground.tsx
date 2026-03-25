@@ -1,403 +1,335 @@
 'use client';
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
-const CHARS = '01{}/*><=-+_.:;|~^%#@&[]()'.split('');
-const FONT_SIZE = 11;
-const CELL_SIZE = 13;
-const CORNER_SIZE = 32;
-const CORNER_LINE_WIDTH = 2;
-const EDGE_PAD = 16;
-const WAVE_SPEED = 200;
-const WAVE_WIDTH = 120;
-const WAVE_COUNT = 3;
-const MOVE_THRESHOLD = 30;
-const BASE_OPACITY = 0.08;
-const PEAK_OPACITY = 0.4;
-const BASE_OPACITY_LIGHT = 0.18;
-const PEAK_OPACITY_LIGHT = 0.55;
-const LERP_SPEED = 0.08;
+const CELL = 14;
+const CYCLE_MS = 90_000;
+const SOIL_CHARS = ['@','#','&','%','+','=','-',':','.'];
 
-function getLightMode(): boolean {
-  if (typeof window === 'undefined') return false;
-  const attr = document.documentElement.getAttribute('data-theme');
-  if (attr === 'light') return true;
-  if (attr === 'dark') return false;
-  return window.matchMedia('(prefers-color-scheme: light)').matches;
+const PT     = [0, 0.28, 0.58, 1.0];
+const PNAMES = ['BUD', 'UNFURLING', 'MATURE'];
+
+// Crozier curl pixels — a tight shepherd's crook at the stem tip
+const CROZIER: { x: number; y: number; openT: number }[] = [
+  { x: 0,  y: -1, openT: 1.00 },
+  { x: 1,  y: -1, openT: 0.70 },
+  { x: 2,  y: -1, openT: 0.50 },
+  { x: 2,  y: -2, openT: 0.38 },
+  { x: 1,  y: -3, openT: 0.26 },
+  { x: 0,  y: -3, openT: 0.18 },
+  { x: -1, y: -3, openT: 0.12 },
+  { x: -1, y: -2, openT: 0.08 },
+  { x: -1, y: -1, openT: 0.05 },
+];
+
+const STEM_MAX = 15;
+
+// Frond pixels sorted by t — bottom pairs reveal first
+const FRONDS: { x: number; y: number; t: number }[] = [
+  { x:-1,y:-2,t:0.32 },{ x:1,y:-2,t:0.32 },
+  { x:-2,y:-3,t:0.33 },{ x:2,y:-3,t:0.33 },
+  { x:-1,y:-4,t:0.35 },{ x:1,y:-4,t:0.35 },
+  { x:-2,y:-4,t:0.36 },{ x:2,y:-4,t:0.36 },
+  { x:-3,y:-5,t:0.37 },{ x:3,y:-5,t:0.37 },
+  { x:-2,y:-5,t:0.38 },{ x:2,y:-5,t:0.38 },
+  { x:-1,y:-6,t:0.40 },{ x:1,y:-6,t:0.40 },
+  { x:-2,y:-6,t:0.41 },{ x:2,y:-6,t:0.41 },
+  { x:-3,y:-6,t:0.42 },{ x:3,y:-6,t:0.42 },
+  { x:-3,y:-7,t:0.43 },{ x:3,y:-7,t:0.43 },
+  { x:-4,y:-7,t:0.44 },{ x:4,y:-7,t:0.44 },
+  { x:-4,y:-8,t:0.45 },{ x:4,y:-8,t:0.45 },
+  { x:-1,y:-8,t:0.46 },{ x:1,y:-8,t:0.46 },
+  { x:-2,y:-8,t:0.47 },{ x:2,y:-8,t:0.47 },
+  { x:-3,y:-8,t:0.48 },{ x:3,y:-8,t:0.48 },
+  { x:-3,y:-9,t:0.49 },{ x:3,y:-9,t:0.49 },
+  { x:-4,y:-9,t:0.50 },{ x:4,y:-9,t:0.50 },
+  { x:-5,y:-9,t:0.51 },{ x:5,y:-9,t:0.51 },
+  { x:-4,y:-10,t:0.52},{ x:4,y:-10,t:0.52},
+  { x:-5,y:-10,t:0.53},{ x:5,y:-10,t:0.53},
+  { x:-6,y:-10,t:0.54},{ x:6,y:-10,t:0.54},
+  { x:-1,y:-10,t:0.55},{ x:1,y:-10,t:0.55},
+  { x:-2,y:-10,t:0.56},{ x:2,y:-10,t:0.56},
+  { x:-3,y:-10,t:0.57},{ x:3,y:-10,t:0.57},
+  { x:-3,y:-11,t:0.58},{ x:3,y:-11,t:0.58},
+  { x:-4,y:-11,t:0.59},{ x:4,y:-11,t:0.59},
+  { x:-5,y:-11,t:0.60},{ x:5,y:-11,t:0.60},
+  { x:-4,y:-12,t:0.61},{ x:4,y:-12,t:0.61},
+  { x:-5,y:-12,t:0.62},{ x:5,y:-12,t:0.62},
+  { x:-6,y:-12,t:0.63},{ x:6,y:-12,t:0.63},
+  { x:-1,y:-12,t:0.64},{ x:1,y:-12,t:0.64},
+  { x:-2,y:-12,t:0.65},{ x:2,y:-12,t:0.65},
+  { x:-3,y:-12,t:0.66},{ x:3,y:-12,t:0.66},
+  { x:-3,y:-13,t:0.67},{ x:3,y:-13,t:0.67},
+  { x:-4,y:-13,t:0.68},{ x:4,y:-13,t:0.68},
+  { x:-4,y:-14,t:0.69},{ x:4,y:-14,t:0.69},
+  { x:-5,y:-14,t:0.70},{ x:5,y:-14,t:0.70},
+  { x:-1,y:-14,t:0.71},{ x:1,y:-14,t:0.71},
+  { x:-2,y:-14,t:0.72},{ x:2,y:-14,t:0.72},
+  { x:-1,y:-15,t:0.73},{ x:1,y:-15,t:0.73},
+  { x:-2,y:-15,t:0.74},{ x:2,y:-15,t:0.74},
+  { x:-3,y:-15,t:0.75},{ x:3,y:-15,t:0.75},
+  { x:-1,y:-16,t:0.76},{ x:1,y:-16,t:0.76},
+  // Extended mature crown
+  { x:-2,y:-16,t:0.77},{ x:2,y:-16,t:0.77},
+  { x: 0,y:-17,t:0.78},
+  { x:-1,y:-17,t:0.79},{ x:1,y:-17,t:0.79},
+  { x: 0,y:-18,t:0.80},
+];
+
+function noise(x: number, y: number, t: number) {
+  return Math.sin(x*0.1+t) + Math.cos(y*0.1-t) + Math.sin((x+y)*0.05+t*0.5);
 }
 
-interface Cell {
-  char: string;
-  baseChar: string;
-  smoothOpacity: number;
+// Unicode root system — each entry is a grid cell offset from stem base
+// t = cycleT threshold to appear; fades in over ~0.025 cycle time
+const ROOTS: { x: number; y: number; char: string; t: number }[] = [
+  // ── Stage 1: taproot descends ────────────────────
+  { x: 0, y:1, char:'│', t:0.06 },
+  { x: 0, y:2, char:'│', t:0.09 },
+  { x: 0, y:3, char:'│', t:0.12 },
+  { x: 0, y:4, char:'│', t:0.15 },
+  { x: 0, y:5, char:'│', t:0.18 },
+  { x: 0, y:6, char:'│', t:0.20 },
+  { x: 0, y:7, char:'╵', t:0.23 },
+
+  // ── Stage 2: outer laterals ──────────────────────
+  { x:-1, y:2, char:'─', t:0.27 }, { x: 1, y:2, char:'─', t:0.27 },
+  { x:-2, y:2, char:'─', t:0.29 }, { x: 2, y:2, char:'─', t:0.29 },
+  { x:-3, y:2, char:'╮', t:0.31 }, { x: 3, y:2, char:'╭', t:0.31 },
+  { x:-4, y:3, char:'╲', t:0.33 }, { x: 4, y:3, char:'╱', t:0.33 },
+  { x:-5, y:4, char:'╲', t:0.35 }, { x: 5, y:4, char:'╱', t:0.35 },
+  { x:-6, y:5, char:'╴', t:0.37 }, { x: 6, y:5, char:'╶', t:0.37 },
+
+  // ── Stage 2: inner laterals ──────────────────────
+  { x:-1, y:4, char:'─', t:0.30 }, { x: 1, y:4, char:'─', t:0.30 },
+  { x:-2, y:4, char:'╮', t:0.32 }, { x: 2, y:4, char:'╭', t:0.32 },
+  { x:-3, y:5, char:'╲', t:0.34 }, { x: 3, y:5, char:'╱', t:0.34 },
+  { x:-4, y:6, char:'╴', t:0.36 }, { x: 4, y:6, char:'╶', t:0.36 },
+
+  // ── Stage 3: secondaries off outer laterals ──────
+  { x:-5, y:3, char:'┤', t:0.52 }, { x: 5, y:3, char:'├', t:0.52 },
+  { x:-6, y:3, char:'─', t:0.54 }, { x: 6, y:3, char:'─', t:0.54 },
+  { x:-6, y:4, char:'╲', t:0.56 }, { x: 6, y:4, char:'╱', t:0.56 },
+  { x:-7, y:5, char:'╴', t:0.58 }, { x: 7, y:5, char:'╶', t:0.58 },
+
+  // ── Stage 3: secondaries off inner laterals ──────
+  { x:-3, y:4, char:'┤', t:0.53 }, { x: 3, y:4, char:'├', t:0.53 },
+  { x:-4, y:4, char:'─', t:0.55 }, { x: 4, y:4, char:'─', t:0.55 },
+  { x:-5, y:5, char:'╲', t:0.57 }, { x: 5, y:5, char:'╱', t:0.57 },
+  { x:-6, y:6, char:'╴', t:0.59 }, { x: 6, y:6, char:'╶', t:0.59 },
+
+  // ── Stage 3: hair roots ──────────────────────────
+  { x:-4, y:7, char:'╵', t:0.62 }, { x: 4, y:7, char:'╵', t:0.62 },
+  { x:-2, y:8, char:'╵', t:0.63 }, { x: 2, y:8, char:'╵', t:0.63 },
+  { x: 0, y:8, char:'╵', t:0.63 },
+  { x:-6, y:7, char:'·', t:0.64 }, { x: 6, y:7, char:'·', t:0.64 },
+  { x:-8, y:6, char:'·', t:0.65 }, { x: 8, y:6, char:'·', t:0.65 },
+  { x:-7, y:7, char:'·', t:0.66 }, { x: 7, y:7, char:'·', t:0.66 },
+];
+
+function drawRoots(ctx: CanvasRenderingContext2D, rootX: number, surf: number, cycleT: number) {
+  ctx.font = `${CELL}px "VT323", monospace`;
+  ctx.textBaseline = 'top';
+
+  for (const r of ROOTS) {
+    if (cycleT < r.t) continue;
+    const fadeIn  = Math.min((cycleT - r.t) / 0.025, 1);
+    const depth   = r.y / 9;
+    const dist    = Math.abs(r.x) / 9;
+    const base    = 0.78 * (1 - depth * 0.22) * (1 - dist * 0.35);
+    const alpha   = fadeIn * Math.max(0.06, base);
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.fillText(r.char, (rootX + r.x) * CELL, (surf + r.y) * CELL);
+  }
 }
 
 export default function MatrixBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const stateRef = useRef({
-    grid: [] as Cell[][],
-    cols: 0,
-    rows: 0,
-    canvasW: 0,
-    canvasH: 0,
-    innerLeft: 0,
-    innerRight: 0,
-    innerTop: 0,
-    innerBottom: 0,
-    mouseX: -9999,
-    mouseY: -9999,
-    mouseActive: false,
-    lastMouseX: -9999,
-    lastMouseY: -9999,
-    waves: [] as { x: number; y: number; startTime: number }[],
-    maxWaveRadius: WAVE_WIDTH * WAVE_COUNT,
-    animId: 0,
-    mobileActive: false,
-    mobileActiveTimer: undefined as ReturnType<typeof setTimeout> | undefined,
-  });
-
-  const initGrid = useCallback(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const s = stateRef.current;
-    const rect = container.getBoundingClientRect();
-    const w = rect.width;
-    const h = rect.height;
-    const dpr = window.devicePixelRatio || 1;
-
-    s.canvasW = w;
-    s.canvasH = h;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    canvas.style.width = `${w}px`;
-    canvas.style.height = `${h}px`;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    s.innerLeft = EDGE_PAD;
-    s.innerRight = w - EDGE_PAD;
-    s.innerTop = EDGE_PAD;
-    s.innerBottom = h - EDGE_PAD;
-
-    const innerW = s.innerRight - s.innerLeft;
-    const innerH = s.innerBottom - s.innerTop;
-    s.cols = Math.ceil(innerW / CELL_SIZE);
-    s.rows = Math.ceil(innerH / CELL_SIZE);
-
-    s.grid = [];
-    for (let r = 0; r < s.rows; r++) {
-      s.grid[r] = [];
-      for (let c = 0; c < s.cols; c++) {
-        const ch = CHARS[Math.floor(Math.random() * CHARS.length)];
-        s.grid[r][c] = { char: ch, baseChar: ch, smoothOpacity: BASE_OPACITY };
-      }
-    }
-  }, []);
+  const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const canvas    = canvasRef.current!;
+    const container = containerRef.current!;
+    const ctx       = canvas.getContext('2d', { alpha: false })!;
+    ctx.imageSmoothingEnabled = false;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    let cols = 0, rows = 0, frame = 0, animId = 0;
+    const cycleStart = Date.now();
 
-    const s = stateRef.current;
-    const isMobile = () => window.innerWidth < 768;
-
-    initGrid();
-
-    // Returns the edge-band mask factor for a cell at (x, y) on mobile.
-    // A cell near ANY edge (left, right, top, bottom) returns 1.
-    // Only cells far from all edges (true center) return 0.
-    function getMobileEdgeMask(x: number, y: number): number {
-      if (!isMobile() || s.mobileActive) return 1;
-      const bandX = s.canvasW * 0.25;
-      const bandY = s.canvasH * 0.25;
-      // Normalized distance from nearest horizontal/vertical edge (0=at edge, 1=at center)
-      const hFactor = Math.min(Math.min(x, s.canvasW - x) / bandX, 1);
-      const vFactor = Math.min(Math.min(y, s.canvasH - y) / bandY, 1);
-      const nearestEdge = Math.min(hFactor, vFactor);
-      const fadeStart = 0.6;
-      if (nearestEdge <= fadeStart) return 1;
-      if (nearestEdge >= 1) return 0;
-      return 1 - (nearestEdge - fadeStart) / (1 - fadeStart);
+    function resize() {
+      const { width, height } = container.getBoundingClientRect();
+      canvas.width = width; canvas.height = height;
+      cols = Math.ceil(width / CELL); rows = Math.ceil(height / CELL);
+      ctx.font = `${CELL}px "VT323",monospace`;
+      ctx.textBaseline = 'top';
     }
+    resize();
+    window.addEventListener('resize', resize);
 
-    // Spawn an auto-pulse wave; on mobile keeps wave near edges unless active.
-    function spawnAutoPulse() {
-      if (s.canvasW <= 0 || s.canvasH <= 0) return;
-      let x: number;
-      let y: number;
-      if (isMobile() && !s.mobileActive) {
-        // Pick one of four edges at random
-        const edge = Math.floor(Math.random() * 4);
-        const bandX = s.canvasW * 0.22;
-        const bandY = s.canvasH * 0.22;
-        if (edge === 0) { // left
-          x = s.innerLeft + Math.random() * bandX;
-          y = s.innerTop + Math.random() * (s.innerBottom - s.innerTop);
-        } else if (edge === 1) { // right
-          x = s.innerRight - Math.random() * bandX;
-          y = s.innerTop + Math.random() * (s.innerBottom - s.innerTop);
-        } else if (edge === 2) { // top
-          x = s.innerLeft + Math.random() * (s.innerRight - s.innerLeft);
-          y = s.innerTop + Math.random() * bandY;
-        } else { // bottom
-          x = s.innerLeft + Math.random() * (s.innerRight - s.innerLeft);
-          y = s.innerBottom - Math.random() * bandY;
-        }
-      } else {
-        x = s.innerLeft + Math.random() * (s.innerRight - s.innerLeft);
-        y = s.innerTop + Math.random() * (s.innerBottom - s.innerTop);
-      }
-      s.waves.push({ x, y, startTime: performance.now() });
-    }
+    function draw() {
+      const elapsed = (Date.now() - cycleStart) % CYCLE_MS;
+      const cycleT  = elapsed / CYCLE_MS;
+      const pct     = Math.round(cycleT * 100);
 
-    // Auto-pulse for mobile: spawn a wave at a random position every 2.5s
-    let autoPulseInterval: ReturnType<typeof setInterval> | null = null;
-    if (isMobile()) {
-      autoPulseInterval = setInterval(spawnAutoPulse, 2500);
-    }
-
-    const handleResize = () => {
-      initGrid();
-      if (isMobile()) {
-        if (!autoPulseInterval) {
-          autoPulseInterval = setInterval(spawnAutoPulse, 2500);
-        }
-      } else {
-        if (autoPulseInterval) { clearInterval(autoPulseInterval); autoPulseInterval = null; }
-      }
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isMobile()) return;
-      const container = containerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      // Only active if mouse is within the canvas bounds
-      if (x < 0 || x > s.canvasW || y < 0 || y > s.canvasH) {
-        s.mouseActive = false;
-        s.mouseX = -9999;
-        s.mouseY = -9999;
-        return;
-      }
-      s.mouseX = x;
-      s.mouseY = y;
-      s.mouseActive = true;
-      const dx = x - s.lastMouseX;
-      const dy = y - s.lastMouseY;
-      if (Math.sqrt(dx * dx + dy * dy) > MOVE_THRESHOLD) {
-        s.waves.push({ x, y, startTime: performance.now() });
-        s.lastMouseX = x;
-        s.lastMouseY = y;
-      }
-    };
-
-    const handleMouseLeave = () => {
-      s.mouseActive = false;
-      s.mouseX = -9999;
-      s.mouseY = -9999;
-      s.waves = [];
-      for (let r = 0; r < s.rows; r++) {
-        for (let c = 0; c < s.cols; c++) {
-          if (s.grid[r]?.[c]) s.grid[r][c].smoothOpacity = BASE_OPACITY;
+      let phaseIdx = PNAMES.length - 1, within = 1;
+      for (let i = 0; i < PNAMES.length; i++) {
+        if (cycleT < PT[i + 1]) {
+          phaseIdx = i;
+          within = (cycleT - PT[i]) / (PT[i + 1] - PT[i]);
+          break;
         }
       }
-    };
 
-    function getWaveIntensity(dist: number, now: number, wave: { x: number; y: number; startTime: number }) {
-      const elapsed = (now - wave.startTime) / 1000;
-      const currentRadius = elapsed * WAVE_SPEED;
-      let intensity = 0;
+      if (frame % 20 === 0) setOverlay({ phase: PNAMES[phaseIdx], pct });
 
-      for (let i = 0; i < WAVE_COUNT; i++) {
-        const ringRadius = currentRadius - i * (WAVE_WIDTH * 0.6);
-        if (ringRadius < 0) continue;
-        const ringDist = Math.abs(dist - ringRadius);
-        if (ringDist < WAVE_WIDTH / 2) {
-          let ringFactor = 1 - ringDist / (WAVE_WIDTH / 2);
-          ringFactor = ringFactor * ringFactor * (3 - 2 * ringFactor);
-          const ageFade = Math.max(0, 1 - currentRadius / (s.maxWaveRadius + 200));
-          intensity = Math.max(intensity, ringFactor * ageFade);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `${CELL}px "VT323",monospace`;
+
+      const baseSoil = Math.floor(rows * 0.60);
+      const rootX    = Math.floor(cols / 2);
+
+      // Soil
+      for (let x = 0; x < cols; x++) {
+        const off  = Math.sin(x * 0.12 + frame * 0.014) * 1.5 + Math.cos(x * 0.06) * 1.5;
+        const surf = Math.floor(baseSoil + off);
+        for (let y = surf; y < rows; y++) {
+          const depth = y - surf;
+          const flow  = noise(x, y, frame * 0.022);
+          let ci = Math.floor(depth * 0.4 + flow * 2.5 + 2);
+          ci = Math.max(0, Math.min(ci, SOIL_CHARS.length - 2));
+          ctx.fillStyle = depth < 2 ? 'rgba(38,38,38,0.9)' : depth < 7 ? 'rgba(22,22,22,0.9)' : 'rgba(12,12,12,0.9)';
+          ctx.fillText(SOIL_CHARS[ci], x * CELL, y * CELL);
         }
       }
-      return intensity;
-    }
 
-    function drawCorners() {
-      const isLight = getLightMode();
-      ctx!.strokeStyle = isLight ? 'rgba(4, 166, 90, 0.4)' : 'rgba(0, 232, 123, 0.4)';
-      ctx!.lineWidth = CORNER_LINE_WIDTH;
+      const curSurf = Math.floor(baseSoil + (Math.sin(rootX * 0.12 + frame * 0.014) * 1.5 + Math.cos(rootX * 0.06) * 1.5));
 
-      // Top-left
-      ctx!.beginPath();
-      ctx!.moveTo(s.innerLeft, s.innerTop + CORNER_SIZE);
-      ctx!.lineTo(s.innerLeft, s.innerTop);
-      ctx!.lineTo(s.innerLeft + CORNER_SIZE, s.innerTop);
-      ctx!.stroke();
+      ctx.font = `${CELL}px "VT323",monospace`;
 
-      // Top-right
-      ctx!.beginPath();
-      ctx!.moveTo(s.innerRight - CORNER_SIZE, s.innerTop);
-      ctx!.lineTo(s.innerRight, s.innerTop);
-      ctx!.lineTo(s.innerRight, s.innerTop + CORNER_SIZE);
-      ctx!.stroke();
+      // ─── BUD ─────────────────────────────────────────────────
+      if (phaseIdx === 0) {
+        const stemCells = Math.max(1, Math.ceil(within * STEM_MAX * 0.55));
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        for (let i = 1; i <= stemCells; i++) {
+          ctx.fillRect(rootX * CELL + 1, (curSurf - i) * CELL + 1, CELL - 2, CELL - 2);
+        }
+        const tipY = curSurf - stemCells;
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        for (const c of CROZIER) {
+          ctx.fillRect((rootX + c.x) * CELL + 1, (tipY + c.y) * CELL + 1, CELL - 2, CELL - 2);
+        }
+      }
 
-      // Bottom-left
-      ctx!.beginPath();
-      ctx!.moveTo(s.innerLeft, s.innerBottom - CORNER_SIZE);
-      ctx!.lineTo(s.innerLeft, s.innerBottom);
-      ctx!.lineTo(s.innerLeft + CORNER_SIZE, s.innerBottom);
-      ctx!.stroke();
+      // ─── UNFURLING ───────────────────────────────────────────
+      else if (phaseIdx === 1) {
+        const stemCells = Math.min(STEM_MAX, Math.ceil(STEM_MAX * 0.55 + within * STEM_MAX * 0.45));
 
-      // Bottom-right
-      ctx!.beginPath();
-      ctx!.moveTo(s.innerRight - CORNER_SIZE, s.innerBottom);
-      ctx!.lineTo(s.innerRight, s.innerBottom);
-      ctx!.lineTo(s.innerRight, s.innerBottom - CORNER_SIZE);
-      ctx!.stroke();
-    }
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        for (let i = 1; i <= stemCells; i++) {
+          ctx.fillRect(rootX * CELL + 1, (curSurf - i) * CELL + 1, CELL - 2, CELL - 2);
+        }
 
-    function animate() {
-      const now = performance.now();
-      const isLight = getLightMode();
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillRect(rootX * CELL + 1, (curSurf - stemCells - 1) * CELL + 1, CELL - 2, CELL - 2);
+        ctx.fillRect(rootX * CELL + 1, (curSurf - stemCells - 2) * CELL + 1, CELL - 2, CELL - 2);
 
-      // Prune old waves
-      s.waves = s.waves.filter((w) => {
-        const elapsed = (now - w.startTime) / 1000;
-        return elapsed * WAVE_SPEED < s.maxWaveRadius + 300;
-      });
-
-      ctx!.clearRect(0, 0, s.canvasW, s.canvasH);
-      ctx!.font = `${FONT_SIZE}px "Geist Mono", "JetBrains Mono", "SF Mono", monospace`;
-      ctx!.textAlign = 'center';
-      ctx!.textBaseline = 'middle';
-
-      for (let r = 0; r < s.rows; r++) {
-        for (let c = 0; c < s.cols; c++) {
-          const cell = s.grid[r]?.[c];
-          if (!cell) continue;
-
-          const x = s.innerLeft + c * CELL_SIZE + CELL_SIZE / 2;
-          const y = s.innerTop + r * CELL_SIZE + CELL_SIZE / 2;
-          let waveIntensity = 0;
-
-          for (let wi = 0; wi < s.waves.length; wi++) {
-            const wave = s.waves[wi];
-            const dx = x - wave.x;
-            const dy = y - wave.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            waveIntensity = Math.max(waveIntensity, getWaveIntensity(dist, now, wave));
+        const tipY = curSurf - stemCells;
+        for (const c of CROZIER) {
+          if (within < c.openT) {
+            const alpha = 0.9 - (within / c.openT) * 0.3;
+            ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+            ctx.fillRect((rootX + c.x) * CELL + 1, (tipY + c.y) * CELL + 1, CELL - 2, CELL - 2);
           }
+        }
 
-          if (s.mouseActive) {
-            const cdx = x - s.mouseX;
-            const cdy = y - s.mouseY;
-            const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
-            if (cdist < 80) {
-              const cursorGlow = (1 - cdist / 80) * 0.5;
-              waveIntensity = Math.max(waveIntensity, cursorGlow);
-            }
-          }
-
-          // On mobile (inactive), suppress wave intensity away from all edges
-          const edgeMask = getMobileEdgeMask(x, y);
-          waveIntensity *= edgeMask;
-
-          const baseOp = isLight ? BASE_OPACITY_LIGHT : BASE_OPACITY;
-          const peakOp = isLight ? PEAK_OPACITY_LIGHT : PEAK_OPACITY;
-          // On mobile (inactive), also fade base opacity toward center
-          const effectiveBase = isMobile() && !s.mobileActive ? baseOp * edgeMask : baseOp;
-          const targetOpacity = waveIntensity > 0
-            ? effectiveBase + (peakOp - effectiveBase) * waveIntensity
-            : effectiveBase;
-
-          // Lerp smoothOpacity toward target
-          cell.smoothOpacity += (targetOpacity - cell.smoothOpacity) * LERP_SPEED;
-
-          // Scramble character during active wave
-          if (waveIntensity > 0.2) {
-            cell.char = CHARS[Math.floor(Math.random() * CHARS.length)];
-          } else if (cell.smoothOpacity < baseOp + 0.01) {
-            // Only reset to baseChar when fully settled
-            cell.char = cell.baseChar;
-          }
-
-          ctx!.fillStyle = isLight
-            ? `rgba(4, 166, 90, ${cell.smoothOpacity.toFixed(3)})`
-            : `rgba(0, 232, 123, ${cell.smoothOpacity.toFixed(3)})`;
-          ctx!.fillText(cell.char, x, y);
+        const frondT = 0.32 + within * 0.48;
+        for (const px of FRONDS) {
+          if (px.t > frondT) continue;
+          const depth = (-px.y) / 17;
+          const sway  = Math.round(Math.sin(frame * 0.038 + depth * 1.4) * 0.15 * depth * 1.8);
+          const alpha = 0.65 + 0.27 * Math.sin(frame * 0.025 + depth * 1.5);
+          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+          ctx.fillRect((rootX + px.x + sway) * CELL + 1, (curSurf + px.y) * CELL + 1, CELL - 2, CELL - 2);
         }
       }
 
-      drawCorners();
-      s.animId = requestAnimationFrame(animate);
+      // ─── MATURE ───────────────────────────────────────────────
+      else {
+        // Stem — slightly wider at the base for a mature, robust look
+        for (let i = 1; i <= STEM_MAX; i++) {
+          const baseAlpha = 0.92;
+          ctx.fillStyle = `rgba(255,255,255,${baseAlpha})`;
+          ctx.fillRect(rootX * CELL + 1, (curSurf - i) * CELL + 1, CELL - 2, CELL - 2);
+          // Widen stem at lower 4 cells
+          if (i <= 4) {
+            const w = (4 - i + 1) / 4; // 1.0 at base, 0.25 at cell 4
+            ctx.fillStyle = `rgba(255,255,255,${baseAlpha * w * 0.5})`;
+            ctx.fillRect((rootX - 1) * CELL + 2, (curSurf - i) * CELL + 2, CELL - 3, CELL - 3);
+            ctx.fillRect((rootX + 1) * CELL + 2, (curSurf - i) * CELL + 2, CELL - 3, CELL - 3);
+          }
+        }
+        // Crown
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        ctx.fillRect(rootX * CELL + 1, (curSurf - STEM_MAX - 1) * CELL + 1, CELL - 2, CELL - 2);
+        ctx.fillRect(rootX * CELL + 1, (curSurf - STEM_MAX - 2) * CELL + 1, CELL - 2, CELL - 2);
+
+        // Fronds — full sway, density gradient: brighter near stem axis, dimmer at tips
+        for (const px of FRONDS) {
+          const depth = (-px.y) / 19;
+          const dist  = Math.abs(px.x) / 7;
+          const sway  = Math.round(Math.sin(frame * 0.028 + depth * 1.6) * 0.32 * depth * 2.4);
+          // Richer alpha at centre, natural dimming at outer tips
+          const baseA = 0.78 - dist * 0.28;
+          const alpha = Math.max(0.18, baseA + 0.22 * Math.abs(Math.sin(frame * 0.018 + depth * 1.3)));
+          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+          ctx.fillRect((rootX + px.x + sway) * CELL + 1, (curSurf + px.y) * CELL + 1, CELL - 2, CELL - 2);
+        }
+
+        // Pinnule detail pass — tiny sub-pixels between fronds for density
+        for (const px of FRONDS) {
+          if (Math.abs(px.x) < 2) continue; // skip centre column
+          const depth = (-px.y) / 19;
+          const sway  = Math.round(Math.sin(frame * 0.028 + depth * 1.6) * 0.32 * depth * 2.4);
+          const detailAlpha = 0.18 + 0.12 * Math.abs(Math.sin(frame * 0.015 + depth * 2.1));
+          ctx.fillStyle = `rgba(255,255,255,${detailAlpha})`;
+          // Draw a half-cell detail pixel on the inner edge of each frond pixel
+          const innerX = px.x > 0 ? px.x - 1 : px.x + 1;
+          const sz = Math.floor((CELL - 2) * 0.5);
+          ctx.fillRect(
+            (rootX + innerX + sway) * CELL + Math.floor(CELL * 0.5),
+            (curSurf + px.y) * CELL + Math.floor(CELL * 0.25),
+            sz, sz
+          );
+        }
+      }
+
+      frame++;
+      animId = requestAnimationFrame(draw);
     }
 
-    const handleRipple = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { clientX: number; clientY: number };
-      const container = containerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const x = detail.clientX - rect.left;
-      const y = detail.clientY - rect.top;
-      if (x >= 0 && x <= s.canvasW && y >= 0 && y <= s.canvasH) {
-        s.waves.push({ x, y, startTime: performance.now() });
-      }
-      // On mobile, unlock the center for a few seconds after interaction
-      if (isMobile()) {
-        s.mobileActive = true;
-        clearTimeout(s.mobileActiveTimer);
-        s.mobileActiveTimer = setTimeout(() => { s.mobileActive = false; }, 4000);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    if (!isMobile()) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseleave', handleMouseLeave);
-    }
-    window.addEventListener('matrix-ripple', handleRipple);
-
-    s.animId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(s.animId);
-      if (autoPulseInterval) clearInterval(autoPulseInterval);
-      clearTimeout(s.mobileActiveTimer);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseleave', handleMouseLeave);
-      window.removeEventListener('matrix-ripple', handleRipple);
-    };
-  }, [initGrid]);
+    animId = requestAnimationFrame(draw);
+    return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize); };
+  }, []);
 
   return (
-    <div
-      ref={containerRef}
-      style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'auto' }}
-    >
+    <div ref={containerRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
       <canvas
         ref={canvasRef}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
+        style={{ display: 'block', width: '100%', height: '100%', imageRendering: 'pixelated' }}
       />
+      <div style={{
+        position: 'absolute', bottom: 24, right: 24,
+        fontFamily: "'Geist Mono', monospace", fontSize: 12,
+        color: '#555', letterSpacing: '1px',
+        textAlign: 'right',
+        pointerEvents: 'none', lineHeight: 1.8,
+      }}>
+        Simulation: Fern //{' '}
+        <span style={{ color: '#00ff66' }}>{overlay.phase.toLowerCase()}</span><br />
+        Day <span style={{ color: '#888' }}>{overlay.pct}</span>
+      </div>
     </div>
   );
 }

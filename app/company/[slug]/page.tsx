@@ -4,13 +4,15 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import ScoreRing from './ScoreRing';
-import CopyButton from './CopyButton';
+import CategoryGrid from './CategoryGrid';
 import CollapsiblePanel from './CollapsiblePanel';
+import CopyButton from './CopyButton';
 import CopyLinkBtn from './CopyLinkBtn';
 import CategoryCheckGroups from './CategoryCheckGroups';
 import AIFixPrompt from './AIFixPrompt';
 import CTASection from '@/components/CTASection';
 import SiteFooter from '@/components/SiteFooter';
+import '../company.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,55 +55,6 @@ function buildCategoriesFromResults(results: CheckResult[]) {
       meta: `${data.pass}/${data.total} pass${data.warn > 0 ? `, ${data.warn} warn` : ''}`,
     };
   });
-}
-
-function buildCategoriesSynthetic(checks: { total: number; pass: number; warn: number; fail: number }) {
-  const { pass, warn, total } = checks;
-  const llmsTxtTotal = 5;
-  const markdownTotal = 2;
-  const pageSizeTotal = 3;
-  const otherTotal = total - llmsTxtTotal - markdownTotal - pageSizeTotal;
-
-  function distribute(catTotal: number) {
-    if (catTotal <= 0) return { pass: 0, warn: 0, fail: 0, score: 0 };
-    const ratio = catTotal / Math.max(total, 1);
-    const catPass = Math.round(pass * ratio);
-    const catWarn = Math.round(warn * ratio);
-    const catScore = Math.round(((catPass + catWarn * 0.5) / catTotal) * 100);
-    return { pass: catPass, warn: catWarn, fail: Math.max(0, catTotal - catPass - catWarn), score: Math.min(100, catScore) };
-  }
-
-  const llms = distribute(llmsTxtTotal);
-  const markdown = distribute(markdownTotal);
-  const pageSize = distribute(pageSizeTotal);
-  const other = otherTotal > 0 ? distribute(otherTotal) : null;
-
-  const cats = [
-    { name: 'llms.txt', score: llms.score, meta: `${llms.pass}/${llmsTxtTotal} pass${llms.warn > 0 ? `, ${llms.warn} warn` : ''}` },
-    { name: 'Markdown Availability', score: markdown.score, meta: `${markdown.pass}/${markdownTotal} pass${markdown.warn > 0 ? `, ${markdown.warn} warn` : ''}` },
-    { name: 'Page Size', score: pageSize.score, meta: `${pageSize.pass}/${pageSizeTotal} pass${pageSize.warn > 0 ? `, ${pageSize.warn} warn` : ''}` },
-  ];
-
-  if (other && otherTotal > 0) {
-    cats.push({ name: 'Other Checks', score: other.score, meta: `${other.pass}/${otherTotal} pass${other.warn > 0 ? `, ${other.warn} warn` : ''}` });
-  }
-  return cats;
-}
-
-function buildSummary(company: { name: string; score: number; grade: string; checks: { total: number; pass: number; warn: number; fail: number } }): string {
-  const { name, score, grade, checks } = company;
-  const passRate = checks.total > 0 ? Math.round((checks.pass / checks.total) * 100) : 0;
-  const issueCount = checks.warn + checks.fail;
-
-  if (score >= 90) {
-    return `${name} scores ${score}/100 (Grade ${grade}), placing it among the most AI-agent-ready documentation sites evaluated. It passes ${checks.pass} of ${checks.total} checks (${passRate}%), demonstrating strong support for AI coding agents. ${issueCount > 0 ? `${issueCount} item${issueCount > 1 ? 's' : ''} require attention to reach a perfect score.` : 'All critical checks pass.'}`;
-  } else if (score >= 70) {
-    return `${name} scores ${score}/100 (Grade ${grade}), passing ${checks.pass} of ${checks.total} checks (${passRate}%). The documentation is broadly accessible to AI agents but has ${issueCount} area${issueCount !== 1 ? 's' : ''} that could be improved to better serve automated tooling.`;
-  } else if (score >= 50) {
-    return `${name} scores ${score}/100 (Grade ${grade}), passing ${checks.pass} of ${checks.total} checks (${passRate}%). There are ${issueCount} issue${issueCount !== 1 ? 's' : ''} limiting AI agent readiness. Addressing llms.txt support and markdown availability would provide the most improvement.`;
-  } else {
-    return `${name} scores ${score}/100 (Grade ${grade}), passing only ${checks.pass} of ${checks.total} checks (${passRate}%). Significant work is needed to make these docs accessible to AI coding agents. Priority improvements include adding llms.txt, enabling markdown endpoints, and reducing page complexity.`;
-  }
 }
 
 function buildSyntheticResults(checks: { total: number; pass: number; warn: number; fail: number }): CheckResult[] {
@@ -157,6 +110,30 @@ function buildSyntheticResults(checks: { total: number; pass: number; warn: numb
   return results;
 }
 
+function scoreColorHex(score: number): string {
+  if (score >= 80) return '#00ff66';
+  if (score >= 65) return '#ccff44';
+  if (score >= 45) return '#ffcc00';
+  if (score >= 30) return '#ff8800';
+  return '#ff4444';
+}
+
+function buildSummary(company: { name: string; score: number; grade: string; checks: { total: number; pass: number; warn: number; fail: number } }): string {
+  const { name, score, grade, checks } = company;
+  const passRate = checks.total > 0 ? Math.round((checks.pass / checks.total) * 100) : 0;
+  const issueCount = checks.warn + checks.fail;
+
+  if (score >= 90) {
+    return `${name} scores ${score}/100 (Grade ${grade}), placing it among the most AI-agent-ready documentation sites evaluated. It passes ${checks.pass} of ${checks.total} checks (${passRate}%), demonstrating strong support for AI coding agents. ${issueCount > 0 ? `${issueCount} item${issueCount > 1 ? 's' : ''} require attention to reach a perfect score.` : 'All critical checks pass.'}`;
+  } else if (score >= 70) {
+    return `${name} scores ${score}/100 (Grade ${grade}), passing ${checks.pass} of ${checks.total} checks (${passRate}%). The documentation is broadly accessible to AI agents but has ${issueCount} area${issueCount !== 1 ? 's' : ''} that could be improved to better serve automated tooling.`;
+  } else if (score >= 50) {
+    return `${name} scores ${score}/100 (Grade ${grade}), passing ${checks.pass} of ${checks.total} checks (${passRate}%). There are ${issueCount} issue${issueCount !== 1 ? 's' : ''} limiting AI agent readiness. Addressing llms.txt support and markdown availability would provide the most improvement.`;
+  } else {
+    return `${name} scores ${score}/100 (Grade ${grade}), passing only ${checks.pass} of ${checks.total} checks (${passRate}%). Significant work is needed to make these docs accessible to AI coding agents. Priority improvements include adding llms.txt, enabling markdown endpoints, and reducing page complexity.`;
+  }
+}
+
 export default async function CompanyPage({ params }: { params: { slug: string } }) {
   const company = await getCompanyWithFallback(params.slug);
   if (!company) notFound();
@@ -167,11 +144,11 @@ export default async function CompanyPage({ params }: { params: { slug: string }
       : buildSyntheticResults(company.checks);
 
   const categories = buildCategoriesFromResults(checkResults);
-
   const summary = buildSummary(company);
 
   const domain = company.docsUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
   const pageUrl = `https://agentscore.buildwithfern.com/company/${company.slug}`;
+  const scoreHex = scoreColorHex(company.score);
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     `${company.name} scored ${company.score}/100 on the Agent Score leaderboard for AI-ready documentation.`
@@ -180,77 +157,128 @@ export default async function CompanyPage({ params }: { params: { slug: string }
   const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
 
   return (
-    <main style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}>
-      {/* Score Hero — centered layout matching agentscore-stripe.html */}
-      <section className="company-hero">
-        <div className="container">
-          <div className="breadcrumb">
-            <Link href="/#leaderboard">Leaderboard</Link>
-            <span className="sep">&gt;</span>
-            <span>{company.name}</span>
+    <main className="company-page">
+
+      {/* Back nav */}
+      <div className="company-back-nav">
+        <Link href="/#leaderboard">&#8592; RETURN_TO_DIRECTORY</Link>
+      </div>
+
+      {/* Header bar: name + score summary */}
+      <div className="company-header-bar">
+        <div className="company-header-name">{company.name.toUpperCase()}</div>
+        <div className="company-header-score-wrap">
+          <span className="company-header-score-num" style={{ color: scoreHex }}>
+            {company.score}
+          </span>
+          <span className="company-header-grade">GRADE_{company.grade}</span>
+        </div>
+      </div>
+
+      {/* Hero: name/domain left, big score right */}
+      <section className="company-hero-section">
+        <div className="company-hero-left">
+          <div className="company-sys-label">// AGENT_READINESS_REPORT</div>
+          <h1 className="company-name-title">{company.name.toUpperCase()}</h1>
+          <a
+            href={company.docsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="company-domain-link"
+          >
+            {domain}
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5" />
+              <path d="M7 1.5h3.5V5" />
+              <path d="M5 7L10.5 1.5" />
+            </svg>
+          </a>
+          <div className="company-last-checked">
+            LAST_CHECKED: {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
           </div>
-
-          <h1 className="hero-company">{company.name}</h1>
-          <p className="hero-domain">
-            <a href={company.docsUrl} target="_blank" rel="noopener noreferrer">
-              {domain}{' '}
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-1px', display: 'inline' }}>
-                <path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5" />
-                <path d="M7 1.5h3.5V5" />
-                <path d="M5 7L10.5 1.5" />
-              </svg>
-            </a>
-          </p>
-
+        </div>
+        <div className="company-hero-right">
           <ScoreRing score={company.score} grade={company.grade} />
-
-          <div>
-            <span className={`grade-badge grade-${company.grade.toLowerCase().replace('+', '-plus')}`}>Grade {company.grade}</span>
-          </div>
-
-          <p className="last-checked">
-            Last checked: {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-          </p>
-
-          <div className="summary-row">
-            <CollapsiblePanel title="Executive Summary" copySlot={<CopyButton text={summary} />}>
-              <div className="exec-summary-body">
-                <p>{summary}</p>
-              </div>
-            </CollapsiblePanel>
-
-            <AIFixPrompt
-              name={company.name}
-              url={company.docsUrl}
-              score={company.score}
-              grade={company.grade}
-              results={checkResults}
-            />
-          </div>
-
-          <div className="share-row">
-            <a href={twitterUrl} className="share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </a>
-            <a href={linkedinUrl} className="share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-              </svg>
-            </a>
-            <CopyLinkBtn url={pageUrl} />
-          </div>
         </div>
       </section>
 
-      {/* Check Results */}
-      <section className="checks-section">
-        <div className="container">
-          <h2 className="section-title">Check Results</h2>
-          <CategoryCheckGroups categories={categories} results={checkResults} />
+      {/* Stats bar */}
+      <div className="company-stats-bar">
+        <div className="stat-cell">
+          <span className="stat-key">// CATEGORY</span>
+          <span className="stat-value">{company.category.toUpperCase()}</span>
         </div>
+        <div className="stat-cell">
+          <span className="stat-key">// CHECKS_PASSED</span>
+          <span className="stat-value" style={{ color: '#00ff66' }}>{company.checks.pass}/{company.checks.total}</span>
+        </div>
+        <div className="stat-cell">
+          <span className="stat-key">// WARNINGS</span>
+          <span className="stat-value" style={{ color: '#ffcc00' }}>{company.checks.warn}</span>
+        </div>
+        <div className="stat-cell">
+          <span className="stat-key">// FAILED</span>
+          <span className="stat-value" style={{ color: '#ff4444' }}>{company.checks.fail}</span>
+        </div>
+      </div>
+
+      {/* Executive Summary */}
+      <div className="company-section-wrapper">
+        <CollapsiblePanel title="Executive Summary" copySlot={<CopyButton text={summary} />}>
+          <p style={{ fontSize: '17px', color: '#999999', letterSpacing: '1px', lineHeight: '1.6', fontFamily: "'VT323', monospace" }}>{summary}</p>
+        </CollapsiblePanel>
+      </div>
+
+      {/* AI Fix Prompt */}
+      <div className="company-section-wrapper">
+        <AIFixPrompt
+          name={company.name}
+          url={company.docsUrl}
+          score={company.score}
+          grade={company.grade}
+          results={checkResults}
+        />
+      </div>
+
+      {/* Category breakdown */}
+      <div className="company-section-wrapper">
+        <div className="company-section-header">
+          <span className="company-section-title">// CATEGORY_BREAKDOWN</span>
+          <span className="company-section-meta">{categories.length} CATEGORIES</span>
+        </div>
+        <CategoryGrid categories={categories} />
+      </div>
+
+      {/* Checks breakdown */}
+      <section className="v3-check-section">
+        <div className="company-section-header">
+          <span className="company-section-title">// CHECK_RESULTS</span>
+          <span className="company-section-meta">{checkResults.length} CHECKS // {categories.length} CATEGORIES</span>
+        </div>
+        <CategoryCheckGroups categories={categories} results={checkResults} />
       </section>
+
+      {/* Share row */}
+      <div className="v3-share-section">
+        <div className="company-section-header">
+          <span className="company-section-title">// SHARE_RESULTS</span>
+        </div>
+        <div className="v3-share-row">
+          <a href={twitterUrl} className="v3-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter/X">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            <span>SHARE_X</span>
+          </a>
+          <a href={linkedinUrl} className="v3-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+            </svg>
+            <span>SHARE_LINKEDIN</span>
+          </a>
+          <CopyLinkBtn url={pageUrl} />
+        </div>
+      </div>
 
       <CTASection />
       <SiteFooter />

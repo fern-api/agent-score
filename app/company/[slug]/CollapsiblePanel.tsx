@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import '../company.css';
 
 export default function CollapsiblePanel({
   title,
@@ -14,32 +15,23 @@ export default function CollapsiblePanel({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={`exec-summary-block collapsible-panel${open ? ' panel-open' : ''}`}>
+    <div className={`v3-panel${open ? ' panel-open' : ''}`}>
       <div
-        className="exec-summary-header"
+        className="v3-panel-header"
         onClick={() => setOpen((o) => !o)}
-        style={{ cursor: 'pointer' }}
       >
-        <span className="exec-summary-title">{title}</span>
-        <div className="panel-header-right">
-          <div className="panel-header-actions" onClick={(e) => e.stopPropagation()}>
+        <span className="v3-panel-title">// {title.toUpperCase()}</span>
+        <div className="v3-panel-header-right">
+          <div onClick={(e) => e.stopPropagation()}>
             {copySlot}
           </div>
-          <svg
-            className="panel-chevron"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 8l5 5 5-5" />
-          </svg>
+          <span className="v3-panel-toggle">{open ? '[-]' : '[+]'}</span>
         </div>
       </div>
-      <div className="panel-body">
-        {children}
+      <div className="v3-panel-body">
+        <div className="v3-panel-body-inner">
+          {children}
+        </div>
       </div>
     </div>
   );

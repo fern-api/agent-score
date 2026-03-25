@@ -3,6 +3,7 @@
 import type { CheckResult } from '@/lib/scores';
 import CollapsiblePanel from './CollapsiblePanel';
 import CopyButton from './CopyButton';
+import '../company.css';
 
 function buildPrompt(name: string, url: string, score: number, grade: string, results: CheckResult[]): string {
   const fails = results.filter(r => r.status === 'fail' || r.status === 'error');
@@ -69,12 +70,11 @@ export default function AIFixPrompt({
 
   return (
     <CollapsiblePanel
-      title={`Agent Prompt to fix ${issues.length} Issue${issues.length !== 1 ? 's' : ''}`}
+      title={`AI_FIX_PROMPT // ${issues.length} ISSUE${issues.length !== 1 ? 'S' : ''}`}
       copySlot={<CopyButton text={prompt} />}
     >
-      <div className="exec-summary-body">
-        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{prompt}</pre>
-      </div>
+      <div className="v3-ai-label">// PASTE_INTO_AI_AGENT</div>
+      <pre className="v3-ai-pre">{prompt}</pre>
     </CollapsiblePanel>
   );
 }

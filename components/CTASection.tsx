@@ -1,46 +1,24 @@
-import Image from 'next/image';
-
-const trustedLogos = [
-  { src: '/nvidia-top.svg', alt: 'Nvidia' },
-  { src: '/square-top.svg', alt: 'Square' },
-  { src: '/elevenlabs-top.svg', alt: 'ElevenLabs' },
-  { src: '/twilio-top.svg', alt: 'Twilio' },
-  { src: '/adobe-top.svg', alt: 'Adobe' },
-];
-
 export default function CTASection() {
   return (
-    <section className="cta-section fade-section visible">
-      <div className="container">
-        <h2 className="section-title">Built by Fern</h2>
-        <p className="cta-description">
-          Fern-powered docs are agent-ready by default.
-        </p>
-        <div className="cta-buttons">
-          <a href="https://buildwithfern.com/book-demo" className="btn-primary" target="_blank" rel="noopener">
+    <section className="cta-built">
+      <div className="cta-built-inner">
+        <h2 className="cta-built-title">Built by Fern</h2>
+        <p className="cta-built-sub">Fern-powered docs are agent-ready by default.</p>
+        <div className="cta-built-btns">
+          <a href="https://buildwithfern.com/contact" target="_blank" rel="noreferrer" className="cta-built-btn-primary">
             Book a demo ›
           </a>
-          <a
-            href="https://dashboard.buildwithfern.com/sign-up?redirect_on_login=%2Fget-started&utm_source=fern-agent-score"
-            className="btn-secondary"
-            target="_blank"
-            rel="noopener"
-          >
+          <a href="https://buildwithfern.com" target="_blank" rel="noreferrer" className="cta-built-btn-secondary">
             Get started for free ›
           </a>
         </div>
-        <p className="cta-trusted">Trusted by</p>
-        <div className="cta-logos">
-          {trustedLogos.map((logo) => (
-            <Image
-              key={logo.alt}
-              src={logo.src}
-              alt={logo.alt}
-              width={80}
-              height={28}
-              className="cta-logo"
-            />
-          ))}
+        <div className="cta-built-trusted-label">Trusted by</div>
+        <div className="cta-built-logos">
+          <img src="/nvidia-top.svg"     alt="NVIDIA"     className="cta-logo" />
+          <img src="/square-top.svg"     alt="Square"     className="cta-logo" />
+          <img src="/elevenlabs-top.svg" alt="ElevenLabs" className="cta-logo" />
+          <img src="/twilio-top.svg"     alt="Twilio"     className="cta-logo" />
+          <img src="/adobe-top.svg"      alt="Adobe"      className="cta-logo" />
         </div>
       </div>
     </section>

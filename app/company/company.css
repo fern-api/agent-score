@@ -1,0 +1,816 @@
+/* =====================================================
+   COMPANY PAGE — V3 RETRO TERMINAL STYLES
+   ===================================================== */
+
+:root {
+  --bg: #000000;
+  --fg: #ffffff;
+  --fg-dim: #555555;
+  --fg-mid: #999999;
+  --accent: #00ff66;
+  --accent-dim: rgba(0, 255, 102, 0.08);
+  --border: #1a1a1a;
+}
+
+/* =====================================================
+   PAGE WRAPPER
+   ===================================================== */
+.company-page {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'VT323', monospace;
+  -webkit-font-smoothing: none;
+  image-rendering: pixelated;
+  color: var(--fg);
+}
+
+/* =====================================================
+   HEADER BAR
+   ===================================================== */
+.company-header-bar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  gap: 24px;
+}
+
+.company-back-link {
+  font-size: 16px;
+  color: var(--fg-dim);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.1s;
+}
+
+.company-back-link:hover {
+  color: var(--accent);
+}
+
+.company-header-name {
+  font-size: 28px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--fg);
+  line-height: 1;
+}
+
+.company-header-score-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.company-header-score-num {
+  font-size: 48px;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.company-header-grade {
+  font-size: 16px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  color: var(--fg-mid);
+}
+
+/* =====================================================
+   BACK NAV
+   ===================================================== */
+.company-back-nav {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.company-back-nav a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.company-back-nav:hover,
+.company-back-nav a:hover {
+  color: #fff;
+}
+
+/* =====================================================
+   SYSTEM LABEL (hero prefix)
+   ===================================================== */
+.company-sys-label {
+  font-size: 14px;
+  color: var(--fg-dim);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* =====================================================
+   SECTION WRAPPER
+   ===================================================== */
+.company-section-wrapper {
+  border-bottom: 1px solid var(--border);
+}
+
+/* =====================================================
+   HERO SECTION
+   ===================================================== */
+.company-hero-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  min-height: 300px;
+}
+
+.company-hero-left {
+  border-right: 1px solid var(--border);
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+}
+
+.company-name-title {
+  font-size: 64px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--fg);
+  line-height: 1;
+}
+
+.company-domain-link {
+  font-size: 18px;
+  color: var(--fg-dim);
+  letter-spacing: 2px;
+  text-transform: lowercase;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.1s;
+}
+
+.company-domain-link:hover {
+  color: var(--fg-mid);
+}
+
+.company-domain-link svg {
+  opacity: 0.5;
+}
+
+.company-last-checked {
+  font-size: 14px;
+  color: var(--fg-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* =====================================================
+   SCORE DISPLAY (replaces SVG ring)
+   ===================================================== */
+.company-hero-right {
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.score-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.score-big-number {
+  font-size: 120px;
+  letter-spacing: -4px;
+  line-height: 1;
+  -webkit-font-smoothing: none;
+}
+
+.score-out-of {
+  font-size: 18px;
+  color: var(--fg-dim);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.score-grade-badge {
+  font-size: 20px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  padding: 6px 18px;
+  border: 1px solid var(--border);
+  color: var(--fg-mid);
+  margin-top: 4px;
+}
+
+/* Score color helpers */
+.score-color-hi   { color: #00ff66; }
+.score-color-good { color: #ccff44; }
+.score-color-mid  { color: #ffcc00; }
+.score-color-low  { color: #ff8800; }
+.score-color-fail { color: #ff4444; }
+
+/* =====================================================
+   STATS BAR
+   ===================================================== */
+.company-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-cell {
+  border-right: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-cell:last-child {
+  border-right: none;
+}
+
+.stat-key {
+  font-size: 13px;
+  color: var(--fg-dim);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 24px;
+  color: var(--fg);
+  letter-spacing: 2px;
+}
+
+/* =====================================================
+   SECTION HEADER
+   ===================================================== */
+.company-section-header {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.company-section-title {
+  font-size: 22px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.company-section-meta {
+  font-size: 15px;
+  color: var(--fg-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* =====================================================
+   CATEGORY GRID
+   ===================================================== */
+.v3-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.v3-category-card {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 20px;
+  cursor: default;
+  transition: background 0.1s;
+}
+
+.v3-category-card:nth-child(4n) {
+  border-right: none;
+}
+
+.v3-category-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.v3-cat-name {
+  font-size: 16px;
+  color: var(--fg-mid);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.v3-cat-meta {
+  font-size: 13px;
+  color: var(--fg-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.v3-cat-score-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.v3-cat-bar-track {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.v3-cat-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--bar-width, 0%);
+  transition: width 0.6s ease;
+}
+
+.v3-cat-score-num {
+  font-size: 22px;
+  letter-spacing: 1px;
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* =====================================================
+   CHECK GROUPS (CATEGORY CHECK GROUPS)
+   ===================================================== */
+.v3-check-section {
+  border-bottom: 1px solid var(--border);
+}
+
+.v3-check-group {
+  border-bottom: 1px solid var(--border);
+}
+
+.v3-check-group:last-child {
+  border-bottom: none;
+}
+
+.v3-check-group-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.v3-check-group-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.v3-check-group-name {
+  font-size: 18px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.v3-check-group-count {
+  font-size: 14px;
+  color: var(--fg-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.v3-check-group-bar {
+  width: 80px;
+  height: 2px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.v3-check-group-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--bar-width, 0%);
+  transition: width 0.6s ease;
+}
+
+.v3-check-group-score {
+  font-size: 20px;
+  letter-spacing: 1px;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.v3-check-group-toggle {
+  font-size: 22px;
+  color: var(--fg-dim);
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  letter-spacing: 0;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* Check group body (collapsible) */
+.v3-check-group-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+.v3-check-group.open .v3-check-group-body {
+  max-height: 9999px;
+}
+
+/* Individual check rows */
+.v3-check-row {
+  display: grid;
+  grid-template-columns: 28px 60px 1fr;
+  align-items: center;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  min-height: 40px;
+}
+
+.v3-check-row:first-child {
+  border-top: none;
+}
+
+.v3-check-idx {
+  font-size: 13px;
+  color: var(--fg-dim);
+  letter-spacing: 2px;
+  padding: 10px 0 10px 24px;
+  font-family: 'VT323', monospace;
+}
+
+.v3-check-status-cell {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.v3-status-pass {
+  font-size: 18px;
+  color: #00ff66;
+  letter-spacing: 1px;
+  font-family: 'VT323', monospace;
+}
+
+.v3-status-warn {
+  font-size: 18px;
+  color: #ffcc00;
+  letter-spacing: 1px;
+  font-family: 'VT323', monospace;
+}
+
+.v3-status-fail {
+  font-size: 18px;
+  color: #ff4444;
+  letter-spacing: 1px;
+  font-family: 'VT323', monospace;
+}
+
+.v3-status-skip {
+  font-size: 18px;
+  color: var(--fg-dim);
+  letter-spacing: 1px;
+  font-family: 'VT323', monospace;
+}
+
+.v3-check-info {
+  padding: 10px 24px 10px 0;
+}
+
+.v3-check-name {
+  font-size: 16px;
+  color: var(--fg);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.v3-check-result {
+  font-size: 14px;
+  color: var(--fg-dim);
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+/* =====================================================
+   COLLAPSIBLE PANEL (exec summary / AI fix)
+   ===================================================== */
+.v3-panel {
+  border-bottom: 1px solid var(--border);
+}
+
+.v3-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.v3-panel-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.v3-panel-title {
+  font-size: 18px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.v3-panel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.v3-panel-toggle {
+  font-size: 24px;
+  color: var(--fg-dim);
+  width: 20px;
+  text-align: center;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.v3-panel-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.v3-panel.panel-open .v3-panel-body {
+  max-height: 9999px;
+}
+
+.v3-panel-body-inner {
+  padding: 20px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* =====================================================
+   AI FIX PROMPT PANEL
+   ===================================================== */
+.v3-ai-panel {
+  border-bottom: 1px solid var(--border);
+}
+
+.v3-ai-label {
+  font-size: 14px;
+  color: var(--fg-dim);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.v3-ai-pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: var(--fg-mid);
+  letter-spacing: 1px;
+  line-height: 1.5;
+  -webkit-font-smoothing: none;
+}
+
+/* =====================================================
+   COPY BUTTON
+   ===================================================== */
+.v3-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.v3-copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.v3-copy-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* =====================================================
+   SHARE / SOCIAL ROW
+   ===================================================== */
+.v3-share-section {
+  border-bottom: 1px solid var(--border);
+}
+
+.v3-share-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+}
+
+.v3-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-right: 1px solid var(--border);
+  color: var(--fg-dim);
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  background: transparent;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.v3-share-btn:hover {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--fg);
+}
+
+.v3-share-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* =====================================================
+   LOADING SKELETON
+   ===================================================== */
+.v3-skeleton-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  gap: 24px;
+}
+
+.v3-skeleton-block {
+  background: var(--border);
+  animation: v3pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes v3pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.v3-skeleton-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  min-height: 240px;
+}
+
+.v3-skeleton-left {
+  border-right: 1px solid var(--border);
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.v3-skeleton-right {
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.v3-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.v3-skeleton-cell {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v3-skeleton-cell:nth-child(4n) {
+  border-right: none;
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+@media (max-width: 900px) {
+  .company-hero-section {
+    grid-template-columns: 1fr;
+  }
+
+  .company-hero-left {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .v3-categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .v3-category-card:nth-child(4n) {
+    border-right: 1px solid var(--border);
+  }
+
+  .v3-category-card:nth-child(2n) {
+    border-right: none;
+  }
+
+  .company-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-cell:nth-child(2n) {
+    border-right: none;
+  }
+
+  .stat-cell:nth-child(1),
+  .stat-cell:nth-child(2) {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 600px) {
+  .company-name-title {
+    font-size: 40px;
+  }
+
+  .score-big-number {
+    font-size: 80px;
+  }
+
+  .company-header-name {
+    font-size: 20px;
+  }
+
+  .v3-check-group-header {
+    grid-template-columns: 1fr auto auto;
+  }
+
+  .v3-check-group-bar {
+    display: none;
+  }
+
+  .v3-categories-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .v3-category-card {
+    border-right: none;
+  }
+
+  .company-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
