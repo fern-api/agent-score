@@ -14,27 +14,20 @@ function scoreColor(score: number): string {
 
 export default function CategoryGrid({ categories }: { categories: Category[] }) {
   return (
-    <div className="v3-categories-grid">
-      {categories.map((cat, idx) => {
+    <div className="co-cat-grid">
+      {categories.map((cat) => {
         const color = scoreColor(cat.score);
         return (
-          <div key={cat.name} className="v3-category-card">
-            <div className="v3-cat-name">
-              <span style={{ color: 'var(--fg-dim)', marginRight: '8px', fontSize: '13px', letterSpacing: '2px' }}>
-                {String(idx + 1).padStart(2, '0')}
-              </span>
-              {cat.name.toUpperCase()}
+          <div key={cat.name} className="co-cat-card">
+            <div className="co-cat-name">{cat.name}</div>
+            <div className="co-cat-meta">{cat.meta}</div>
+            <div className="co-cat-bar-track">
+              <div
+                className="co-cat-bar-fill"
+                style={{ width: `${cat.score}%`, background: color } as React.CSSProperties}
+              />
             </div>
-            <div className="v3-cat-meta">{cat.meta.toUpperCase()}</div>
-            <div className="v3-cat-score-row">
-              <div className="v3-cat-bar-track">
-                <div
-                  className="v3-cat-bar-fill"
-                  style={{ '--bar-width': `${cat.score}%`, background: color } as React.CSSProperties}
-                />
-              </div>
-              <span className="v3-cat-score-num" style={{ color }}>{cat.score}</span>
-            </div>
+            <span className="co-cat-score" style={{ color }}>{cat.score}</span>
           </div>
         );
       })}

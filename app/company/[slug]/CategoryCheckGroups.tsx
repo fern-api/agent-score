@@ -4,31 +4,25 @@ import { useState } from 'react';
 import type { CheckResult } from '@/lib/scores';
 import '../company.css';
 
-function scoreColorHex(score: number): string {
-  if (score >= 80) return '#00ff66';
-  if (score >= 65) return '#ccff44';
-  if (score >= 45) return '#ffcc00';
-  if (score >= 30) return '#ff8800';
+function barColor(score: number): string {
+  if (score >= 80) return '#00e87b';
+  if (score >= 50) return '#ffcc00';
   return '#ff4444';
 }
 
-function scoreColorClass(score: number): string {
-  if (score >= 80) return 'score-color-hi';
-  if (score >= 65) return 'score-color-good';
-  if (score >= 45) return 'score-color-mid';
-  if (score >= 30) return 'score-color-low';
-  return 'score-color-fail';
+function dotColor(status: string): string {
+  if (status === 'pass') return '#00e87b';
+  if (status === 'warn') return '#ffcc00';
+  if (status === 'fail' || status === 'error') return '#ff4444';
+  return 'var(--fg-dim)';
 }
 
-function StatusCell({ status }: { status: string }) {
-  if (status === 'pass') return <span className="v3-status-pass">[PASS]</span>;
-  if (status === 'warn') return <span className="v3-status-warn">[WARN]</span>;
-  if (status === 'fail' || status === 'error') return <span className="v3-status-fail">[FAIL]</span>;
-  return <span className="v3-status-skip">[SKIP]</span>;
+function formatCategoryName(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-');
 }
 
 function formatCheckId(id: string): string {
-  return id.replace(/-/g, '_').toUpperCase();
+  return id.toLowerCase().replace(/_/g, '-');
 }
 
 interface Category {
@@ -57,6 +51,14 @@ function buildGroupMap(results: CheckResult[]) {
   return map;
 }
 
+function calcCategoryScore(items: CheckResult[]): number {
+  if (items.length === 0) return 0;
+  const total = items.length;
+  const pass = items.filter(r => r.status === 'pass').length;
+  const warn = items.filter(r => r.status === 'warn').length;
+  return Math.round(((pass + warn * 0.5) / total) * 100);
+}
+
 export default function CategoryCheckGroups({ categories, results }: Props) {
   const groupMap = buildGroupMap(results);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
@@ -79,41 +81,50 @@ export default function CategoryCheckGroups({ categories, results }: Props) {
         const items = [...(groupMap.get(cat.name) || [])].sort(
           (a, b) => statusPriority(a.status) - statusPriority(b.status)
         );
-        const colorClass = scoreColorClass(cat.score);
-        const colorHex = scoreColorHex(cat.score);
+        const score = calcCategoryScore(items);
+        const passCount = items.filter(r => r.status === 'pass').length;
+        const warnCount = items.filter(r => r.status === 'warn').length;
+
+        const bodyId = `check-group-body-${formatCategoryName(cat.name)}`;
 
         return (
-          <div key={cat.name} className={`v3-check-group${isOpen ? ' open' : ''}`}>
-            <div className="v3-check-group-header" onClick={() => toggle(cat.name)}>
-              <span className="v3-check-group-name">{cat.name.toUpperCase()}</span>
-              <span className="v3-check-group-count">{cat.meta.toUpperCase()}</span>
-              <div
-                className="v3-check-group-bar"
-              >
+          <div key={cat.name} className={`co-check-group${isOpen ? ' open' : ''}`}>
+            <button
+              className="co-check-group-header"
+              aria-expanded={isOpen}
+              aria-controls={bodyId}
+              onClick={() => toggle(cat.name)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggle(cat.name);
+                }
+              }}
+            >
+              <div className="co-check-group-name-wrap">
+                <span className="co-check-group-name">{formatCategoryName(cat.name)}</span>
+                <span className="co-check-group-count">{passCount}p / {warnCount}w</span>
+              </div>
+              <div className="co-check-group-bar-track">
                 <div
-                  className="v3-check-group-bar-fill"
-                  style={
-                    {
-                      '--bar-width': `${cat.score}%`,
-                      background: colorHex,
-                    } as React.CSSProperties
-                  }
+                  className="co-check-group-bar-fill"
+                  style={{ width: `${score}%`, background: barColor(score) }}
                 />
               </div>
-              <span className={`v3-check-group-score ${colorClass}`}>{cat.score}</span>
-              <span className="v3-check-group-toggle">{isOpen ? '[-]' : '[+]'}</span>
-            </div>
-            <div className="v3-check-group-body">
+              <span className="co-check-group-score">{score}</span>
+              <span className={`co-check-group-chevron${isOpen ? ' open' : ''}`} aria-hidden="true">›</span>
+            </button>
+            <div id={bodyId} className="co-check-group-body">
               {items.map((item, i) => (
-                <div key={item.id + i} className="v3-check-row">
-                  <span className="v3-check-idx">{String(i + 1).padStart(2, '0')}</span>
-                  <div className="v3-check-status-cell">
-                    <StatusCell status={item.status} />
-                  </div>
-                  <div className="v3-check-info">
-                    <div className="v3-check-name">{formatCheckId(item.id)}</div>
-                    <div className="v3-check-result">{item.message}</div>
-                  </div>
+                <div key={item.id + i} className="co-check-item">
+                  <span
+                    className="co-check-item-dot"
+                    style={{ background: dotColor(item.status) }}
+                    aria-label={item.status === 'pass' ? 'Pass' : item.status === 'warn' ? 'Warning' : item.status === 'fail' || item.status === 'error' ? 'Fail' : 'Skip'}
+                    role="img"
+                  />
+                  <span className="co-check-item-id">{formatCheckId(item.id)}</span>
+                  <span className="co-check-item-msg">{item.message}</span>
                 </div>
               ))}
             </div>

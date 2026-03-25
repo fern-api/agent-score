@@ -35,7 +35,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-
 function buildCategoriesFromResults(results: CheckResult[]) {
   const categoryMap = new Map<string, { pass: number; warn: number; fail: number; skip: number; total: number }>();
   for (const r of results) {
@@ -60,33 +59,25 @@ function buildCategoriesFromResults(results: CheckResult[]) {
 function buildSyntheticResults(checks: { total: number; pass: number; warn: number; fail: number }): CheckResult[] {
   const { pass, warn, fail } = checks;
   const defs: Array<{ id: string; category: string; passMsg: string; warnMsg?: string; failMsg: string }> = [
-    // llms.txt (5)
     { id: 'llms-txt-exists', category: 'llms.txt', passMsg: 'llms.txt found at /llms.txt', warnMsg: 'llms.txt found but at non-standard path', failMsg: 'No llms.txt found' },
     { id: 'llms-txt-valid', category: 'llms.txt', passMsg: 'Valid structure following llmstxt.org spec', failMsg: 'Invalid llms.txt structure' },
     { id: 'llms-txt-size', category: 'llms.txt', passMsg: 'File size within recommended limits', warnMsg: 'File size approaching the 50,000 character limit', failMsg: 'File exceeds 50,000 character limit' },
     { id: 'llms-txt-links-resolve', category: 'llms.txt', passMsg: 'All linked URLs return 200', failMsg: 'Some linked URLs return errors' },
     { id: 'llms-txt-links-markdown', category: 'llms.txt', passMsg: 'Linked URLs serve markdown content', failMsg: 'Linked URLs do not serve markdown' },
-    // Markdown Availability (2)
     { id: 'markdown-url-support', category: 'Markdown Availability', passMsg: 'Pages serve markdown at .md URLs', failMsg: 'No .md URL support detected' },
     { id: 'content-negotiation', category: 'Markdown Availability', passMsg: 'Server responds to Accept: text/markdown', warnMsg: 'Partial content negotiation support', failMsg: 'No content negotiation support' },
-    // Page Size (3)
     { id: 'page-size-markdown', category: 'Page Size', passMsg: 'Markdown content within size limits', warnMsg: 'Markdown pages are large but within limits', failMsg: 'Markdown pages exceed size limits' },
     { id: 'page-size-html', category: 'Page Size', passMsg: 'HTML pages within recommended size', warnMsg: 'HTML pages have significant boilerplate', failMsg: 'HTML pages exceed size limits' },
     { id: 'content-start-position', category: 'Page Size', passMsg: 'Content begins near page start', warnMsg: 'Significant nav/header before content', failMsg: 'Content start position too far into document' },
-    // Content Structure (3)
     { id: 'tab-content-visible', category: 'Content Structure', passMsg: 'Tab content is accessible without JavaScript', warnMsg: 'Tab content requires interaction to reveal', failMsg: 'Tab content is hidden and inaccessible to agents' },
     { id: 'heading-hierarchy', category: 'Content Structure', passMsg: 'Heading hierarchy is well-structured', warnMsg: 'Some heading levels are skipped', failMsg: 'No meaningful heading hierarchy detected' },
     { id: 'code-fences', category: 'Content Structure', passMsg: 'Code blocks use fenced markdown syntax', warnMsg: 'Some code blocks lack language annotations', failMsg: 'Code blocks are not fenced or lack markdown formatting' },
-    // URL Stability (2)
     { id: 'no-redirect-chains', category: 'URL Stability', passMsg: 'URLs resolve without redirect chains', warnMsg: 'Some URLs redirect once before resolving', failMsg: 'Long redirect chains detected on doc URLs' },
     { id: 'no-auth-walls', category: 'URL Stability', passMsg: 'URLs resolve without authentication prompts', failMsg: 'Auth walls block access to documentation URLs' },
-    // Agent Discoverability (1)
     { id: 'llms-txt-discoverable', category: 'Agent Discoverability', passMsg: 'llms.txt is linked from the main docs page', warnMsg: 'llms.txt exists but is not linked from docs', failMsg: 'No mechanism for agents to discover llms.txt' },
-    // Observability (3)
     { id: 'last-modified-header', category: 'Observability', passMsg: 'Pages return Last-Modified headers', warnMsg: 'Some pages missing Last-Modified header', failMsg: 'No Last-Modified headers returned' },
     { id: 'sitemap-exists', category: 'Observability', passMsg: 'sitemap.xml found and accessible', warnMsg: 'Sitemap found but missing some doc pages', failMsg: 'No sitemap.xml found' },
     { id: 'changelog-available', category: 'Observability', passMsg: 'Changelog or release notes page detected', warnMsg: 'Changelog exists but is not machine-readable', failMsg: 'No changelog or release notes detected' },
-    // Authentication (2)
     { id: 'docs-publicly-accessible', category: 'Authentication', passMsg: 'Documentation is publicly accessible without login', failMsg: 'Documentation requires authentication to access' },
     { id: 'api-ref-accessible', category: 'Authentication', passMsg: 'API reference pages are publicly accessible', warnMsg: 'Some API reference pages require authentication', failMsg: 'API reference requires login to access' },
   ];
@@ -110,11 +101,10 @@ function buildSyntheticResults(checks: { total: number; pass: number; warn: numb
   return results;
 }
 
-function scoreColorHex(score: number): string {
-  if (score >= 80) return '#00ff66';
-  if (score >= 65) return '#ccff44';
-  if (score >= 45) return '#ffcc00';
-  if (score >= 30) return '#ff8800';
+function gradeColor(score: number): string {
+  if (score >= 80) return '#00e87b';
+  if (score >= 65) return '#a8e63d';
+  if (score >= 45) return '#ffaa00';
   return '#ff4444';
 }
 
@@ -148,7 +138,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
 
   const domain = company.docsUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
   const pageUrl = `https://agentscore.buildwithfern.com/company/${company.slug}`;
-  const scoreHex = scoreColorHex(company.score);
+  const color = gradeColor(company.score);
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     `${company.name} scored ${company.score}/100 on the Agent Score leaderboard for AI-ready documentation.`
@@ -157,80 +147,70 @@ export default async function CompanyPage({ params }: { params: { slug: string }
   const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
 
   return (
-    <main className="company-page">
+    <main className="co-page">
 
-      {/* Back nav */}
-      <div className="company-back-nav">
-        <Link href="/#leaderboard">&#8592; RETURN_TO_DIRECTORY</Link>
-      </div>
-
-      {/* Header bar: name + score summary */}
-      <div className="company-header-bar">
-        <div className="company-header-name">{company.name.toUpperCase()}</div>
-        <div className="company-header-score-wrap">
-          <span className="company-header-score-num" style={{ color: scoreHex }}>
-            {company.score}
-          </span>
-          <span className="company-header-grade">GRADE_{company.grade}</span>
+      {/* Hero: breadcrumb + name/domain/date + score ring */}
+      <div className="co-hero-container">
+        <div className="co-breadcrumb">
+          <Link href="/">Home</Link>
+          <span className="co-breadcrumb-sep">/</span>
+          <Link href="/#leaderboard">Leaderboard</Link>
+          <span className="co-breadcrumb-sep">/</span>
+          <span className="co-breadcrumb-current">{company.name}</span>
         </div>
-      </div>
 
-      {/* Hero: name/domain left, big score right */}
-      <section className="company-hero-section">
-        <div className="company-hero-left">
-          <div className="company-sys-label">// AGENT_READINESS_REPORT</div>
-          <h1 className="company-name-title">{company.name.toUpperCase()}</h1>
-          <a
-            href={company.docsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="company-domain-link"
-          >
-            {domain}
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5" />
-              <path d="M7 1.5h3.5V5" />
-              <path d="M5 7L10.5 1.5" />
-            </svg>
-          </a>
-          <div className="company-last-checked">
-            LAST_CHECKED: {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
+        <div className="co-hero">
+          <div className="co-hero-left">
+            <h1 className="co-company-name">{company.name}</h1>
+            <a
+              href={company.docsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="co-domain-link"
+            >
+              {domain}
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5" />
+                <path d="M7 1.5h3.5V5" />
+                <path d="M5 7L10.5 1.5" />
+              </svg>
+            </a>
+            <div className="co-last-checked">
+              Last checked {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </div>
+          </div>
+          <div className="co-hero-right">
+            <ScoreRing score={company.score} grade={company.grade} />
+            <div className="co-grade-badge" style={{ color }}>Grade {company.grade}</div>
           </div>
         </div>
-        <div className="company-hero-right">
-          <ScoreRing score={company.score} grade={company.grade} />
-        </div>
-      </section>
+      </div>
 
       {/* Stats bar */}
-      <div className="company-stats-bar">
-        <div className="stat-cell">
-          <span className="stat-key">// CATEGORY</span>
-          <span className="stat-value">{company.category.toUpperCase()}</span>
+      <div className="co-stats-bar">
+        <div className="co-stat">
+          <span className="co-stat-key">Category</span>
+          <span className="co-stat-val">{company.category}</span>
         </div>
-        <div className="stat-cell">
-          <span className="stat-key">// CHECKS_PASSED</span>
-          <span className="stat-value" style={{ color: '#00ff66' }}>{company.checks.pass}/{company.checks.total}</span>
+        <div className="co-stat">
+          <span className="co-stat-key">Checks passed</span>
+          <span className="co-stat-val" style={{ color: '#00e87b' }}>{company.checks.pass}/{company.checks.total}</span>
         </div>
-        <div className="stat-cell">
-          <span className="stat-key">// WARNINGS</span>
-          <span className="stat-value" style={{ color: '#ffcc00' }}>{company.checks.warn}</span>
+        <div className="co-stat">
+          <span className="co-stat-key">Warnings</span>
+          <span className="co-stat-val" style={{ color: '#ffcc00' }}>{company.checks.warn}</span>
         </div>
-        <div className="stat-cell">
-          <span className="stat-key">// FAILED</span>
-          <span className="stat-value" style={{ color: '#ff4444' }}>{company.checks.fail}</span>
+        <div className="co-stat">
+          <span className="co-stat-key">Failed</span>
+          <span className="co-stat-val" style={{ color: '#ff4444' }}>{company.checks.fail}</span>
         </div>
       </div>
 
-      {/* Executive Summary */}
-      <div className="company-section-wrapper">
+      {/* Side-by-side collapsible panels */}
+      <div className="co-panels-row">
         <CollapsiblePanel title="Executive Summary" copySlot={<CopyButton text={summary} />}>
-          <p style={{ fontSize: '17px', color: '#999999', letterSpacing: '1px', lineHeight: '1.6', fontFamily: "'VT323', monospace" }}>{summary}</p>
+          <p className="co-panel-text">{summary}</p>
         </CollapsiblePanel>
-      </div>
-
-      {/* AI Fix Prompt */}
-      <div className="company-section-wrapper">
         <AIFixPrompt
           name={company.name}
           url={company.docsUrl}
@@ -241,40 +221,32 @@ export default async function CompanyPage({ params }: { params: { slug: string }
       </div>
 
       {/* Category breakdown */}
-      <div className="company-section-wrapper">
-        <div className="company-section-header">
-          <span className="company-section-title">// CATEGORY_BREAKDOWN</span>
-          <span className="company-section-meta">{categories.length} CATEGORIES</span>
-        </div>
-        <CategoryGrid categories={categories} />
+      <div className="co-section-header">
+        <h2 className="co-section-title">Category breakdown</h2>
+      </div>
+      <CategoryGrid categories={categories} />
+
+      {/* Check results */}
+      <div className="co-checks-section">
+        <div className="co-checks-title">Check results</div>
+        <CategoryCheckGroups categories={categories} results={checkResults} />
       </div>
 
-      {/* Checks breakdown */}
-      <section className="v3-check-section">
-        <div className="company-section-header">
-          <span className="company-section-title">// CHECK_RESULTS</span>
-          <span className="company-section-meta">{checkResults.length} CHECKS // {categories.length} CATEGORIES</span>
-        </div>
-        <CategoryCheckGroups categories={categories} results={checkResults} />
-      </section>
-
-      {/* Share row */}
-      <div className="v3-share-section">
-        <div className="company-section-header">
-          <span className="company-section-title">// SHARE_RESULTS</span>
-        </div>
-        <div className="v3-share-row">
-          <a href={twitterUrl} className="v3-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on Twitter/X">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+      {/* Share */}
+      <div className="co-share-section">
+        <div className="co-share-label">Share results</div>
+        <div className="co-share-row">
+          <a href={twitterUrl} className="co-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on X">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
             </svg>
-            <span>SHARE_X</span>
+            <span>Share on X</span>
           </a>
-          <a href={linkedinUrl} className="v3-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+          <a href={linkedinUrl} className="co-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
               <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
             </svg>
-            <span>SHARE_LINKEDIN</span>
+            <span>Share on LinkedIn</span>
           </a>
           <CopyLinkBtn url={pageUrl} />
         </div>

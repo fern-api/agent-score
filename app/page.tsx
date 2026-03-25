@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { getLeaderboard } from '@/lib/scores';
 import Leaderboard from './leaderboard';
 import ScoreChecker from '@/components/ScoreChecker';
@@ -48,15 +49,114 @@ function TickerSet() {
 }
 
 const methodCells = [
-  { id: 'CAT_01', name: 'LLMS.TXT', checks: '5 CHECKS', desc: 'Can agents discover and parse your documentation index?' },
-  { id: 'CAT_02', name: 'MARKDOWN', checks: '2 CHECKS', desc: 'Can agents get clean markdown instead of bloated HTML?' },
-  { id: 'CAT_03', name: 'PAGE SIZE', checks: '3 CHECKS', desc: "Will your pages fit in an agent's context window?" },
-  { id: 'CAT_04', name: 'CONTENT STRUCTURE', checks: '3 CHECKS', desc: 'Are tabs, headers, and code fences agent-parseable?' },
-  { id: 'CAT_05', name: 'URL STABILITY', checks: '2 CHECKS', desc: 'Do your URLs resolve cleanly without traps?' },
-  { id: 'CAT_06', name: 'DISCOVERABILITY', checks: '1 CHECK', desc: 'Can agents find your llms.txt from any page?' },
-  { id: 'CAT_07', name: 'OBSERVABILITY', checks: '3 CHECKS', desc: 'Is your agent-facing content fresh and accurate?' },
-  { id: 'CAT_08', name: 'AUTHENTICATION', checks: '2 CHECKS', desc: 'Can agents access your docs without hitting auth walls?' },
+  {
+    name: 'llms.txt',
+    checks: '5 checks',
+    desc: 'Can agents discover and parse your documentation index?',
+    icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2h8l4 4v12H4V2z"/><path d="M12 2v4h4"/><line x1="7" y1="9" x2="13" y2="9"/><line x1="7" y1="12" x2="13" y2="12"/><line x1="7" y1="15" x2="11" y2="15"/></svg>,
+  },
+  {
+    name: 'Markdown',
+    checks: '2 checks',
+    desc: 'Can agents get clean markdown instead of bloated HTML?',
+    icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="7" x2="15" y2="7"/><line x1="5" y1="13" x2="15" y2="13"/><line x1="8" y1="3" x2="7" y2="17"/><line x1="13" y1="3" x2="12" y2="17"/></svg>,
+  },
+  {
+    name: 'Page size',
+    checks: '3 checks',
+    desc: "Will your pages fit in an agent's context window?",
+    icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="13,3 17,3 17,7"/><polyline points="7,17 3,17 3,13"/><line x1="17" y1="3" x2="11" y2="9"/><line x1="3" y1="17" x2="9" y2="11"/></svg>,
+  },
+  {
+    name: 'Content structure',
+    checks: '3 checks',
+    desc: 'Are tabs, headers, and code fences agent-parseable?',
+    icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="14" height="3"/><rect x="3" y="8.5" width="10" height="3"/><rect x="3" y="14" width="6" height="3"/></svg>,
+  },
+  {
+    name: 'URL stability',
+    checks: '2 checks',
+    desc: 'Do your URLs resolve cleanly without traps?',
+    icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 13H5a4 4 0 0 1 0-8h2"/><path d="M13 7h2a4 4 0 0 1 0 8h-2"/><line x1="7" y1="10" x2="13" y2="10"/></svg>,
+  },
+  {
+    name: 'Discoverability',
+    checks: '1 check',
+    desc: 'Can agents find your llms.txt from any page?',
+    icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="5"/><line x1="14" y1="14" x2="17" y2="17"/></svg>,
+  },
+  {
+    name: 'Observability',
+    checks: '3 checks',
+    desc: 'Is your agent-facing content fresh and accurate?',
+    icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z"/><circle cx="10" cy="10" r="2.5"/></svg>,
+  },
+  {
+    name: 'Authentication',
+    checks: '2 checks',
+    desc: 'Can agents access your docs without hitting auth walls?',
+    icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="10" r="4"/><path d="M11 10h7"/><path d="M15 10v2.5"/><path d="M17.5 10v2"/></svg>,
+  },
 ];
+
+// Pixel art for the Why section ──────────────────────────────────────────────
+function WhyPixelArt({ grid, px = 9 }: { grid: string[]; px?: number }) {
+  const rows = grid.length;
+  const cols = grid[0]?.length ?? 0;
+  return (
+    <svg
+      width={cols * px}
+      height={rows * px}
+      viewBox={`0 0 ${cols * px} ${rows * px}`}
+      fill="var(--accent)"
+      style={{ imageRendering: 'pixelated', opacity: 0.8 } as React.CSSProperties}
+    >
+      {grid.flatMap((row, r) =>
+        row.split('').map((cell, c) =>
+          cell === '1'
+            ? <rect key={`${r}-${c}`} x={c * px} y={r * px} width={px} height={px} />
+            : null
+        )
+      )}
+    </svg>
+  );
+}
+
+// Ghost — hooded phantom figure (12 × 14)
+const GHOST_GRID = [
+  '000111111000',
+  '011111111110',
+  '111111111111',
+  '111111111111',
+  '111001001111',
+  '111111111111',
+  '111111111111',
+  '011111111110',
+  '011111111110',
+  '001111111100',
+  '001111111100',
+  '000111111000',
+  '000011110000',
+  '000001100000',
+];
+
+// Gate — arched gate with vertical bars (12 × 13)
+const GATE_GRID = [
+  '000011110000',
+  '000111111000',
+  '001111111100',
+  '011000000110',
+  '011010010110',
+  '011010010110',
+  '011010010110',
+  '011111111110',
+  '011010010110',
+  '011010010110',
+  '011010010110',
+  '011111111110',
+  '011111111110',
+];
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
   const companies = await getLeaderboard();
@@ -81,10 +181,11 @@ export default async function HomePage() {
               <span style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>
                 Developed by
                 <a href="https://buildwithfern.com" target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center'}}>
-                  <img src="/fern-labs-dark.svg" alt="fern labs" style={{height:'13px',display:'block',opacity:0.6}} />
+                  <Image src="/fern-labs-dark.svg" alt="Fern Labs" width={56} height={13} className="fern-logo-dark" />
+                  <Image src="/fern-labs-light.svg" alt="Fern Labs" width={56} height={13} className="fern-logo-light" />
                 </a>
               </span>
-              <span style={{color:'#2a2a2a'}}>·</span>
+              <span style={{color:'var(--border)'}}>·</span>
               <span style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>
                 in partnership with
                 <a href="https://github.com/dacharyc" target="_blank" rel="noreferrer">Dachary Carey</a>
@@ -108,37 +209,60 @@ export default async function HomePage() {
 
       {/* WHY */}
       <section className="why-section">
-        <div className="why-panel">
-          <span className="panel-num">// 01</span>
-          <div className="panel-title">The <span className="accent">invisible</span> audience</div>
-          <p className="panel-body">
-            AI coding agents read your API docs millions of times daily. If your docs aren&apos;t
-            optimized, you&apos;re invisible to the fastest-growing segment of your user base.
-          </p>
+        <div className="why-header">
+          <span className="why-label">WHY IT MATTERS</span>
+          <h2 className="why-heading">
+            Your docs have a new audience:{' '}
+            <span className="accent">AI is reading them now</span>
+          </h2>
         </div>
-        <div className="why-panel">
-          <span className="panel-num">// 02</span>
-          <div className="panel-title">Lighthouse for <span className="accent">AI</span></div>
-          <p className="panel-body">
-            Agent Score is the first industry benchmark for AI-agent readiness. 0 to 100, 21 checks,
-            8 categories. Think Lighthouse, but for how AI agents experience your docs.
-          </p>
-        </div>
-        <div className="why-panel">
-          <span className="panel-num">// 03</span>
-          <div className="panel-title">Readiness = <span className="accent">moat</span></div>
-          <p className="panel-body">
-            API platforms with higher agent readability are seeing outsized adoption. Agent readiness
-            isn&apos;t a nice-to-have — it&apos;s the new SEO. 73% of top docs still lack llms.txt.
-          </p>
-        </div>
-        <div className="why-panel">
-          <span className="panel-num">// 04</span>
-          <div className="panel-title">No <span className="accent">black</span> boxes</div>
-          <p className="panel-body">
-            Built on the open-source Agent-Friendly Docs Spec. No gatekeeping, no hidden scoring.
-            Every check is transparent and community-driven.
-          </p>
+
+        <div className="why-grid">
+          {/* Row 1 */}
+          <div className="why-cell why-cell-img">
+            <WhyPixelArt grid={GHOST_GRID} />
+          </div>
+          <div className="why-cell why-cell-text">
+            <div className="why-cell-title">The invisible audience</div>
+            <p className="why-cell-body">
+              AI coding agents are reading your API docs millions of times a day. If your docs
+              aren&apos;t optimized for these agents, you&apos;re invisible to the fastest-growing
+              segment of your user base.
+            </p>
+          </div>
+          <div className="why-cell why-cell-empty" />
+          <div className="why-cell why-cell-text">
+            <div className="why-cell-title">Lighthouse for AI agents</div>
+            <p className="why-cell-body">
+              Agent Score is the first industry benchmark for AI-agent readiness. Think Lighthouse,
+              but for how effectively AI agents can discover, parse, and use your documentation.
+              0 to 100, 21 checks, 8 categories.
+            </p>
+          </div>
+
+          {/* Row 2 */}
+          <div className="why-cell why-cell-empty" />
+          <div className="why-cell why-cell-text">
+            <div className="why-cell-title">Agent readiness = competitive moat</div>
+            <p className="why-cell-body">
+              API platforms with higher agent readability are already seeing outsized adoption.
+              Agent readiness isn&apos;t a nice-to-have. It&apos;s the new SEO. 73% of top API
+              docs still lack an llms.txt.
+            </p>
+          </div>
+          <div className="why-cell why-cell-img">
+            <WhyPixelArt grid={GATE_GRID} />
+          </div>
+          <div className="why-cell why-cell-text">
+            <div className="why-cell-title">Open source, no black boxes</div>
+            <p className="why-cell-body">
+              Built on the open-source{' '}
+              <a href="https://github.com/agent-ecosystem/agent-docs-spec" target="_blank" rel="noopener">
+                Agent-Friendly Docs Spec
+              </a>{' '}
+              with no gatekeeping, no black boxes. Every check is transparent and community-driven.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -152,16 +276,16 @@ export default async function HomePage() {
 
       {/* METHODOLOGY */}
       <section className="method-section" id="methodology">
-        <div className="section-header">
-          <div className="section-header-title">Methodology</div>
-          <div className="section-header-meta">
-            21 checks // 8 categories // framework: agent_friendly_docs_spec
-          </div>
+        <div className="method-header">
+          <h2 className="method-header-title">21 checks across 8 categories</h2>
+          <p className="method-header-sub">
+            A comprehensive framework for evaluating agent-readiness
+          </p>
         </div>
         <div className="method-grid">
           {methodCells.map((cell) => (
-            <div key={cell.id} className="method-cell">
-              <span className="mc-id">{cell.id}</span>
+            <div key={cell.name} className="method-cell">
+              <div className="mc-icon">{cell.icon}</div>
               <div className="mc-name">{cell.name}</div>
               <div className="mc-checks">{cell.checks}</div>
               <div className="mc-desc">{cell.desc}</div>

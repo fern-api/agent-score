@@ -70,11 +70,10 @@ export default function AIFixPrompt({
 
   return (
     <CollapsiblePanel
-      title={`AI_FIX_PROMPT // ${issues.length} ISSUE${issues.length !== 1 ? 'S' : ''}`}
+      title={`Agent Prompt to fix ${issues.length} issue${issues.length !== 1 ? 's' : ''}`}
       copySlot={<CopyButton text={prompt} />}
     >
-      <div className="v3-ai-label">// PASTE_INTO_AI_AGENT</div>
-      <pre className="v3-ai-pre">{prompt}</pre>
+      <pre className="co-ai-pre">{prompt}</pre>
     </CollapsiblePanel>
   );
 }

@@ -2,74 +2,50 @@ import '../company.css';
 
 export default function CompanyLoading() {
   return (
-    <main className="company-page">
-      {/* Back nav skeleton */}
-      <div className="company-back-nav">
-        <span className="v3-skeleton-block" style={{ display: 'inline-block', width: '180px', height: '14px', verticalAlign: 'middle' }} />
+    <main className="co-page">
+      {/* Breadcrumb skeleton */}
+      <div className="co-breadcrumb">
+        <span className="co-skeleton-block" style={{ display: 'inline-block', width: '180px', height: '13px', verticalAlign: 'middle' }} />
       </div>
 
       {/* Hero skeleton */}
-      <div className="v3-skeleton-hero">
-        <div className="v3-skeleton-left">
-          <div className="v3-skeleton-block" style={{ width: '140px', height: '13px' }} />
-          <div className="v3-skeleton-block" style={{ width: '280px', height: '52px', marginTop: '12px' }} />
-          <div className="v3-skeleton-block" style={{ width: '200px', height: '14px', marginTop: '8px' }} />
+      <div className="co-hero">
+        <div className="co-hero-left">
+          <div className="co-skeleton-block" style={{ width: '340px', height: '44px' }} />
+          <div className="co-skeleton-block" style={{ width: '200px', height: '14px', marginTop: '6px' }} />
         </div>
-        <div className="v3-skeleton-right">
-          <div className="v3-skeleton-block" style={{ width: '120px', height: '96px' }} />
-          <div className="v3-skeleton-block" style={{ width: '80px', height: '20px' }} />
+        <div className="co-hero-right">
+          <div className="co-skeleton-block" style={{ width: '120px', height: '120px', borderRadius: '50%' }} />
+          <div className="co-skeleton-block" style={{ width: '80px', height: '24px' }} />
+          <div className="co-skeleton-block" style={{ width: '120px', height: '13px' }} />
         </div>
       </div>
 
-      {/* Stats bar skeleton */}
-      <div className="v3-skeleton-grid" style={{ borderBottom: '1px solid #1a1a1a' }}>
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="v3-skeleton-cell" style={{ borderBottom: 'none' }}>
-            <div className="v3-skeleton-block" style={{ width: '80px', height: '12px' }} />
-            <div className="v3-skeleton-block" style={{ width: '60px', height: '22px' }} />
-          </div>
-        ))}
+      {/* Panels row skeleton */}
+      <div className="co-panels-row">
+        <div className="co-panel" style={{ padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="co-skeleton-block" style={{ width: '160px', height: '14px' }} />
+        </div>
+        <div className="co-panel" style={{ padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="co-skeleton-block" style={{ width: '200px', height: '14px' }} />
+        </div>
       </div>
 
-      {/* Category grid skeleton */}
-      <div style={{ borderBottom: '1px solid #1a1a1a' }}>
-        <div className="v3-skeleton-header">
-          <div className="v3-skeleton-block" style={{ width: '200px', height: '18px' }} />
-          <div className="v3-skeleton-block" style={{ width: '80px', height: '14px' }} />
-        </div>
-        <div className="v3-skeleton-grid">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="v3-skeleton-cell">
-              <div className="v3-skeleton-block" style={{ width: '120px', height: '14px' }} />
-              <div className="v3-skeleton-block" style={{ width: '80px', height: '12px' }} />
-              <div className="v3-skeleton-block" style={{ width: '100%', height: '2px' }} />
+      {/* Check results skeleton */}
+      <div className="co-checks-section">
+        <h2 className="co-checks-title">
+          <span className="co-skeleton-block" style={{ display: 'inline-block', width: '160px', height: '22px' }} />
+        </h2>
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="co-check-row" style={{ cursor: 'default' }}>
+            <div className="co-skeleton-block" style={{ height: '14px', width: '50%' }} />
+            <div className="co-check-bar-track">
+              <div className="co-skeleton-block" style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0 }} />
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Checks skeleton */}
-      <div style={{ borderBottom: '1px solid #1a1a1a' }}>
-        <div className="v3-skeleton-header">
-          <div className="v3-skeleton-block" style={{ width: '160px', height: '18px' }} />
-          <div className="v3-skeleton-block" style={{ width: '80px', height: '14px' }} />
-        </div>
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', alignItems: 'center', gap: '16px', padding: '14px 24px', borderBottom: '1px solid #1a1a1a' }}>
-            <div className="v3-skeleton-block" style={{ height: '16px', width: '60%' }} />
-            <div className="v3-skeleton-block" style={{ width: '80px', height: '2px' }} />
-            <div className="v3-skeleton-block" style={{ width: '28px', height: '18px' }} />
-            <div className="v3-skeleton-block" style={{ width: '20px', height: '18px' }} />
+            <div className="co-skeleton-block" style={{ width: '28px', height: '14px', justifySelf: 'end' }} />
+            <div className="co-skeleton-block" style={{ width: '16px', height: '14px' }} />
           </div>
         ))}
-      </div>
-
-      {/* Loading indicator */}
-      <div style={{ padding: '32px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ fontFamily: "'VT323', monospace", fontSize: '20px', letterSpacing: '4px', color: '#555', textTransform: 'uppercase' }}>
-          // LOADING_REPORT
-        </span>
-        <span className="v3-skeleton-block" style={{ display: 'inline-block', width: '10px', height: '18px' }} />
       </div>
     </main>
   );

@@ -1,24 +1,89 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+
 interface ScoreRingProps {
   score: number;
   grade: string;
 }
 
-function scoreColorClass(score: number): string {
-  if (score >= 80) return 'score-color-hi';
-  if (score >= 65) return 'score-color-good';
-  if (score >= 45) return 'score-color-mid';
-  if (score >= 30) return 'score-color-low';
-  return 'score-color-fail';
+function scoreColor(score: number): string {
+  if (score >= 80) return '#00e87b';
+  if (score >= 65) return '#a8e63d';
+  if (score >= 45) return '#ffaa00';
+  return '#ff4444';
 }
 
 export default function ScoreRing({ score, grade }: ScoreRingProps) {
-  const colorCls = scoreColorClass(score);
+  const circleRef = useRef<SVGCircleElement>(null);
+
+  const size = 120;
+  const strokeWidth = 8;
+  const r = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference - (score / 100) * circumference;
+  const color = scoreColor(score);
+
+  useEffect(() => {
+    const el = circleRef.current;
+    if (!el) return;
+    // Start fully hidden, then animate to final offset
+    el.style.strokeDashoffset = String(circumference);
+    el.style.transition = 'none';
+    // Force reflow
+    void el.getBoundingClientRect();
+    el.style.transition = 'stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1)';
+    el.style.strokeDashoffset = String(offset);
+  }, [circumference, offset]);
 
   return (
-    <div className="score-display">
-      <div className={`score-big-number ${colorCls}`}>{score}</div>
-      <div className="score-out-of">// OUT_OF_100</div>
-      <div className="score-grade-badge">GRADE_{grade}</div>
+    <div className="co-score-ring-wrap">
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="co-score-ring-svg"
+        role="img"
+        aria-label={`Score: ${score} out of 100, grade ${grade}`}
+      >
+        <title>{`Score: ${score} out of 100, grade ${grade}`}</title>
+        {/* Track */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--border)"
+          strokeWidth={strokeWidth}
+        />
+        {/* Fill arc */}
+        <circle
+          ref={circleRef}
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference}
+          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+        />
+        {/* Score number */}
+        <text
+          x={size / 2}
+          y={size / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill={color}
+          fontSize="40"
+          fontFamily="'Inter', sans-serif"
+          fontWeight="600"
+        >
+          {score}
+        </text>
+      </svg>
     </div>
   );
 }
