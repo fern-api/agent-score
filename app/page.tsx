@@ -8,42 +8,26 @@ import SiteFooter from '@/components/SiteFooter';
 
 export const dynamic = 'force-dynamic';
 
-const tickerItems = [
-  { name: 'Stripe', score: 96 },
-  { name: 'ElevenLabs', score: 94 },
-  { name: 'Square', score: 89 },
-  { name: 'Cloudflare', score: 88 },
-  { name: 'Anthropic', score: 86 },
-  { name: 'Vercel', score: 85 },
-  { name: 'Cohere', score: 83 },
-  { name: 'OpenAI', score: 78 },
-  { name: 'Sentry', score: 71 },
-  { name: 'Datadog', score: 70 },
-  { name: 'Resend', score: 65 },
-  { name: 'Supabase', score: 62 },
-  { name: 'Clerk', score: 58 },
-  { name: 'Shopify', score: 52 },
-  { name: 'HubSpot', score: 48 },
-  { name: 'AWS', score: 42 },
-  { name: 'Slack', score: 39 },
-  { name: 'Twilio', score: 35 },
-  { name: 'Zendesk', score: 30 },
-  { name: 'Salesforce', score: 25 },
-  { name: 'SAP', score: 18 },
-];
+function scoreColor(score: number): string {
+  if (score >= 80) return '#00e87b';
+  if (score >= 65) return '#a8e63d';
+  if (score >= 45) return '#ffaa00';
+  if (score >= 30) return '#f97316';
+  return '#ef4444';
+}
 
-function TickerSet() {
+function TickerSet({ items }: { items: { name: string; score: number }[] }) {
   return (
     <>
-      {tickerItems.map((item, i) => {
-        const cls = item.score >= 80 ? ' hi' : item.score < 40 ? ' lo' : '';
-        return (
-          <span key={i} className={`tick-item${cls}`}>
+      {items.map((item, i) => (
+        <span key={i}>
+          <span className="tick-item">
             {item.name}{' '}
-            <span className="tick-score">{item.score}</span>
+            <strong style={{ color: scoreColor(item.score) }}>{item.score}</strong>
           </span>
-        );
-      })}
+          <span className="ticker-separator">·</span>
+        </span>
+      ))}
     </>
   );
 }
@@ -161,6 +145,7 @@ const GATE_GRID = [
 export default async function HomePage() {
   const companies = await getLeaderboard();
   const categories = Array.from(new Set(companies.map((c) => c.category))).sort();
+  const tickerItems = [...companies].sort((a, b) => b.score - a.score).map(c => ({ name: c.name, score: c.score }));
 
   return (
     <main>
@@ -181,11 +166,10 @@ export default async function HomePage() {
               <span style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>
                 Developed by
                 <a href="https://buildwithfern.com" target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center'}}>
-                  <Image src="/fern-labs-dark.svg" alt="Fern Labs" width={56} height={13} className="fern-logo-dark" />
-                  <Image src="/fern-labs-light.svg" alt="Fern Labs" width={56} height={13} className="fern-logo-light" />
+                  <Image src="/fern-labs-dark.svg" alt="Fern Labs" width={64} height={13} className="fern-logo-dark" />
+                  <Image src="/fern-labs-light.svg" alt="Fern Labs" width={64} height={13} className="fern-logo-light" />
                 </a>
               </span>
-              <span style={{color:'var(--border)'}}>·</span>
               <span style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>
                 in partnership with
                 <a href="https://github.com/dacharyc" target="_blank" rel="noreferrer">Dachary Carey</a>
@@ -269,8 +253,8 @@ export default async function HomePage() {
       {/* TICKER */}
       <div className="ticker-section">
         <div className="ticker-track">
-          <TickerSet />
-          <TickerSet />
+          <TickerSet items={tickerItems} />
+          <TickerSet items={tickerItems} />
         </div>
       </div>
 

@@ -61,6 +61,7 @@ export async function upsertScore(company: CompanyScore): Promise<void> {
 export async function getScoreBySlug(slug: string): Promise<CompanyScore | null> {
   const url = `${process.env.SUPABASE_URL}/rest/v1/scores?select=*&slug=eq.${encodeURIComponent(slug)}&order=scored_at.desc&limit=1`;
   const res = await fetch(url, {
+    cache: 'no-store',
     headers: {
       apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
       Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
@@ -75,6 +76,7 @@ export async function getScoreBySlug(slug: string): Promise<CompanyScore | null>
 export async function getAllScores(): Promise<CompanyScore[]> {
   const url = `${process.env.SUPABASE_URL}/rest/v1/scores?select=slug,name,category,docs_url,score,grade,scored_at,checks_total,checks_pass,checks_warn,checks_fail&order=scored_at.desc`;
   const res = await fetch(url, {
+    cache: 'no-store',
     headers: {
       apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
       Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,

@@ -152,8 +152,6 @@ export default async function CompanyPage({ params }: { params: { slug: string }
       {/* Hero: breadcrumb + name/domain/date + score ring */}
       <div className="co-hero-container">
         <div className="co-breadcrumb">
-          <Link href="/">Home</Link>
-          <span className="co-breadcrumb-sep">/</span>
           <Link href="/#leaderboard">Leaderboard</Link>
           <span className="co-breadcrumb-sep">/</span>
           <span className="co-breadcrumb-current">{company.name}</span>

@@ -9,71 +9,58 @@ const SOIL_CHARS = ['@','#','&','%','+','=','-',':','.'];
 const PT     = [0, 0.28, 0.58, 1.0];
 const PNAMES = ['BUD', 'UNFURLING', 'MATURE'];
 
-// Crozier curl pixels — a tight shepherd's crook at the stem tip
+// Crozier — square spiral fiddlehead: 5×5 outer ring + 3×3 inner ring
+// openT: pixel is drawn while within < openT, so higher = stays coiled longer (inner core)
+// Outer ring uncoils first (low openT), inner core last (high openT)
 const CROZIER: { x: number; y: number; openT: number }[] = [
-  { x: 0,  y: -1, openT: 1.00 },
-  { x: 1,  y: -1, openT: 0.70 },
-  { x: 2,  y: -1, openT: 0.50 },
-  { x: 2,  y: -2, openT: 0.38 },
-  { x: 1,  y: -3, openT: 0.26 },
-  { x: 0,  y: -3, openT: 0.18 },
-  { x: -1, y: -3, openT: 0.12 },
-  { x: -1, y: -2, openT: 0.08 },
-  { x: -1, y: -1, openT: 0.05 },
+  // === Outer 5×5 ring (y: -5 to -1, x: -2 to +2) ===
+  // Top row
+  { x:-2, y:-5, openT:0.12 }, { x:-1, y:-5, openT:0.14 }, { x:0, y:-5, openT:0.16 },
+  { x: 1, y:-5, openT:0.18 }, { x: 2, y:-5, openT:0.20 },
+  // Right column
+  { x:2, y:-4, openT:0.24 }, { x:2, y:-3, openT:0.28 },
+  { x:2, y:-2, openT:0.32 }, { x:2, y:-1, openT:0.36 },
+  // Bottom-right (near stem)
+  { x:1, y:-1, openT:0.40 },
+  // Left column
+  { x:-2, y:-1, openT:0.44 }, { x:-2, y:-2, openT:0.48 },
+  { x:-2, y:-3, openT:0.52 }, { x:-2, y:-4, openT:0.56 },
+
+  // === Inner 3×3 ring (y: -4 to -2, x: -1 to +1) ===
+  { x:-1, y:-4, openT:0.62 }, { x:0, y:-4, openT:0.66 }, { x:1, y:-4, openT:0.70 },
+  { x: 1, y:-3, openT:0.74 }, { x:1, y:-2, openT:0.78 },
+  { x:-1, y:-2, openT:0.82 }, { x:-1, y:-3, openT:0.86 },
+
+  // === Core (last to uncoil) ===
+  { x:0, y:-3, openT:0.92 },
+  { x:0, y:-2, openT:0.96 },
+  { x:0, y:-1, openT:1.00 },
 ];
 
 const STEM_MAX = 15;
 
-// Frond pixels sorted by t — bottom pairs reveal first
+// Organic fern pinnae — alternating diagonal fronds along the stalk
+// x = offset from stem (rootX), y = rows above soil (negative)
+// t values used for progressive reveal order (lower = appears first in MATURE)
 const FRONDS: { x: number; y: number; t: number }[] = [
-  { x:-1,y:-2,t:0.32 },{ x:1,y:-2,t:0.32 },
-  { x:-2,y:-3,t:0.33 },{ x:2,y:-3,t:0.33 },
-  { x:-1,y:-4,t:0.35 },{ x:1,y:-4,t:0.35 },
-  { x:-2,y:-4,t:0.36 },{ x:2,y:-4,t:0.36 },
-  { x:-3,y:-5,t:0.37 },{ x:3,y:-5,t:0.37 },
-  { x:-2,y:-5,t:0.38 },{ x:2,y:-5,t:0.38 },
-  { x:-1,y:-6,t:0.40 },{ x:1,y:-6,t:0.40 },
-  { x:-2,y:-6,t:0.41 },{ x:2,y:-6,t:0.41 },
-  { x:-3,y:-6,t:0.42 },{ x:3,y:-6,t:0.42 },
-  { x:-3,y:-7,t:0.43 },{ x:3,y:-7,t:0.43 },
-  { x:-4,y:-7,t:0.44 },{ x:4,y:-7,t:0.44 },
-  { x:-4,y:-8,t:0.45 },{ x:4,y:-8,t:0.45 },
-  { x:-1,y:-8,t:0.46 },{ x:1,y:-8,t:0.46 },
-  { x:-2,y:-8,t:0.47 },{ x:2,y:-8,t:0.47 },
-  { x:-3,y:-8,t:0.48 },{ x:3,y:-8,t:0.48 },
-  { x:-3,y:-9,t:0.49 },{ x:3,y:-9,t:0.49 },
-  { x:-4,y:-9,t:0.50 },{ x:4,y:-9,t:0.50 },
-  { x:-5,y:-9,t:0.51 },{ x:5,y:-9,t:0.51 },
-  { x:-4,y:-10,t:0.52},{ x:4,y:-10,t:0.52},
-  { x:-5,y:-10,t:0.53},{ x:5,y:-10,t:0.53},
-  { x:-6,y:-10,t:0.54},{ x:6,y:-10,t:0.54},
-  { x:-1,y:-10,t:0.55},{ x:1,y:-10,t:0.55},
-  { x:-2,y:-10,t:0.56},{ x:2,y:-10,t:0.56},
-  { x:-3,y:-10,t:0.57},{ x:3,y:-10,t:0.57},
-  { x:-3,y:-11,t:0.58},{ x:3,y:-11,t:0.58},
-  { x:-4,y:-11,t:0.59},{ x:4,y:-11,t:0.59},
-  { x:-5,y:-11,t:0.60},{ x:5,y:-11,t:0.60},
-  { x:-4,y:-12,t:0.61},{ x:4,y:-12,t:0.61},
-  { x:-5,y:-12,t:0.62},{ x:5,y:-12,t:0.62},
-  { x:-6,y:-12,t:0.63},{ x:6,y:-12,t:0.63},
-  { x:-1,y:-12,t:0.64},{ x:1,y:-12,t:0.64},
-  { x:-2,y:-12,t:0.65},{ x:2,y:-12,t:0.65},
-  { x:-3,y:-12,t:0.66},{ x:3,y:-12,t:0.66},
-  { x:-3,y:-13,t:0.67},{ x:3,y:-13,t:0.67},
-  { x:-4,y:-13,t:0.68},{ x:4,y:-13,t:0.68},
-  { x:-4,y:-14,t:0.69},{ x:4,y:-14,t:0.69},
-  { x:-5,y:-14,t:0.70},{ x:5,y:-14,t:0.70},
-  { x:-1,y:-14,t:0.71},{ x:1,y:-14,t:0.71},
-  { x:-2,y:-14,t:0.72},{ x:2,y:-14,t:0.72},
-  { x:-1,y:-15,t:0.73},{ x:1,y:-15,t:0.73},
-  { x:-2,y:-15,t:0.74},{ x:2,y:-15,t:0.74},
-  { x:-3,y:-15,t:0.75},{ x:3,y:-15,t:0.75},
-  { x:-1,y:-16,t:0.76},{ x:1,y:-16,t:0.76},
-  // Extended mature crown
-  { x:-2,y:-16,t:0.77},{ x:2,y:-16,t:0.77},
-  { x: 0,y:-17,t:0.78},
-  { x:-1,y:-17,t:0.79},{ x:1,y:-17,t:0.79},
-  { x: 0,y:-18,t:0.80},
+  // Tip frond — diagonal upper-right from stalk top
+  { x: 1, y:-12, t:0.32 }, { x: 2, y:-13, t:0.34 }, { x: 3, y:-13, t:0.36 },
+  // Left pinna 1 (y=-11)
+  { x:-1, y:-11, t:0.38 }, { x:-2, y:-11, t:0.40 },
+  // Right pinna 1 (y=-10)
+  { x: 1, y:-10, t:0.42 }, { x: 2, y:-10, t:0.44 }, { x: 3, y:-10, t:0.46 },
+  // Left pinna 2 (y=-9)
+  { x:-1, y: -9, t:0.48 }, { x:-2, y: -9, t:0.50 }, { x:-3, y: -9, t:0.52 },
+  // Right pinna 2 (y=-8)
+  { x: 1, y: -8, t:0.54 }, { x: 2, y: -8, t:0.56 },
+  // Left pinna 3 (y=-7)
+  { x:-1, y: -7, t:0.58 }, { x:-2, y: -7, t:0.60 },
+  // Right pinna 3 (y=-6)
+  { x: 1, y: -6, t:0.62 }, { x: 2, y: -6, t:0.64 },
+  // Left pinna 4 (y=-5)
+  { x:-1, y: -5, t:0.66 }, { x:-2, y: -5, t:0.68 },
+  // Small right pinna (y=-4)
+  { x: 1, y: -4, t:0.70 },
 ];
 
 function noise(x: number, y: number, t: number) {
@@ -143,10 +130,20 @@ function drawRoots(ctx: CanvasRenderingContext2D, rootX: number, surf: number, c
   }
 }
 
+// null = live animation; 0/1/2 = pinned to that phase index at 85% through it
+type PinnedPhase = number | null;
+
 export default function MatrixBackground() {
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
+  const [pinnedPhase, setPinnedPhase] = useState<PinnedPhase>(null);
+  const pinnedPhaseRef = useRef<PinnedPhase>(null);
+  useEffect(() => { pinnedPhaseRef.current = pinnedPhase; }, [pinnedPhase]);
+
+  const cyclePhase = () => {
+    setPinnedPhase(prev => prev === null ? 0 : prev >= PNAMES.length - 1 ? null : prev + 1);
+  };
 
   useEffect(() => {
     const canvas    = canvasRef.current!;
@@ -169,7 +166,11 @@ export default function MatrixBackground() {
 
     function draw() {
       const elapsed = (Date.now() - cycleStart) % CYCLE_MS;
-      const cycleT  = elapsed / CYCLE_MS;
+      const pinned  = pinnedPhaseRef.current;
+      // When pinned: jump to 85% through the chosen phase so it looks fully developed
+      const cycleT  = pinned !== null
+        ? PT[pinned] + (PT[pinned + 1] - PT[pinned]) * 0.85
+        : elapsed / CYCLE_MS;
       const pct     = Math.round(cycleT * 100);
 
       let phaseIdx = PNAMES.length - 1, within = 1;
@@ -244,15 +245,6 @@ export default function MatrixBackground() {
           }
         }
 
-        const frondT = 0.32 + within * 0.48;
-        for (const px of FRONDS) {
-          if (px.t > frondT) continue;
-          const depth = (-px.y) / 17;
-          const sway  = Math.round(Math.sin(frame * 0.038 + depth * 1.4) * 0.15 * depth * 1.8);
-          const alpha = 0.65 + 0.27 * Math.sin(frame * 0.025 + depth * 1.5);
-          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-          ctx.fillRect((rootX + px.x + sway) * CELL + 1, (curSurf + px.y) * CELL + 1, CELL - 2, CELL - 2);
-        }
       }
 
       // ─── MATURE ───────────────────────────────────────────────
@@ -270,11 +262,6 @@ export default function MatrixBackground() {
             ctx.fillRect((rootX + 1) * CELL + 2, (curSurf - i) * CELL + 2, CELL - 3, CELL - 3);
           }
         }
-        // Crown
-        ctx.fillStyle = 'rgba(255,255,255,0.88)';
-        ctx.fillRect(rootX * CELL + 1, (curSurf - STEM_MAX - 1) * CELL + 1, CELL - 2, CELL - 2);
-        ctx.fillRect(rootX * CELL + 1, (curSurf - STEM_MAX - 2) * CELL + 1, CELL - 2, CELL - 2);
-
         // Fronds — full sway, density gradient: brighter near stem axis, dimmer at tips
         for (const px of FRONDS) {
           const depth = (-px.y) / 19;
@@ -287,22 +274,6 @@ export default function MatrixBackground() {
           ctx.fillRect((rootX + px.x + sway) * CELL + 1, (curSurf + px.y) * CELL + 1, CELL - 2, CELL - 2);
         }
 
-        // Pinnule detail pass — tiny sub-pixels between fronds for density
-        for (const px of FRONDS) {
-          if (Math.abs(px.x) < 2) continue; // skip centre column
-          const depth = (-px.y) / 19;
-          const sway  = Math.round(Math.sin(frame * 0.028 + depth * 1.6) * 0.32 * depth * 2.4);
-          const detailAlpha = 0.18 + 0.12 * Math.abs(Math.sin(frame * 0.015 + depth * 2.1));
-          ctx.fillStyle = `rgba(255,255,255,${detailAlpha})`;
-          // Draw a half-cell detail pixel on the inner edge of each frond pixel
-          const innerX = px.x > 0 ? px.x - 1 : px.x + 1;
-          const sz = Math.floor((CELL - 2) * 0.5);
-          ctx.fillRect(
-            (rootX + innerX + sway) * CELL + Math.floor(CELL * 0.5),
-            (curSurf + px.y) * CELL + Math.floor(CELL * 0.25),
-            sz, sz
-          );
-        }
       }
 
       frame++;
@@ -319,15 +290,24 @@ export default function MatrixBackground() {
         ref={canvasRef}
         style={{ display: 'block', width: '100%', height: '100%', imageRendering: 'pixelated' }}
       />
-      <div style={{
-        position: 'absolute', bottom: 24, right: 24,
-        fontFamily: "'Geist Mono', monospace", fontSize: 12,
-        color: '#555', letterSpacing: '1px',
-        textAlign: 'right',
-        pointerEvents: 'none', lineHeight: 1.8,
-      }}>
+      <div
+        onClick={cyclePhase}
+        title={pinnedPhase !== null ? `Phase ${pinnedPhase + 1}/${PNAMES.length} — click to advance` : 'Click to pin a phase'}
+        style={{
+          position: 'absolute', bottom: 24, right: 24,
+          fontFamily: "'Geist Mono', monospace", fontSize: 12,
+          color: '#555', letterSpacing: '1px',
+          textAlign: 'right',
+          cursor: 'pointer', lineHeight: 1.8,
+          userSelect: 'none',
+        }}
+      >
         Simulation: Fern //{' '}
-        <span style={{ color: '#00ff66' }}>{overlay.phase.toLowerCase()}</span><br />
+        <span style={{ color: '#00ff66' }}>{overlay.phase.toLowerCase()}</span>
+        {pinnedPhase !== null && (
+          <span style={{ color: '#333', marginLeft: 4 }}>●</span>
+        )}
+        <br />
         Day <span style={{ color: '#888' }}>{overlay.pct}</span>
       </div>
     </div>
