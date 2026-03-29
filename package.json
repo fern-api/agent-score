@@ -10,6 +10,7 @@
     "generate-scores": "npx tsx scripts/generate-scores.ts"
   },
   "dependencies": {
+    "@chenglou/pretext": "^0.0.3",
     "@fontsource/inter": "^5.2.8",
     "@supabase/supabase-js": "^2.99.2",
     "@vercel/functions": "^3.4.3",

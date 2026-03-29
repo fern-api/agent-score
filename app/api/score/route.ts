@@ -4,6 +4,7 @@ import path from "path";
 import { waitUntil } from "@vercel/functions";
 import { calculateGrade } from "@/lib/scores";
 import { upsertScore } from "@/lib/supabase";
+import { fetchOgName } from "@/lib/og-name";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -86,39 +87,6 @@ async function detectDocsUrl(url: string): Promise<{ isLikely: boolean; warning?
       warning: `Could not fetch the URL — it may be protected by bot-detection.`,
       suggestion: `Try: docs.${parsed.hostname.replace(/^www\./, "")}`,
     };
-  }
-}
-
-function cleanOgName(raw: string): string {
-  return raw
-    .replace(/\s*[|\-–—]\s*(docs|documentation|api\s*reference|developer\s*docs|developers|home|overview|portal)\s*$/i, '')
-    .replace(/^(docs|documentation)\s*[|\-–—]\s*/i, '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .trim();
-}
-
-async function fetchOgName(url: string): Promise<string | null> {
-  try {
-    const r = await fetch(url, {
-      signal: AbortSignal.timeout(8000),
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AgentScore/1.0)', Accept: 'text/html' },
-    });
-    if (!r.ok) return null;
-    const html = await r.text();
-    const siteName = html.match(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i)?.[1]
-      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:site_name["']/i)?.[1];
-    if (siteName) return cleanOgName(siteName);
-    const appName = html.match(/<meta[^>]+name=["']application-name["'][^>]+content=["']([^"']+)["']/i)?.[1]
-      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']application-name["']/i)?.[1];
-    if (appName) return cleanOgName(appName);
-    const ogTitle = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)?.[1]
-      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i)?.[1];
-    if (ogTitle) return cleanOgName(ogTitle);
-    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    if (titleMatch) return cleanOgName(titleMatch[1]);
-    return null;
-  } catch {
-    return null;
   }
 }
 
@@ -252,6 +220,19 @@ export async function POST(request: Request) {
           );
         }
       }
+    }
+
+    // Check Supabase for an existing score before re-scoring
+    const computedSlug = slug || urlToSlug(url);
+    try {
+      const { getScoreBySlug } = await import("@/lib/supabase");
+      const existing = await getScoreBySlug(computedSlug);
+      if (existing) {
+        console.log("[score] returning existing score for slug:", computedSlug);
+        return NextResponse.json({ existing: true, slug: computedSlug, score: existing.score, grade: existing.grade });
+      }
+    } catch {
+      // If Supabase check fails, proceed with fresh scoring
     }
 
     // Generate job, write pending state, kick off background work

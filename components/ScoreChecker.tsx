@@ -73,6 +73,10 @@ export default function ScoreChecker() {
         throw new Error(msg + suggestion);
       }
       const data = await res.json();
+      if (data.existing && data.slug) {
+        window.location.href = `/company/${data.slug}`;
+        return;
+      }
       jobIdRef.current = data.jobId;
       startPolling(data.jobId);
     } catch (err) {
