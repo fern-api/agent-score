@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getCompanyWithFallback, getScores } from '@/lib/scores';
+import { getCompanyWithFallback } from '@/lib/scores';
 import fs from 'fs';
 import path from 'path';
 
@@ -16,19 +16,12 @@ function loadLocalFont(weight: 400 | 500 | 700): ArrayBuffer {
 }
 
 export async function generateStaticParams() {
-  // Include all companies from both Supabase and scores.json
-  const staticSlugs = Object.keys(getScores());
   try {
     const { getAllScores } = await import('@/lib/supabase');
-    const supabaseScores = await getAllScores();
-    const seen = new Set(staticSlugs);
-    const allSlugs = [...staticSlugs];
-    for (const s of supabaseScores) {
-      if (!seen.has(s.slug)) allSlugs.push(s.slug);
-    }
-    return allSlugs.map(slug => ({ slug }));
+    const scores = await getAllScores();
+    return scores.map(s => ({ slug: s.slug }));
   } catch {
-    return staticSlugs.map(slug => ({ slug }));
+    return [];
   }
 }
 

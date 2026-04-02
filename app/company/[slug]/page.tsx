@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import ScoreRing from './ScoreRing';
-import CategoryGrid from './CategoryGrid';
 import CollapsiblePanel from './CollapsiblePanel';
 import CopyButton from './CopyButton';
 import CopyLinkBtn from './CopyLinkBtn';
@@ -12,6 +11,7 @@ import CategoryCheckGroups from './CategoryCheckGroups';
 import AIFixPrompt from './AIFixPrompt';
 import CTASection from '@/components/CTASection';
 import SiteFooter from '@/components/SiteFooter';
+import RerunButton from './RerunButton';
 import '../company.css';
 
 export const dynamic = 'force-dynamic';
@@ -175,6 +175,8 @@ export default async function CompanyPage({ params }: { params: { slug: string }
             </a>
             <div className="co-last-checked">
               Last checked {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              {' · '}
+              <RerunButton url={company.docsUrl} slug={company.slug} />
             </div>
           </div>
           <div className="co-hero-right">
@@ -217,12 +219,6 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           results={checkResults}
         />
       </div>
-
-      {/* Category breakdown */}
-      <div className="co-section-header">
-        <h2 className="co-section-title">Category breakdown</h2>
-      </div>
-      <CategoryGrid categories={categories} />
 
       {/* Check results */}
       <div className="co-checks-section">

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
-import path from "path";
 import { waitUntil } from "@vercel/functions";
 import { calculateGrade } from "@/lib/scores";
-import { upsertScore } from "@/lib/supabase";
-import { fetchOgName } from "@/lib/og-name";
+import { upsertScore, getScoreBySlug } from "@/lib/supabase";
+import { fetchOgName, domainToName } from "@/lib/og-name";
+import { computeScore } from "@/lib/scoring";
+import { inferCategory } from "@/lib/categorize";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -13,17 +14,85 @@ const DOCS_SUBDOMAINS = /^(docs|developer|api|reference|developers)\./i;
 const DOCS_PATHS = /\/(docs|api|reference|guides|developer|sdk|learn|manual|documentation)\//i;
 const DOCS_PLATFORMS = /(readme\.io|gitbook\.io|mintlify\.app|buildwithfern\.com\/learn|\.fern\.dev|\.readme\.io|\.gitbook\.io|github\.io|notion\.site)/i;
 
-function jobPath(jobId: string) {
-  return `/tmp/score-${jobId}.json`;
+// ---------------------------------------------------------------------------
+// Rate limiting — cookie-based, 5 scoring requests per hour
+// ---------------------------------------------------------------------------
+
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 3_600_000;
+const RL_COOKIE = 'score_rl';
+
+function checkCookieRateLimit(request: Request): { allowed: boolean; timestamps: number[] } {
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${RL_COOKIE}=([^;]*)`));
+  let timestamps: number[] = [];
+  if (match) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(match[1]));
+      if (Array.isArray(parsed)) {
+        const now = Date.now();
+        timestamps = parsed.filter((t: unknown) => typeof t === 'number' && now - t < RATE_WINDOW_MS);
+      }
+    } catch { /* malformed cookie — treat as empty */ }
+  }
+  return { allowed: timestamps.length < RATE_LIMIT, timestamps };
 }
+
+function buildRateLimitCookie(timestamps: number[]): string {
+  const value = encodeURIComponent(JSON.stringify([...timestamps, Date.now()]));
+  return `${RL_COOKIE}=${value}; Path=/; Max-Age=3600; HttpOnly; SameSite=Strict`;
+}
+
+// ---------------------------------------------------------------------------
+// Visibility heuristics
+// ---------------------------------------------------------------------------
+
+// Free/personal hosting — score but don't show on leaderboard
+const PERSONAL_HOSTING = /(^|\.)((github|gitlab)\.io|vercel\.app|netlify\.app|pages\.dev|surge\.sh|render\.com|railway\.app|fly\.dev|cloudflare\.dev|web\.app|firebaseapp\.com|glitch\.me|replit\.dev|codepen\.io)$/i;
+
+async function isKnownCompany(url: string): Promise<boolean> {
+  try {
+    const { hostname } = new URL(url);
+    const domain = hostname.replace(/^(www|docs|developer|api|reference|developers)\./i, '');
+    const res = await fetch(`https://logo.clearbit.com/${domain}`, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(4000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function shouldHide(url: string): Promise<boolean> {
+  try {
+    const { hostname } = new URL(url);
+    if (PERSONAL_HOSTING.test(hostname)) {
+      const known = await isKnownCompany(url);
+      console.log('[score] personal hosting domain, clearbit known:', known, hostname);
+      return !known;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Job file helpers
+// ---------------------------------------------------------------------------
 
 function writeJob(jobId: string, data: Record<string, unknown>) {
   try {
-    fs.writeFileSync(jobPath(jobId), JSON.stringify(data));
+    fs.writeFileSync(`/tmp/score-${jobId}.json`, JSON.stringify(data));
   } catch (e) {
     console.error("[score] writeJob failed:", e);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Docs-site detection
+// ---------------------------------------------------------------------------
 
 async function detectDocsUrl(url: string): Promise<{ isLikely: boolean; warning?: string; suggestion?: string }> {
   let parsed: URL;
@@ -41,40 +110,26 @@ async function detectDocsUrl(url: string): Promise<{ isLikely: boolean; warning?
   if (DOCS_PLATFORMS.test(host + parsed.pathname)) return { isLikely: true };
 
   try {
-    const llmsUrl = `${parsed.origin}/llms.txt`;
-    const r = await fetch(llmsUrl, {
+    const r = await fetch(`${parsed.origin}/llms.txt`, {
       signal: AbortSignal.timeout(5000),
       headers: { "User-Agent": "Mozilla/5.0 (compatible; AgentScore/1.0)" },
     });
     if (r.ok) return { isLikely: true };
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
 
   try {
     const r = await fetch(url, {
       signal: AbortSignal.timeout(8000),
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; AgentScore/1.0)",
-        Accept: "text/html",
-      },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; AgentScore/1.0)", Accept: "text/html" },
     });
-
     if (!r.ok) {
-      return {
-        isLikely: false,
-        warning: `The URL returned HTTP ${r.status}. Verify it is publicly accessible.`,
-      };
+      return { isLikely: false, warning: `The URL returned HTTP ${r.status}. Verify it is publicly accessible.` };
     }
-
     const html = await r.text();
-    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    const title = titleMatch ? titleMatch[1].toLowerCase() : "";
+    const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.toLowerCase() ?? "";
     if (/docs|documentation|api\s|reference|developer|quickstart/i.test(title)) return { isLikely: true };
-    const codeCount = (html.match(/<pre|<code/g) || []).length;
-    if (codeCount >= 3) return { isLikely: true };
+    if ((html.match(/<pre|<code/g) ?? []).length >= 3) return { isLikely: true };
     if (/getting started|api reference|quickstart|sdk reference/i.test(html)) return { isLikely: true };
-
     const baseDomain = host.replace(/^www\./, "");
     return {
       isLikely: false,
@@ -90,6 +145,10 @@ async function detectDocsUrl(url: string): Promise<{ isLikely: boolean; warning?
   }
 }
 
+// ---------------------------------------------------------------------------
+// Slug helpers
+// ---------------------------------------------------------------------------
+
 function urlToSlug(url: string): string {
   try {
     const parsed = new URL(url);
@@ -102,12 +161,23 @@ function urlToSlug(url: string): string {
   }
 }
 
-async function runJob(jobId: string, url: string, slug?: string, name?: string) {
+function nameToSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+// ---------------------------------------------------------------------------
+// Job runner
+// ---------------------------------------------------------------------------
+
+async function runJob(jobId: string, url: string, slug?: string, name?: string, hidden?: boolean) {
   console.log("[score] runJob start:", jobId, url);
   try {
     const { runChecks } = await import("afdocs");
 
-    // Race against a 50s hard timeout so the job always writes a terminal state
     const result = await Promise.race([
       runChecks(url, {
         requestTimeout: 8000,
@@ -121,19 +191,28 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string) 
     ]);
     console.log("[score] runChecks complete:", JSON.stringify(result.summary));
 
-    const score = Math.round((result.summary.pass / result.summary.total) * 100);
-    const grade = calculateGrade(score);
+    // Exclude llms-txt-valid when the only issue is a missing blockquote
+    const scorableResults = result.results.filter(
+      (r: { id: string; message: string }) => !(r.id === "llms-txt-valid" && r.message.includes("No blockquote summary found"))
+    );
+    const scored = computeScore(scorableResults as Parameters<typeof computeScore>[0]);
+    const score = scored.overall;
+    const grade = scored.grade;
+
     const effectiveSlug = slug || urlToSlug(url);
-    const ogName = name ? null : await fetchOgName(url);
-    const effectiveName = name ?? ogName ?? effectiveSlug;
+    const effectiveName = name ?? effectiveSlug;
+
+    const category = await inferCategory(url, effectiveName);
+    console.log("[score] inferred category:", category, "for:", effectiveName);
 
     const companyData = {
       name: effectiveName,
       slug: effectiveSlug,
-      category: "Other",
+      category,
       docsUrl: url,
       score,
       grade,
+      hidden: hidden ?? false,
       scoredAt: new Date().toISOString(),
       checks: {
         total: result.summary.total,
@@ -144,7 +223,6 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string) 
       results: result.results,
     };
 
-    // Persist to Supabase (primary store)
     try {
       await upsertScore(companyData);
       console.log("[score] Supabase upsert complete for:", effectiveSlug);
@@ -152,7 +230,6 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string) 
       console.error("[score] Supabase upsert failed:", dbErr instanceof Error ? dbErr.message : dbErr);
     }
 
-    // Generate and store OG image
     try {
       const { generateOgImageBuffer } = await import("@/lib/og-image-generator");
       const { uploadOgImage } = await import("@/lib/supabase");
@@ -161,16 +238,6 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string) 
       console.log("[score] OG image uploaded for:", effectiveSlug);
     } catch (ogErr) {
       console.error("[score] OG image generation failed:", ogErr instanceof Error ? ogErr.message : ogErr);
-    }
-
-    // Best-effort fallback: write to scores.json
-    try {
-      const scoresPath = path.join(process.cwd(), "data", "scores.json");
-      const scores = JSON.parse(fs.readFileSync(scoresPath, "utf-8"));
-      scores[effectiveSlug] = companyData;
-      fs.writeFileSync(scoresPath, JSON.stringify(scores, null, 2));
-    } catch {
-      // expected to fail on Vercel read-only fs — Supabase is the source of truth
     }
 
     writeJob(jobId, {
@@ -190,59 +257,97 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string) 
   }
 }
 
+// ---------------------------------------------------------------------------
+// POST handler
+// ---------------------------------------------------------------------------
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { url, slug, name, skipDetection } = body;
-    console.log("[score] POST received", { url, slug, skipDetection });
+    const { url, slug: slugParam, name: nameParam, skipDetection, force } = body;
+    console.log("[score] POST received", { url, slugParam, skipDetection, force });
 
     if (!url) {
       return NextResponse.json({ error: "url is required" }, { status: 400 });
     }
 
-    // Fast docs-site detection before starting the async job
-    if (!skipDetection) {
-      let existingScores: Record<string, unknown> = {};
+    // Rate limiting — cookie-based
+    const { allowed, timestamps } = checkCookieRateLimit(request);
+    if (!allowed) {
+      console.log("[score] rate limit exceeded");
+      return NextResponse.json(
+        { error: "rate_limit", message: `You can score up to ${RATE_LIMIT} sites per hour. Try again later.` },
+        { status: 429 }
+      );
+    }
+
+    // Resolve display name: compare og name vs domain name, pick the shorter
+    const ogName = nameParam ? null : await fetchOgName(url);
+    const fromDomain = nameParam ? null : domainToName(url);
+    let derivedName: string | null = null;
+    if (ogName && fromDomain) {
+      derivedName = ogName.length <= fromDomain.length ? ogName : fromDomain;
+    } else {
+      derivedName = ogName ?? fromDomain ?? null;
+    }
+    const effectiveName: string | null = nameParam ?? derivedName ?? null;
+    console.log("[score] name candidates — og:", ogName, "domain:", fromDomain, "chosen:", effectiveName);
+
+    const effectiveSlug = slugParam || (effectiveName ? nameToSlug(effectiveName) : urlToSlug(url));
+    console.log("[score] resolved slug:", effectiveSlug, "name:", effectiveName);
+
+    // Return cached result if company already exists (skip when force=true)
+    if (!force) {
       try {
-        const scoresPath = path.join(process.cwd(), "data", "scores.json");
-        existingScores = JSON.parse(fs.readFileSync(scoresPath, "utf-8"));
-      } catch {
-        // ignore
-      }
-      const alreadyKnown = slug && existingScores[slug];
-      if (!alreadyKnown) {
-        const detection = await detectDocsUrl(url);
-        console.log("[score] detection:", JSON.stringify(detection));
-        if (!detection.isLikely) {
-          return NextResponse.json(
-            { error: "not_a_docs_site", message: detection.warning, suggestion: detection.suggestion },
-            { status: 422 }
-          );
+        const existing = await getScoreBySlug(effectiveSlug);
+        if (existing) {
+          console.log("[score] company already exists, returning cached result:", effectiveSlug);
+          const jobId = crypto.randomUUID();
+          writeJob(jobId, {
+            status: "complete",
+            score: existing.score,
+            grade: existing.grade,
+            slug: effectiveSlug,
+            summary: {
+              total: existing.checks.total,
+              pass: existing.checks.pass,
+              warn: existing.checks.warn,
+              fail: existing.checks.fail,
+            },
+            results: existing.results,
+          });
+          return NextResponse.json({ jobId });
         }
+      } catch { /* Supabase check failed — proceed with scoring */ }
+    }
+
+    // Docs-site detection
+    if (!skipDetection) {
+      const detection = await detectDocsUrl(url);
+      console.log("[score] detection:", JSON.stringify(detection));
+      if (!detection.isLikely) {
+        return NextResponse.json(
+          { error: "not_a_docs_site", message: detection.warning, suggestion: detection.suggestion },
+          { status: 422 }
+        );
       }
     }
 
-    // Check Supabase for an existing score before re-scoring
-    const computedSlug = slug || urlToSlug(url);
-    try {
-      const { getScoreBySlug } = await import("@/lib/supabase");
-      const existing = await getScoreBySlug(computedSlug);
-      if (existing) {
-        console.log("[score] returning existing score for slug:", computedSlug);
-        return NextResponse.json({ existing: true, slug: computedSlug, score: existing.score, grade: existing.grade });
-      }
-    } catch {
-      // If Supabase check fails, proceed with fresh scoring
-    }
+    // Determine visibility heuristics
+    const hidden = await shouldHide(url);
+    console.log("[score] hidden:", hidden, url);
 
-    // Generate job, write pending state, kick off background work
+    // Start job
     const jobId = crypto.randomUUID();
     writeJob(jobId, { status: "running" });
     console.log("[score] job created:", jobId);
 
-    waitUntil(runJob(jobId, url, slug, name));
+    waitUntil(runJob(jobId, url, effectiveSlug, effectiveName ?? undefined, hidden));
 
-    return NextResponse.json({ jobId });
+    // Set updated rate limit cookie
+    const response = NextResponse.json({ jobId });
+    response.headers.set('Set-Cookie', buildRateLimitCookie(timestamps));
+    return response;
   } catch (error) {
     console.error("[score] POST error:", error instanceof Error ? error.stack : error);
     return NextResponse.json(

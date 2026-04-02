@@ -1,10 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import type { CompanyScore } from './scores';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let _supabase: ReturnType<typeof createClient> | null = null;
+function getSupabase() {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return _supabase;
+}
 
 export interface ScoreRow {
   slug: string;
@@ -19,6 +25,7 @@ export interface ScoreRow {
   checks_warn: number;
   checks_fail: number;
   results: CompanyScore['results'];
+  hidden?: boolean;
 }
 
 function rowToCompany(row: ScoreRow): CompanyScore {
@@ -41,7 +48,7 @@ function rowToCompany(row: ScoreRow): CompanyScore {
 }
 
 export async function upsertScore(company: CompanyScore): Promise<void> {
-  const { error } = await supabase.from('scores').upsert({
+  const payload: Record<string, unknown> = {
     slug: company.slug,
     name: company.name,
     category: company.category,
@@ -54,7 +61,11 @@ export async function upsertScore(company: CompanyScore): Promise<void> {
     checks_warn: company.checks.warn,
     checks_fail: company.checks.fail,
     results: company.results ?? null,
-  }, { onConflict: 'slug' });
+  };
+  // Only write hidden when explicitly provided — preserves manual overrides
+  if (company.hidden !== undefined) payload.hidden = company.hidden;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await getSupabase().from('scores').upsert(payload as any, { onConflict: 'slug' });
   if (error) throw new Error(`Supabase upsert failed: ${error.message}`);
 }
 
@@ -74,7 +85,7 @@ export async function getScoreBySlug(slug: string): Promise<CompanyScore | null>
 }
 
 export async function getAllScores(): Promise<CompanyScore[]> {
-  const url = `${process.env.SUPABASE_URL}/rest/v1/scores?select=slug,name,category,docs_url,score,grade,scored_at,checks_total,checks_pass,checks_warn,checks_fail&order=scored_at.desc`;
+  const url = `${process.env.SUPABASE_URL}/rest/v1/scores?select=slug,name,category,docs_url,score,grade,scored_at,checks_total,checks_pass,checks_warn,checks_fail&hidden=eq.false&order=scored_at.desc`;
   const res = await fetch(url, {
     cache: 'no-store',
     headers: {
@@ -101,7 +112,7 @@ const OG_BUCKET = 'og-images';
 
 // Ensure bucket exists (called lazily)
 async function ensureOgBucket(): Promise<void> {
-  const { error } = await supabase.storage.createBucket(OG_BUCKET, { public: true });
+  const { error } = await getSupabase().storage.createBucket(OG_BUCKET, { public: true });
   // Ignore "already exists" error
   if (error && !error.message.includes('already exists')) {
     console.error('[og] bucket create error:', error.message);
@@ -110,13 +121,13 @@ async function ensureOgBucket(): Promise<void> {
 
 export async function uploadOgImage(slug: string, buffer: Buffer): Promise<void> {
   await ensureOgBucket();
-  const { error } = await supabase.storage
+  const { error } = await getSupabase().storage
     .from(OG_BUCKET)
     .upload(`${slug}.png`, buffer, { contentType: 'image/png', upsert: true });
   if (error) throw new Error(`OG image upload failed: ${error.message}`);
 }
 
 export function getOgImagePublicUrl(slug: string): string {
-  const { data } = supabase.storage.from(OG_BUCKET).getPublicUrl(`${slug}.png`);
+  const { data } = getSupabase().storage.from(OG_BUCKET).getPublicUrl(`${slug}.png`);
   return data.publicUrl;
 }

@@ -66,20 +66,42 @@ export default function Leaderboard({ companies, categories }: LeaderboardProps)
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="lb-grid">
-        {filtered.map((c) => (
-          <Link href={`/company/${c.slug}`} className="lb-item" key={c.slug}>
-            <span className="lb-info">
-              <span className="lb-name">{c.name}</span>
-              <span className="lb-cat">{c.category}</span>
-            </span>
-            <span className="lb-score" style={{ color: scoreColor(c.score) }}>
-              {c.score}
-            </span>
-          </Link>
-        ))}
-      </div>
+      {/* Grid grouped by grade */}
+      {(['A+', 'A', 'B', 'C', 'D', 'F'] as const).map((grade) => {
+        const gradeLabels: Record<string, string> = {
+          'A+': 'Exceptional',
+          'A':  'Agent-Ready',
+          'B':  'Good',
+          'C':  'Improving',
+          'D':  'Needs Work',
+          'F':  'Not Agent Supported',
+        };
+        const gradeItems = filtered.filter(c => c.grade === grade);
+        if (gradeItems.length === 0) return null;
+        return (
+          <div key={grade}>
+            <div className="lb-grade-section">
+              <span className="lb-grade-label" style={{ color: scoreColor(gradeItems[0].score) }}>
+                Grade {grade}:
+              </span>
+              <span className="lb-grade-desc">{gradeLabels[grade]}</span>
+            </div>
+            <div className="lb-grid">
+              {gradeItems.map((c) => (
+                <Link href={`/company/${c.slug}`} className="lb-item" key={c.slug}>
+                  <span className="lb-info">
+                    <span className="lb-name">{c.name}</span>
+                    <span className="lb-cat">{c.category}</span>
+                  </span>
+                  <span className="lb-score" style={{ color: scoreColor(c.score) }}>
+                    {c.score}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

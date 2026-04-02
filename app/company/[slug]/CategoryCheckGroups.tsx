@@ -112,7 +112,11 @@ export default function CategoryCheckGroups({ categories, results }: Props) {
                 />
               </div>
               <span className="co-check-group-score">{score}</span>
-              <span className={`co-check-group-chevron${isOpen ? ' open' : ''}`} aria-hidden="true">›</span>
+              <span className={`co-check-group-chevron${isOpen ? ' open' : ''}`} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6,4 10,8 6,12"/>
+                </svg>
+              </span>
             </button>
             <div id={bodyId} className="co-check-group-body">
               {items.map((item, i) => (

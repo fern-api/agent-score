@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { lines_3 } from 'cli-loaders';
 
 type CheckerState = 'idle' | 'running' | 'complete' | 'error';
 
@@ -25,6 +26,7 @@ export default function ScoreChecker() {
   const [url, setUrl] = useState('');
   const [state, setState] = useState<CheckerState>('idle');
   const [currentStep, setCurrentStep] = useState(0);
+  const [stepFrame, setStepFrame] = useState(0);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ score: number; grade: string } | null>(null);
   const jobIdRef = useRef<string | null>(null);
@@ -95,6 +97,12 @@ export default function ScoreChecker() {
     return () => clearInterval(stepId);
   }, [state]);
 
+  useEffect(() => {
+    if (state !== 'running') return;
+    const id = setInterval(() => setStepFrame(f => (f + 1) % lines_3.keyframes.length), lines_3.speed);
+    return () => clearInterval(id);
+  }, [state]);
+
   useEffect(() => () => stopPolling(), []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -107,7 +115,9 @@ export default function ScoreChecker() {
       <div className="hsf-running">
         {PROGRESS_STEPS.map((step, i) => (
           <div key={step} className={`hsf-step ${i < currentStep ? 'done' : i === currentStep ? 'active' : 'pending'}`}>
-            <span className="hsf-step-icon">{i < currentStep ? '✓' : i === currentStep ? '›' : ' '}</span>
+            <span className="hsf-step-icon">
+              {i < currentStep ? '✓' : i === currentStep ? lines_3.keyframes[stepFrame] : ' '}
+            </span>
             {step}
           </div>
         ))}
@@ -129,17 +139,27 @@ export default function ScoreChecker() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="hsf-form">
-      <input
-        type="url"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        placeholder="https://docs.yourcompany.com"
-        autoComplete="off"
-        className="hsf-input"
-      />
-      <button type="submit" className="hsf-btn">Score your docs</button>
-      {error && <div className="hsf-error">{error}</div>}
-    </form>
+    <div className="hsf-container-outer">
+      <div className="hsf-container">
+        <form onSubmit={handleSubmit} className="hsf-form">
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onBlur={() => {
+              const v = url.trim();
+              if (v && !/^https?:\/\//i.test(v)) setUrl(`https://${v}`);
+            }}
+            placeholder="https://docs.yourcompany.com"
+            autoComplete="off"
+            className="hsf-input"
+          />
+          <div className="hsf-btn-container">
+            <button type="submit" className="hsf-btn">Score your docs</button>
+          </div>
+          {error && <div className="hsf-error">{error}</div>}
+        </form>
+      </div>
+    </div>
   );
 }

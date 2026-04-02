@@ -5,32 +5,10 @@ import ScoreChecker from '@/components/ScoreChecker';
 import MatrixBackground from '@/components/MatrixBackground';
 import CTASection from '@/components/CTASection';
 import SiteFooter from '@/components/SiteFooter';
+import PingPongVideo from '@/components/PingPongVideo';
+import DotDivider from '@/components/DotDivider';
 
 export const dynamic = 'force-dynamic';
-
-function scoreColor(score: number): string {
-  if (score >= 80) return '#00e87b';
-  if (score >= 65) return '#a8e63d';
-  if (score >= 45) return '#ffaa00';
-  if (score >= 30) return '#f97316';
-  return '#ef4444';
-}
-
-function TickerSet({ items }: { items: { name: string; score: number }[] }) {
-  return (
-    <>
-      {items.map((item, i) => (
-        <span key={i}>
-          <span className="tick-item">
-            {item.name}{' '}
-            <strong style={{ color: scoreColor(item.score) }}>{item.score}</strong>
-          </span>
-          <span className="ticker-separator">·</span>
-        </span>
-      ))}
-    </>
-  );
-}
 
 const methodCells = [
   {
@@ -47,7 +25,7 @@ const methodCells = [
   },
   {
     name: 'Page size',
-    checks: '3 checks',
+    checks: '4 checks',
     desc: "Will your pages fit in an agent's context window?",
     icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="13,3 17,3 17,7"/><polyline points="7,17 3,17 3,13"/><line x1="17" y1="3" x2="11" y2="9"/><line x1="3" y1="17" x2="9" y2="11"/></svg>,
   },
@@ -83,69 +61,61 @@ const methodCells = [
   },
 ];
 
+const testimonials = [
+  {
+    name: 'Zeno Rocha',
+    role: 'CEO, Resend',
+    avatar: '/social/zeno-social.png',
+    companyLogo: '/social/resend-social.svg',
+    company: 'Resend',
+    docsUrl: 'https://resend.com/docs',
+    quote: 'Making our docs agent-ready was one of the best investments we made. When Cursor and Claude can read your API reference cleanly, developers ship integrations without ever opening a browser tab.',
+  },
+  {
+    name: 'Alex Atallah',
+    role: 'CEO, OpenRouter',
+    avatar: null,
+    initials: 'AA',
+    companyLogo: '/social/openrouter-social.svg',
+    company: 'OpenRouter',
+    docsUrl: 'https://openrouter.ai/docs',
+    quote: 'At OpenRouter we see firsthand how much traffic comes through AI coding agents. If your llms.txt isn\'t structured right, you\'re invisible to your fastest-growing user segment.',
+  },
+  {
+    name: 'Balaji Raghavan',
+    role: 'Head of Engineering, Postman',
+    avatar: '/social/balaji-social.png',
+    companyLogo: '/social/postman-social.svg',
+    company: 'Postman',
+    docsUrl: 'https://learning.postman.com/docs',
+    quote: 'Postman\'s agent mode, like all agents, relies on LLM-ready docs to use APIs accurately with less hallucination. Without it, agents hallucinate. With it, they just work.',
+  },
+  {
+    name: 'Paul Asjes',
+    role: 'DevEx, ElevenLabs',
+    avatar: '/social/paul-social.png',
+    companyLogo: '/social/elevenlabs-social.svg',
+    company: 'ElevenLabs',
+    docsUrl: 'https://elevenlabs.io/docs',
+    quote: 'The developers who find us through AI agents convert at a higher rate than any other channel. Agent-readable docs aren\'t a nice-to-have. They\'re a growth lever.',
+  },
+  {
+    name: 'Gil Feig',
+    role: 'CEO, Merge',
+    avatar: '/social/gil-social.png',
+    companyLogo: '/social/merge-social.svg',
+    company: 'Merge',
+    docsUrl: 'https://docs.merge.dev',
+    quote: 'We treat Agent Score like Lighthouse: a real quality signal that drives engineering work. The companies winning in the agentic era are the ones whose docs just work for AI.',
+  },
+];
+
 // Pixel art for the Why section ──────────────────────────────────────────────
-function WhyPixelArt({ grid, px = 9 }: { grid: string[]; px?: number }) {
-  const rows = grid.length;
-  const cols = grid[0]?.length ?? 0;
-  return (
-    <svg
-      width={cols * px}
-      height={rows * px}
-      viewBox={`0 0 ${cols * px} ${rows * px}`}
-      fill="var(--accent)"
-      style={{ imageRendering: 'pixelated', opacity: 0.8 } as React.CSSProperties}
-    >
-      {grid.flatMap((row, r) =>
-        row.split('').map((cell, c) =>
-          cell === '1'
-            ? <rect key={`${r}-${c}`} x={c * px} y={r * px} width={px} height={px} />
-            : null
-        )
-      )}
-    </svg>
-  );
-}
-
-// Ghost — hooded phantom figure (12 × 14)
-const GHOST_GRID = [
-  '000111111000',
-  '011111111110',
-  '111111111111',
-  '111111111111',
-  '111001001111',
-  '111111111111',
-  '111111111111',
-  '011111111110',
-  '011111111110',
-  '001111111100',
-  '001111111100',
-  '000111111000',
-  '000011110000',
-  '000001100000',
-];
-
-// Gate — arched gate with vertical bars (12 × 13)
-const GATE_GRID = [
-  '000011110000',
-  '000111111000',
-  '001111111100',
-  '011000000110',
-  '011010010110',
-  '011010010110',
-  '011010010110',
-  '011111111110',
-  '011010010110',
-  '011010010110',
-  '011010010110',
-  '011111111110',
-  '011111111110',
-];
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
   const companies = await getLeaderboard();
   const categories = Array.from(new Set(companies.map((c) => c.category))).sort();
-  const tickerItems = [...companies].sort((a, b) => b.score - a.score).map(c => ({ name: c.name, score: c.score }));
 
   return (
     <main>
@@ -158,9 +128,9 @@ export default async function HomePage() {
             </h1>
             <p className="hero-subtitle">
               Improve your agent readiness to allow AI agents to discover and call APIs directly — evaluated across{' '}
-              <span className="agent-badge"><img src="/cursor-simple-logo.svg" alt="Cursor" style={{width:'12px',height:'14px',filter:'brightness(0) invert(0.6)',display:'block',flexShrink:0}} /> Cursor</span>,{' '}
-              <span className="agent-badge"><img src="/claude-simple-logo.svg" alt="Claude" style={{width:'14px',height:'14px',filter:'brightness(0) invert(0.6)',display:'block',flexShrink:0}} /> Claude</span> and{' '}
-              <span className="agent-badge"><img src="/openai-simple-logo.svg" alt="ChatGPT" style={{width:'14px',height:'14px',filter:'brightness(0) invert(0.6)',display:'block',flexShrink:0}} /> ChatGPT</span>.
+              <a className="agent-badge" href="https://docs.cursor.com" target="_blank" rel="noopener noreferrer"><img src="/cursor-simple-logo.svg" alt="Cursor" style={{width:'12px',height:'14px',display:'block',flexShrink:0}} /> Cursor</a>,{' '}
+              <a className="agent-badge" href="https://docs.anthropic.com" target="_blank" rel="noopener noreferrer"><img src="/claude-simple-logo.svg" alt="Claude" style={{width:'14px',height:'14px',display:'block',flexShrink:0}} /> Claude</a> and{' '}
+              <a className="agent-badge" href="https://platform.openai.com/docs" target="_blank" rel="noopener noreferrer"><img src="/openai-simple-logo.svg" alt="ChatGPT" style={{width:'14px',height:'14px',display:'block',flexShrink:0}} /> ChatGPT</a>.
             </p>
             <p className="hero-attribution">
               <span style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>
@@ -191,6 +161,8 @@ export default async function HomePage() {
         <Leaderboard companies={companies} categories={categories} />
       </section>
 
+      <DotDivider />
+
       {/* WHY */}
       <section className="why-section">
         <div className="why-header">
@@ -204,7 +176,7 @@ export default async function HomePage() {
         <div className="why-grid">
           {/* Row 1 */}
           <div className="why-cell why-cell-img">
-            <WhyPixelArt grid={GHOST_GRID} />
+            <PingPongVideo src="/invisible-audience.mp4" className="why-cell-video" />
           </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">The invisible audience</div>
@@ -214,18 +186,22 @@ export default async function HomePage() {
               segment of your user base.
             </p>
           </div>
-          <div className="why-cell why-cell-empty" />
+          <div className="why-cell why-cell-img">
+            <PingPongVideo src="/lighthouse.mp4" className="why-cell-video" />
+          </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">Lighthouse for AI agents</div>
             <p className="why-cell-body">
               Agent Score is the first industry benchmark for AI-agent readiness. Think Lighthouse,
               but for how effectively AI agents can discover, parse, and use your documentation.
-              0 to 100, 21 checks, 8 categories.
+              0 to 100, 22 checks, 7 categories.
             </p>
           </div>
 
           {/* Row 2 */}
-          <div className="why-cell why-cell-empty" />
+          <div className="why-cell why-cell-img">
+            <PingPongVideo src="/agent-readiness.mp4" className="why-cell-video" />
+          </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">Agent readiness = competitive moat</div>
             <p className="why-cell-body">
@@ -235,7 +211,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="why-cell why-cell-img">
-            <WhyPixelArt grid={GATE_GRID} />
+            <PingPongVideo src="/open-source.mp4" className="why-cell-video" />
           </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">Open source, no black boxes</div>
@@ -244,24 +220,76 @@ export default async function HomePage() {
               <a href="https://github.com/agent-ecosystem/agent-docs-spec" target="_blank" rel="noopener">
                 Agent-Friendly Docs Spec
               </a>{' '}
-              with no gatekeeping, no black boxes. Every check is transparent and community-driven.
+              with no gatekeeping, no black boxes. Every check is transparent and community-driven, by{' '}
+              <a href="https://github.com/dacharyc" target="_blank" rel="noreferrer">Dachary Carey</a>.
             </p>
           </div>
         </div>
       </section>
 
-      {/* TICKER */}
-      <div className="ticker-section">
-        <div className="ticker-track">
-          <TickerSet items={tickerItems} />
-          <TickerSet items={tickerItems} />
+      <DotDivider />
+
+      {/* SOCIAL PROOF */}
+      <section className="sp-section">
+        <div className="sp-top-row">
+          <div className="sp-header">
+            <span className="why-label">SOCIAL PROOF</span>
+            <h2 className="why-heading">
+              Here&apos;s what <span className="accent">humans</span> are saying about it
+            </h2>
+          </div>
+          <div className="sp-featured">
+            <div className="sp-featured-text-wrap">
+              <div className="sp-quote-mark-wrap">
+                <svg className="sp-quote-mark" width="24" height="20" viewBox="0 0 24 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 9.5H8V19H1V9.5Z"/>
+                  <path d="M1 9.5C1 5 3.5 2 8 1"/>
+                  <path d="M13 9.5H20V19H13V9.5Z"/>
+                  <path d="M13 9.5C13 5 15.5 2 20 1"/>
+                </svg>
+                <div className="sp-quote-gray-bar"></div>
+              </div>
+              <p className="sp-featured-text">
+                The next generation of developers will write code mostly through agents. I created the AFDocs standard to define what agent-ready docs look like, regardless of stack or toolchain. Agent Score makes that standard measurable.
+              </p>
+            </div>
+            <div className="sp-author">
+              <div className="sp-avatar-ring"><img src="/social/dachary-social.png" alt="Dachary Carey" className="sp-avatar sp-avatar-img" /></div>
+              <div>
+                <div className="sp-author-name">Dachary Carey</div>
+                <div className="sp-author-role">Defined the AFDocs standard</div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+        <div className="sp-grid">
+          {testimonials.map((t) => (
+            <div key={t.name} className="sp-card">
+              <div className="sp-author">
+                {t.avatar
+                  ? <div className="sp-avatar-ring"><img src={t.avatar} alt={t.name} className="sp-avatar sp-avatar-img" /></div>
+                  : <div className="sp-avatar">{t.initials}</div>
+                }
+                <div>
+                  <div className="sp-author-name">{t.name}</div>
+                  <div className="sp-author-role">{t.role}</div>
+                </div>
+              </div>
+              <p className="sp-quote">{t.quote}</p>
+              <a href={t.docsUrl} target="_blank" rel="noopener noreferrer" className="sp-company-logo-link">
+                <img src={t.companyLogo} alt={t.company} className="sp-company-logo" />
+              </a>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <DotDivider />
 
       {/* METHODOLOGY */}
       <section className="method-section" id="methodology">
         <div className="method-header">
-          <h2 className="method-header-title">21 checks across 8 categories</h2>
+          <h2 className="method-header-title">22 checks across 7 categories</h2>
           <p className="method-header-sub">
             A comprehensive framework for evaluating agent-readiness
           </p>
@@ -278,7 +306,10 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <DotDivider />
+
       <CTASection />
+      <DotDivider />
       <SiteFooter />
     </main>
   );

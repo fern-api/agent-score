@@ -381,10 +381,9 @@
 }
 
 .co-panel-chevron {
-  font-family: 'Geist Mono', monospace;
-  font-size: 16px;
   color: var(--fg-dim);
-  line-height: 1;
+  display: flex;
+  align-items: center;
   transition: transform 0.2s;
 }
 
@@ -719,13 +718,11 @@
 }
 
 .co-check-group-chevron {
-  font-size: 18px;
   color: var(--fg-dim);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.2s ease;
-  line-height: 1;
 }
 
 .co-check-group-chevron.open {

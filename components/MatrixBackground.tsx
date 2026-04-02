@@ -3,10 +3,11 @@
 import { useRef, useEffect, useState } from 'react';
 import { prepareWithSegments, walkLineRanges } from '@chenglou/pretext';
 
-const CELL = 14;
-const CYCLE_MS = 90_000;
+const CELL      = 14;
+const SOIL_CELL = 7;   // finer grid for soil — 2× density
+const CYCLE_MS  = 5_000;
 
-const PT     = [0, 0.28, 0.58, 1.0];
+const PT     = [0, 0.20, 0.50, 1.0];
 const PNAMES = ['BUD', 'UNFURLING', 'MATURE'];
 
 // Crozier — square spiral fiddlehead: 5×5 outer ring + 3×3 inner ring
@@ -34,17 +35,34 @@ const CROZIER: { x: number; y: number; openT: number }[] = [
 
 const STEM_MAX = 15;
 
-// Organic alternating pinnae along the stalk
+// Frond pixels for the mature state.
+// t = growT threshold (0→1 spanning unfurling+mature) at which each pixel appears.
+// Ordered top-to-bottom, closer to stem first within each row.
 const FRONDS: { x: number; y: number; t: number }[] = [
-  { x: 1, y:-12, t:0.32 }, { x: 2, y:-13, t:0.34 }, { x: 3, y:-13, t:0.36 },
-  { x:-1, y:-11, t:0.38 }, { x:-2, y:-11, t:0.40 },
-  { x: 1, y:-10, t:0.42 }, { x: 2, y:-10, t:0.44 }, { x: 3, y:-10, t:0.46 },
-  { x:-1, y: -9, t:0.48 }, { x:-2, y: -9, t:0.50 }, { x:-3, y: -9, t:0.52 },
-  { x: 1, y: -8, t:0.54 }, { x: 2, y: -8, t:0.56 },
-  { x:-1, y: -7, t:0.58 }, { x:-2, y: -7, t:0.60 },
-  { x: 1, y: -6, t:0.62 }, { x: 2, y: -6, t:0.64 },
-  { x:-1, y: -5, t:0.66 }, { x:-2, y: -5, t:0.68 },
-  { x: 1, y: -4, t:0.70 },
+  // y=-15
+  { x:-2, y:-15, t:0.05 }, { x: 2, y:-15, t:0.07 },
+  // y=-14
+  { x:-2, y:-14, t:0.09 }, { x: 2, y:-14, t:0.11 },
+  // y=-13
+  { x:-1, y:-13, t:0.13 }, { x: 1, y:-13, t:0.15 }, { x:-2, y:-13, t:0.17 }, { x: 2, y:-13, t:0.19 },
+  // y=-12
+  { x:-1, y:-12, t:0.22 }, { x: 1, y:-12, t:0.24 },
+  // y=-11
+  { x:-3, y:-11, t:0.28 }, { x: 3, y:-11, t:0.30 }, { x:-4, y:-11, t:0.32 }, { x: 4, y:-11, t:0.34 },
+  // y=-10
+  { x:-2, y:-10, t:0.37 }, { x: 2, y:-10, t:0.39 }, { x:-3, y:-10, t:0.41 }, { x: 3, y:-10, t:0.43 },
+  // y=-9
+  { x:-1, y: -9, t:0.46 }, { x: 1, y: -9, t:0.48 }, { x:-2, y: -9, t:0.50 }, { x: 2, y: -9, t:0.52 },
+  // y=-8
+  { x:-3, y: -8, t:0.56 }, { x: 3, y: -8, t:0.58 },
+  // y=-7
+  { x:-2, y: -7, t:0.61 }, { x: 2, y: -7, t:0.63 }, { x:-3, y: -7, t:0.65 }, { x: 3, y: -7, t:0.67 },
+  // y=-6
+  { x:-1, y: -6, t:0.70 }, { x: 1, y: -6, t:0.72 }, { x:-2, y: -6, t:0.74 }, { x: 2, y: -6, t:0.76 },
+  // y=-4
+  { x:-2, y: -4, t:0.80 }, { x: 2, y: -4, t:0.82 }, { x:-3, y: -4, t:0.84 }, { x: 3, y: -4, t:0.86 },
+  // y=-3
+  { x:-1, y: -3, t:0.88 }, { x: 1, y: -3, t:0.90 }, { x:-2, y: -3, t:0.92 }, { x: 2, y: -3, t:0.94 },
 ];
 
 // ── Pretext-measured soil palette ────────────────────────────────────────────
@@ -54,7 +72,7 @@ const FRONDS: { x: number; y: number; t: number }[] = [
 const PROP_FAMILY = 'Georgia, Palatino, "Times New Roman", serif';
 // Soil chars only — no letters or digits, purely symbolic/punctuation
 // Ordered roughly dense→sparse so the brightness range is well-covered
-const CHARSET = '@#%&$*+=~^-_:;,.\'"·•';
+const CHARSET = '-*';
 const SOIL_WEIGHTS = [300, 500, 800] as const;
 const SOIL_STYLES  = ['normal', 'italic'] as const;
 
@@ -82,7 +100,7 @@ function buildSoilLookup(): SoilEntry[] {
   const palette: E[] = [];
   for (const style of SOIL_STYLES) {
     for (const weight of SOIL_WEIGHTS) {
-      const font = `${style === 'italic' ? 'italic ' : ''}${weight} ${CELL}px ${PROP_FAMILY}`;
+      const font = `${style === 'italic' ? 'italic ' : ''}${weight} ${SOIL_CELL}px ${PROP_FAMILY}`;
       for (const ch of CHARSET) {
         const prepared = prepareWithSegments(ch, font);
         let width = 0;
@@ -107,7 +125,7 @@ function buildSoilLookup(): SoilEntry[] {
     for (let i = Math.max(0, lo - 15); i < Math.min(palette.length, lo + 15); i++) {
       const e = palette[i]!;
       const score = Math.abs(e.brightness - targetBrightness) * 2.5
-                  + Math.abs(e.width - CELL) / CELL;
+                  + Math.abs(e.width - SOIL_CELL) / SOIL_CELL;
       if (score < bestScore) { bestScore = score; best = e; }
     }
     return best;
@@ -117,7 +135,7 @@ function buildSoilLookup(): SoilEntry[] {
   for (let b = 0; b < 256; b++) {
     const brightness = b / 255;
     if (brightness < 0.03) {
-      lookup.push({ char: '.', font: `300 ${CELL}px ${PROP_FAMILY}` });
+      lookup.push({ char: '-', font: `300 ${SOIL_CELL}px ${PROP_FAMILY}` });
     } else {
       const match = findBest(brightness);
       lookup.push({ char: match.char, font: match.font });
@@ -154,7 +172,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
     // Build brightness→char lookup once (measures real glyph brightness via canvas)
     if (!soilLookup) soilLookup = buildSoilLookup();
 
-    let cols = 0, rows = 0, logW = 0, logH = 0, frame = 0, animId = 0;
+    let cols = 0, rows = 0, soilCols = 0, soilRows = 0, logW = 0, logH = 0, frame = 0, animId = 0;
     const cycleStart = Date.now();
 
     function resize() {
@@ -169,12 +187,14 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
       ctx.textBaseline = 'top';
       cols = Math.ceil(width  / CELL);
       rows = Math.ceil(height / CELL);
+      soilCols = Math.ceil(width  / SOIL_CELL);
+      soilRows = Math.ceil(height / SOIL_CELL);
     }
     resize();
     window.addEventListener('resize', resize);
 
     function draw() {
-      const elapsed = (Date.now() - cycleStart) % CYCLE_MS;
+      const elapsed = Math.min(Date.now() - cycleStart, CYCLE_MS);
       const pinned  = pinnedPhaseRef.current;
       const cycleT  = pinned !== null
         ? PT[pinned] + (PT[pinned + 1] - PT[pinned]) * 0.85
@@ -195,26 +215,27 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, logW, logH);
 
-      const baseSoil = Math.floor(rows * 0.60);
+      const SOIL_Y   = 0.78;
+      const baseSoil = Math.floor(rows * SOIL_Y);
       const rootX    = Math.floor(cols / 2);
       const curSurf  = Math.floor(baseSoil + (Math.sin(rootX * 0.12 + frame * 0.014) * 1.5 + Math.cos(rootX * 0.06) * 1.5));
 
-      // ── Soil (pretext brightness-mapped Georgia chars) ────────
+      // ── Soil (pretext brightness-mapped chars, 2× density) ───
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      for (let x = 0; x < cols; x++) {
-        const off  = Math.sin(x * 0.12 + frame * 0.014) * 1.5 + Math.cos(x * 0.06) * 1.5;
-        const surf = Math.floor(baseSoil + off);
-        for (let y = surf; y < rows; y++) {
+      const SC = CELL / SOIL_CELL; // = 2
+      for (let x = 0; x < soilCols; x++) {
+        const off  = Math.sin(x / SC * 0.12 + frame * 0.014) * 1.5 * SC + Math.cos(x / SC * 0.06) * 1.5 * SC;
+        const surf = Math.floor(rows * SOIL_Y * SC + off);
+        for (let y = surf; y < soilRows; y++) {
           const depth = y - surf;
-          const flow  = noise(x, y, frame * 0.022);
-          // depth drives base brightness; noise adds organic variation
-          const alpha = depth < 2 ? 0.72 : depth < 7 ? 0.48 : 0.22;
+          const flow  = noise(x / SC, y / SC, frame * 0.022);
+          const alpha = depth < 2 * SC ? 0.72 : depth < 7 * SC ? 0.48 : 0.22;
           const targetB = Math.max(0.03, Math.min(1, alpha + flow * 0.08));
           const entry = soilLookup![Math.round(targetB * 255)]!;
           ctx.font = entry.font;
           ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-          ctx.fillText(entry.char, x * CELL, y * CELL);
+          ctx.fillText(entry.char, x * SOIL_CELL, y * SOIL_CELL);
         }
       }
 
@@ -224,12 +245,11 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
       // ─── BUD ─────────────────────────────────────────────────
       if (phaseIdx === 0) {
         const stemCells = Math.max(1, Math.ceil(within * STEM_MAX * 0.55));
-        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.fillStyle = '#fff';
         for (let i = 1; i <= stemCells; i++) {
           ctx.fillRect(rootX * CELL + 1, (curSurf - i) * CELL + 1, CELL - 2, CELL - 2);
         }
         const tipY = curSurf - stemCells;
-        ctx.fillStyle = 'rgba(255,255,255,0.88)';
         for (const c of CROZIER) {
           ctx.fillRect((rootX + c.x) * CELL + 1, (tipY + c.y) * CELL + 1, CELL - 2, CELL - 2);
         }
@@ -238,44 +258,50 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
       // ─── UNFURLING ───────────────────────────────────────────
       else if (phaseIdx === 1) {
         const stemCells = Math.min(STEM_MAX, Math.ceil(STEM_MAX * 0.55 + within * STEM_MAX * 0.45));
-        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.fillStyle = '#fff';
         for (let i = 1; i <= stemCells; i++) {
           ctx.fillRect(rootX * CELL + 1, (curSurf - i) * CELL + 1, CELL - 2, CELL - 2);
         }
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.fillRect(rootX * CELL + 1, (curSurf - stemCells - 1) * CELL + 1, CELL - 2, CELL - 2);
         ctx.fillRect(rootX * CELL + 1, (curSurf - stemCells - 2) * CELL + 1, CELL - 2, CELL - 2);
+        // Crozier uncoiling
         const tipY = curSurf - stemCells;
         for (const c of CROZIER) {
           if (within < c.openT) {
-            const alpha = 0.9 - (within / c.openT) * 0.3;
-            ctx.fillStyle = `rgba(255,255,255,${alpha})`;
             ctx.fillRect((rootX + c.x) * CELL + 1, (tipY + c.y) * CELL + 1, CELL - 2, CELL - 2);
+          }
+        }
+        // Fronds growing outward from stem — growT 0→0.5 during unfurling
+        const growT = within * 0.5;
+        for (const px of FRONDS) {
+          if (growT >= px.t) {
+            ctx.fillRect((rootX + px.x) * CELL + 1, (curSurf + px.y) * CELL + 1, CELL - 2, CELL - 2);
           }
         }
       }
 
       // ─── MATURE ───────────────────────────────────────────────
       else {
+        ctx.fillStyle = '#fff';
         for (let i = 1; i <= STEM_MAX; i++) {
-          const baseAlpha = 0.92;
-          ctx.fillStyle = `rgba(255,255,255,${baseAlpha})`;
           ctx.fillRect(rootX * CELL + 1, (curSurf - i) * CELL + 1, CELL - 2, CELL - 2);
-          if (i <= 4) {
-            const w = (4 - i + 1) / 4;
-            ctx.fillStyle = `rgba(255,255,255,${baseAlpha * w * 0.5})`;
-            ctx.fillRect((rootX - 1) * CELL + 2, (curSurf - i) * CELL + 2, CELL - 3, CELL - 3);
-            ctx.fillRect((rootX + 1) * CELL + 2, (curSurf - i) * CELL + 2, CELL - 3, CELL - 3);
-          }
         }
+        // Fronds finish growing — growT 0.5→1.0 during mature
+        const growT = 0.5 + within * 0.5;
+        // Wave band: ~3 rows travel up and down the stem
+        const wavePos = (frame * 0.05) % 15 + 1;
         for (const px of FRONDS) {
-          const depth = (-px.y) / 19;
-          const dist  = Math.abs(px.x) / 7;
-          const sway  = Math.round(Math.sin(frame * 0.028 + depth * 1.6) * 0.32 * depth * 2.4);
-          const baseA = 0.78 - dist * 0.28;
-          const alpha = Math.max(0.18, baseA + 0.22 * Math.abs(Math.sin(frame * 0.018 + depth * 1.3)));
-          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-          ctx.fillRect((rootX + px.x + sway) * CELL + 1, (curSurf + px.y) * CELL + 1, CELL - 2, CELL - 2);
+          if (growT >= px.t) {
+            const depth = (-px.y) / 19;
+            const distFromWave = Math.abs((-px.y) - wavePos);
+            const envelope = Math.max(0, 1 - distFromWave / 1.5);
+            const sway  = Math.round(Math.sin(frame * 0.028 + depth * 1.6) * envelope * (0.6 + depth * 0.5));
+            ctx.fillRect((rootX + px.x + sway) * CELL + 1, (curSurf + px.y) * CELL + 1, CELL - 2, CELL - 2);
+            // Fill gap only for stem-adjacent pixels so branches stay connected
+            if (Math.abs(px.x) === 1 && sway !== 0) {
+              ctx.fillRect((rootX + px.x) * CELL + 1, (curSurf + px.y) * CELL + 1, CELL - 2, CELL - 2);
+            }
+          }
         }
       }
 
@@ -311,7 +337,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
         Simulation: Fern //{' '}
         <span style={{ color: '#00ff66' }}>{overlay.phase.toLowerCase()}</span>
         {pinnedPhase !== null && (
-          <span style={{ color: '#333', marginLeft: 4 }}>●</span>
+          <span style={{ color: '#00ff66', marginLeft: 4 }}>●</span>
         )}
         <br />
         Day <span style={{ color: '#888' }}>{overlay.pct}</span>
