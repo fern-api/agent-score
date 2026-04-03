@@ -17,7 +17,7 @@ function scoreColor(score: number): string {
 export default function ScoreRing({ score, grade }: ScoreRingProps) {
   const circleRef = useRef<SVGCircleElement>(null);
 
-  const size = 120;
+  const size = 160;
   const strokeWidth = 8;
   const r = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * r;
@@ -77,9 +77,9 @@ export default function ScoreRing({ score, grade }: ScoreRingProps) {
           textAnchor="middle"
           dominantBaseline="central"
           fill={color}
-          fontSize="40"
-          fontFamily="'Inter', sans-serif"
-          fontWeight="600"
+          fontSize="64"
+          fontFamily="'Geist Mono', 'Courier New', monospace"
+          fontWeight="500"
         >
           {score}
         </text>

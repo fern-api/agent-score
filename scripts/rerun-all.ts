@@ -17,7 +17,13 @@ import { upsertScore } from '../lib/supabase';
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const DELAY_MS = parseInt(process.env.DELAY_MS ?? '1000', 10);
-const FILTER_SLUGS = process.env.SLUGS ? process.env.SLUGS.split(',').map((s) => s.trim()) : null;
+const DEFAULT_SLUGS = [
+  'zendesk', 'ydc', 'workos', 'vercel', 'twilio', 'tanstack-router', 'support',
+  'supabase', 'stripe', 'strands-agents-sdk', 'stackby-developer-api-v1', 'square',
+  'sonatype-nexus-repository', 'slack-developer', 'shopify', 'shipfox', 'sentry',
+  'sap', 'salesforce', 'rootly', 'roboflow', 'resend', 'docs',
+];
+const FILTER_SLUGS = process.env.SLUGS ? process.env.SLUGS.split(',').map((s) => s.trim()) : DEFAULT_SLUGS;
 
 if (!SUPABASE_URL || !KEY) {
   console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars');
@@ -36,6 +42,7 @@ interface StoredRow {
   docs_url: string;
   category: string;
   hidden: boolean;
+  scored_at: string | null;
 }
 
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -63,7 +70,7 @@ async function main() {
 
   process.stdout.write('Fetching company list from Supabase... ');
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/scores?select=slug,name,docs_url,category,hidden&order=name.asc`,
+    `${SUPABASE_URL}/rest/v1/scores?select=slug,name,docs_url,category,hidden,scored_at&order=name.asc`,
     { headers }
   );
   if (!res.ok) {
@@ -80,6 +87,16 @@ async function main() {
     seen.add(c.slug);
     return true;
   });
+
+  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+  const staleCompanies = companies.filter(
+    (c) => !c.scored_at || new Date(c.scored_at) < thirtyMinAgo
+  );
+  const skipped = companies.length - staleCompanies.length;
+  if (skipped > 0) {
+    console.log(`  Skipping ${skipped} companies scored in the last 30 min`);
+  }
+  companies = staleCompanies;
 
   if (FILTER_SLUGS) {
     companies = companies.filter((c) => FILTER_SLUGS.includes(c.slug));

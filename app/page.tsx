@@ -5,8 +5,8 @@ import ScoreChecker from '@/components/ScoreChecker';
 import MatrixBackground from '@/components/MatrixBackground';
 import CTASection from '@/components/CTASection';
 import SiteFooter from '@/components/SiteFooter';
-import PingPongVideo from '@/components/PingPongVideo';
 import DotDivider from '@/components/DotDivider';
+import PingPongVideo from '@/components/PingPongVideo';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,16 +71,15 @@ const testimonials = [
     docsUrl: 'https://resend.com/docs',
     quote: 'Making our docs agent-ready was one of the best investments we made. When Cursor and Claude can read your API reference cleanly, developers ship integrations without ever opening a browser tab.',
   },
-  {
-    name: 'Alex Atallah',
-    role: 'CEO, OpenRouter',
-    avatar: null,
-    initials: 'AA',
-    companyLogo: '/social/openrouter-social.svg',
-    company: 'OpenRouter',
-    docsUrl: 'https://openrouter.ai/docs',
-    quote: 'At OpenRouter we see firsthand how much traffic comes through AI coding agents. If your llms.txt isn\'t structured right, you\'re invisible to your fastest-growing user segment.',
-  },
+  // {
+  //   name: 'Alex Atallah',
+  //   role: 'CEO, OpenRouter',
+  //   avatar: '/social/alex-social.png',
+  //   companyLogo: '/social/openrouter-social.svg',
+  //   company: 'OpenRouter',
+  //   docsUrl: 'https://openrouter.ai/docs',
+  //   quote: 'At OpenRouter we see firsthand how much traffic comes through AI coding agents. If your llms.txt isn\'t structured right, you\'re invisible to your fastest-growing user segment.',
+  // },
   {
     name: 'Balaji Raghavan',
     role: 'Head of Engineering, Postman',
@@ -88,26 +87,26 @@ const testimonials = [
     companyLogo: '/social/postman-social.svg',
     company: 'Postman',
     docsUrl: 'https://learning.postman.com/docs',
-    quote: 'Postman\'s agent mode, like all agents, relies on LLM-ready docs to use APIs accurately with less hallucination. Without it, agents hallucinate. With it, they just work.',
+    quote: 'Postman\'s agent mode, like all agents, relies on LLM-ready docs to use APIs accurately with less hallucination. Agent Score gives you a concrete target to close that gap.',
   },
-  {
-    name: 'Paul Asjes',
-    role: 'DevEx, ElevenLabs',
-    avatar: '/social/paul-social.png',
-    companyLogo: '/social/elevenlabs-social.svg',
-    company: 'ElevenLabs',
-    docsUrl: 'https://elevenlabs.io/docs',
-    quote: 'The developers who find us through AI agents convert at a higher rate than any other channel. Agent-readable docs aren\'t a nice-to-have. They\'re a growth lever.',
-  },
-  {
-    name: 'Gil Feig',
-    role: 'CEO, Merge',
-    avatar: '/social/gil-social.png',
-    companyLogo: '/social/merge-social.svg',
-    company: 'Merge',
-    docsUrl: 'https://docs.merge.dev',
-    quote: 'We treat Agent Score like Lighthouse: a real quality signal that drives engineering work. The companies winning in the agentic era are the ones whose docs just work for AI.',
-  },
+  // {
+  //   name: 'Paul Asjes',
+  //   role: 'DevEx, ElevenLabs',
+  //   avatar: '/social/paul-social.png',
+  //   companyLogo: '/social/elevenlabs-social.svg',
+  //   company: 'ElevenLabs',
+  //   docsUrl: 'https://elevenlabs.io/docs',
+  //   quote: 'The developers who find us through AI agents convert at a higher rate than any other channel. Agent-readable docs aren\'t a nice-to-have. They\'re a growth lever.',
+  // },
+  // {
+  //   name: 'Gil Feig',
+  //   role: 'CEO, Merge',
+  //   avatar: '/social/gil-social.png',
+  //   companyLogo: '/social/merge-social.svg',
+  //   company: 'Merge',
+  //   docsUrl: 'https://docs.merge.dev',
+  //   quote: 'We treat Agent Score like Lighthouse: a real quality signal that drives engineering work. The companies winning in the agentic era are the ones whose docs just work for AI.',
+  // },
 ];
 
 // Pixel art for the Why section ──────────────────────────────────────────────
@@ -146,7 +145,7 @@ export default async function HomePage() {
               </span>
             </p>
           </div>
-          <div className="hero-form-strip">
+          <div className="hero-form-strip" id="hero-score-btn">
             <ScoreChecker />
           </div>
         </div>
@@ -164,19 +163,19 @@ export default async function HomePage() {
       <DotDivider />
 
       {/* WHY */}
-      <section className="why-section">
+      <section className="why-section" id="why-it-matters">
         <div className="why-header">
           <span className="why-label">WHY IT MATTERS</span>
           <h2 className="why-heading">
-            Your docs have a new audience:{' '}
-            <span className="accent">AI is reading them now</span>
+            Your docs have a new reader:{' '}
+            <span className="accent">AI agents</span>
           </h2>
         </div>
 
         <div className="why-grid">
           {/* Row 1 */}
           <div className="why-cell why-cell-img">
-            <PingPongVideo src="/invisible-audience.mp4" className="why-cell-video" />
+            <video autoPlay muted playsInline loop className="why-cell-video"><source src="/invisible-audience.mp4" type="video/mp4" /></video>
           </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">The invisible audience</div>
@@ -187,7 +186,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="why-cell why-cell-img">
-            <PingPongVideo src="/lighthouse.mp4" className="why-cell-video" />
+            <video autoPlay muted playsInline loop className="why-cell-video"><source src="/lighthouse.mp4" type="video/mp4" /></video>
           </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">Lighthouse for AI agents</div>
@@ -200,7 +199,7 @@ export default async function HomePage() {
 
           {/* Row 2 */}
           <div className="why-cell why-cell-img">
-            <PingPongVideo src="/agent-readiness.mp4" className="why-cell-video" />
+            <video autoPlay muted playsInline loop className="why-cell-video"><source src="/agent-readiness.mp4" type="video/mp4" /></video>
           </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">Agent readiness = competitive moat</div>
@@ -230,7 +229,7 @@ export default async function HomePage() {
       <DotDivider />
 
       {/* SOCIAL PROOF */}
-      <section className="sp-section">
+      <section className="sp-section" id="humans">
         <div className="sp-top-row">
           <div className="sp-header">
             <span className="why-label">SOCIAL PROOF</span>
@@ -250,7 +249,7 @@ export default async function HomePage() {
                 <div className="sp-quote-gray-bar"></div>
               </div>
               <p className="sp-featured-text">
-                The next generation of developers will write code mostly through agents. I created the AFDocs standard to define what agent-ready docs look like, regardless of stack or toolchain. Agent Score makes that standard measurable.
+                My agent couldn&apos;t use the docs. I started digging into why. The result is AFDocs, a standard that codifies what agents need to help developers complete their tasks. Agent Score makes that standard measurable.
               </p>
             </div>
             <div className="sp-author">

@@ -14,7 +14,7 @@
     "@fontsource/inter": "^5.2.8",
     "@supabase/supabase-js": "^2.99.2",
     "@vercel/functions": "^3.4.3",
-    "afdocs": "latest",
+    "afdocs": "^0.8.2",
     "cli-loaders": "^3.0.0",
     "next": "^14.2.0",
     "react": "^18.3.0",

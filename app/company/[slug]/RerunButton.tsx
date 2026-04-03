@@ -56,7 +56,7 @@ export default function RerunButton({ url, slug }: { url: string; slug: string }
 
   return (
     <>
-      <button className="rerun-btn" onClick={handleRerun}>Rerun test</button>
+      <span className="rerun-btn" onClick={handleRerun} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && handleRerun()}>Rerun test</span>
       {state === 'error' && <span className="rerun-error"> {error}</span>}
     </>
   );

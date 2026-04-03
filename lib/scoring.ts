@@ -1,5 +1,5 @@
 /**
- * Weighted scoring module — port of afdocs PR #10 (spec v0.3.0).
+ * Weighted scoring module — port of afdocs 0.8.2 scoring.
  *
  * Overall score = round( sum(earnedScore) / sum(maxScore) × 100 )
  * where earnedScore = proportion × (baseWeight × coefficient)
@@ -30,189 +30,435 @@ export interface ScoreResult {
 }
 
 // ---------------------------------------------------------------------------
-// Weights
+// Weights  (afdocs 0.7.2)
 // ---------------------------------------------------------------------------
 
-const WEIGHTS: Record<string, number> = {
-  // Critical (10)
-  'llms-txt-exists':                10,
-  'rendering-strategy':             10,
-  'auth-gate-detection':            10,
-  // High (7)
-  'llms-txt-size':                   7,
-  'llms-txt-links-resolve':          7,
-  'llms-txt-links-markdown':         7,
-  'markdown-url-support':            7,
-  'page-size-html':                  7,
-  'page-size-markdown':              7,
-  'http-status-codes':               7,
-  'llms-txt-directive':              7,
-  // Medium (4)
-  'llms-txt-valid':                  4,
-  'content-negotiation':             4,
-  'content-start-position':          4,
-  'tabbed-content-serialization':    4,
-  'markdown-code-fence-validity':    4,
-  'llms-txt-freshness':              4,
-  'markdown-content-parity':         4,
-  'auth-alternative-access':         4,
-  'redirect-behavior':               4,
-  // Low (2)
-  'section-header-quality':          2,
-  'cache-header-hygiene':            2,
-};
+const TIER_WEIGHTS = { critical: 10, high: 7, medium: 4, low: 2 } as const;
+type Tier = keyof typeof TIER_WEIGHTS;
 
-// Warn coefficient: how much partial credit a warn earns (default 0.5)
-const WARN_COEFFICIENTS: Record<string, number> = {
-  'rendering-strategy':           0.5,
-  'auth-gate-detection':          0.5,
-  'llms-txt-size':                0.5,
-  'llms-txt-links-resolve':       0.75,
-  'llms-txt-links-markdown':      0.25,
-  'llms-txt-valid':               0.75,
-  'llms-txt-directive':           0.6,
-  'llms-txt-freshness':           0.75,
-  'content-negotiation':          0.75,
-  'page-size-html':               0.5,
-  'page-size-markdown':           0.5,
-  'http-status-codes':            0.5,
-  'redirect-behavior':            0.6,
-  'content-start-position':       0.5,
-  'tabbed-content-serialization': 0.5,
-  'markdown-content-parity':      0.75,
-  'auth-alternative-access':      0.5,
-  'section-header-quality':       0.5,
-  'cache-header-hygiene':         0.5,
+interface WeightDef { tier: Tier; weight: number; warnCoefficient?: number }
+
+function w(tier: Tier, warnCoefficient?: number): WeightDef {
+  return { tier, weight: TIER_WEIGHTS[tier], warnCoefficient };
+}
+
+const CHECK_WEIGHTS: Record<string, WeightDef> = {
+  // Critical
+  'llms-txt-exists':              w('critical', 0.5),
+  'rendering-strategy':           w('critical', 0.5),
+  'auth-gate-detection':          w('critical', 0.5),
+  // High
+  'llms-txt-size':                w('high', 0.5),
+  'llms-txt-links-resolve':       w('high', 0.75),
+  'markdown-url-support':         w('high', 0.5),
+  'page-size-markdown':           w('high', 0.5),
+  'page-size-html':               w('high', 0.5),
+  'http-status-codes':            w('high'),
+  'llms-txt-directive':           w('high', 0.6),
+  // Medium
+  'llms-txt-valid':               w('medium', 0.75),
+  'content-negotiation':          w('medium', 0.75),
+  'content-start-position':       w('medium', 0.5),
+  'tabbed-content-serialization': w('medium', 0.5),
+  'markdown-code-fence-validity': w('medium'),
+  'llms-txt-freshness':           w('medium', 0.75),
+  'markdown-content-parity':      w('medium', 0.75),
+  'auth-alternative-access':      w('medium', 0.5),
+  'redirect-behavior':            w('medium', 0.6),
+  // Medium  (llms-txt-links-markdown back to high in 0.8.2 with warnCoeff 0.25)
+  'llms-txt-links-markdown':      w('high', 0.25),
+  // Low
+  'section-header-quality':       w('low', 0.5),
+  'cache-header-hygiene':         w('low', 0.5),
 };
 
 // ---------------------------------------------------------------------------
-// Proportions — bucket-based for multi-page checks
+// Helpers
 // ---------------------------------------------------------------------------
 
-function getProportion(result: CheckResult): number | undefined {
-  if (result.status === 'skip' || result.status === 'error') return undefined;
+function statusToProportion(
+  status: 'pass' | 'warn' | 'fail',
+  warnCoeff: number | undefined,
+): number {
+  if (status === 'pass') return 1.0;
+  if (status === 'warn') return warnCoeff ?? 0.5;
+  return 0.0;
+}
 
-  const d = result.details as Record<string, number> | undefined;
+/** Count pass/warn/fail items (skip/error excluded) → 0–1 proportion. */
+function countByStatus(
+  items: Array<{ status: string }>,
+  warnCoefficient: number | undefined,
+): number | undefined {
+  let pass = 0, warn = 0, total = 0;
+  for (const item of items) {
+    const s = item.status;
+    if (s === 'pass') { pass++; total++; }
+    else if (s === 'warn') { warn++; total++; }
+    else if (s === 'fail') { total++; }
+    // skip/error excluded
+  }
+  if (total === 0) return undefined;
+  const wc = warnCoefficient ?? 0.5;
+  return (pass + warn * wc) / total;
+}
 
-  // rendering-strategy: (serverRendered + sparseContent × 0.5) / testedPages
-  if (result.id === 'rendering-strategy' && d?.testedPages) {
-    return Math.min(1, ((d.serverRendered ?? 0) + (d.sparseContent ?? 0) * 0.5) / d.testedPages);
-  }
-
-  // auth-gate-detection: accessible / testedPages
-  if (result.id === 'auth-gate-detection' && d?.testedPages) {
-    return Math.min(1, (d.accessible ?? 0) / d.testedPages);
-  }
-
-  // http-status-codes: pass pages / total tested
-  if (result.id === 'http-status-codes' && d?.testedPages) {
-    const pass = (d.testedPages as number) - ((d.errors ?? 0) as number) - ((d.redirects ?? 0) as number);
-    return Math.max(0, Math.min(1, pass / d.testedPages));
-  }
-
-  // llms-txt-directive: foundCount / testedPages
-  if (result.id === 'llms-txt-directive' && d?.testedPages) {
-    return Math.min(1, (d.foundCount ?? 0) / d.testedPages);
-  }
-
-  // llms-txt-links-resolve: resolved / testedLinks (resolveRate is a 0-100 percentage)
-  if (result.id === 'llms-txt-links-resolve') {
-    if (d?.testedLinks) return Math.min(1, (d.resolved ?? 0) / d.testedLinks);
-    if (d?.resolveRate !== undefined) return (d.resolveRate as number) / 100;
-  }
-
-  // Bucket-based checks: (passBucket + warnBucket × 0.5) / testedPages
-  if (result.id === 'content-start-position' && d?.testedPages) {
-    return Math.min(1, ((d.passBucket ?? 0) + (d.warnBucket ?? 0) * 0.5) / d.testedPages);
-  }
-  if (result.id === 'page-size-markdown' && d?.testedPages) {
-    return Math.min(1, ((d.passBucket ?? 0) + (d.warnBucket ?? 0) * 0.5) / d.testedPages);
-  }
-  if (result.id === 'page-size-html' && d?.testedPages) {
-    return Math.min(1, ((d.passBucket ?? 0) + (d.warnBucket ?? 0) * 0.5) / d.testedPages);
-  }
-  if (result.id === 'cache-header-hygiene') {
-    const total = (d?.testedPages ?? d?.testedEndpoints) as number | undefined;
-    if (total) return Math.min(1, ((d?.passBucket ?? 0) + (d?.warnBucket ?? 0) * 0.5) / total);
-  }
-  if (result.id === 'markdown-content-parity') {
-    const total = (d?.testedPages ?? d?.pagesCompared) as number | undefined;
-    if (total) return Math.min(1, ((d?.passBucket ?? 0) + (d?.warnBucket ?? 0) * 0.5) / total);
-  }
-
-  // Fall back to status-based proportion
-  if (result.status === 'pass') return 1.0;
-  if (result.status === 'warn') return WARN_COEFFICIENTS[result.id] ?? 0.5;
-  return 0.0; // fail
+/** Bucket-based proportion: (pass + warn × wc) / (pass + warn + fail) */
+function bucketProportion(
+  d: Record<string, unknown>,
+  warnCoeff: number | undefined,
+): number | undefined {
+  const pass = (d.passBucket as number) ?? 0;
+  const warn = (d.warnBucket as number) ?? 0;
+  const fail = (d.failBucket as number) ?? 0;
+  const total = pass + warn + fail;
+  if (total === 0) return undefined;
+  const wc = warnCoeff ?? 0.5;
+  return (pass + warn * wc) / total;
 }
 
 // ---------------------------------------------------------------------------
-// Coefficients — contextual scaling of effective weight
+// Proportions — one extractor per check (afdocs 0.7.2)
 // ---------------------------------------------------------------------------
 
+function getProportion(result: CheckResult, weight: WeightDef): number | undefined {
+  if (result.status === 'skip' || result.status === 'error') return undefined;
+
+  const d = result.details as Record<string, unknown> | undefined;
+
+  switch (result.id) {
+    // --- Rendering strategy ---
+    case 'rendering-strategy': {
+      if (!d) break;
+      const sr = (d.serverRendered as number) ?? 0;
+      const sc = (d.sparseContent as number) ?? 0;
+      const spa = (d.spaShells as number) ?? 0;
+      const total = sr + sc + spa;
+      if (total === 0) break;
+      return (sr + sc * (weight.warnCoefficient ?? 0.5)) / total;
+    }
+
+    // --- Auth gate detection ---
+    case 'auth-gate-detection': {
+      if (!d) break;
+      const pages = d.pageResults as Array<{ classification: string }> | undefined;
+      if (pages && pages.length > 0) {
+        return countByStatus(
+          pages.map((p) => {
+            if (p.classification === 'accessible') return { status: 'pass' };
+            if (p.classification === 'soft-auth-gate') return { status: 'warn' };
+            if (p.classification === 'auth-required' || p.classification === 'auth-redirect') return { status: 'fail' };
+            return { status: 'skip' };
+          }),
+          weight.warnCoefficient,
+        );
+      }
+      // Fallback to legacy field
+      const accessible = (d.accessible as number) ?? 0;
+      const testedPages = (d.testedPages as number) ?? 0;
+      if (testedPages > 0) return Math.min(1, accessible / testedPages);
+      break;
+    }
+
+    // --- HTTP status codes ---
+    case 'http-status-codes': {
+      if (!d) break;
+      const pages = d.pageResults as Array<{ classification: string }> | undefined;
+      if (pages && pages.length > 0) {
+        return countByStatus(
+          pages.map((p) => {
+            if (p.classification === 'correct-error') return { status: 'pass' };
+            if (p.classification === 'soft-404') return { status: 'fail' };
+            return { status: 'skip' };
+          }),
+          weight.warnCoefficient,
+        );
+      }
+      // Legacy
+      const tp = (d.testedPages as number) ?? 0;
+      if (tp > 0) {
+        const bad = ((d.errors as number) ?? 0) + ((d.redirects as number) ?? 0);
+        return Math.max(0, (tp - bad) / tp);
+      }
+      break;
+    }
+
+    // --- llms-txt-directive ---
+    case 'llms-txt-directive': {
+      if (!d) break;
+      const pages = d.pageResults as Array<{ found?: boolean; positionPercent?: number; error?: boolean }> | undefined;
+      if (pages && pages.length > 0) {
+        return countByStatus(
+          pages.filter((p) => !p.error).map((p) => {
+            if (!p.found) return { status: 'fail' };
+            if ((p.positionPercent ?? 0) > 50) return { status: 'warn' };
+            return { status: 'pass' };
+          }),
+          weight.warnCoefficient,
+        );
+      }
+      // Legacy
+      const tp = (d.testedPages as number) ?? 0;
+      if (tp > 0) return Math.min(1, ((d.foundCount as number) ?? 0) / tp);
+      break;
+    }
+
+    // --- llms-txt-links-resolve ---
+    case 'llms-txt-links-resolve': {
+      if (!d) break;
+      const resolveRate = d.resolveRate as number | undefined;
+      if (resolveRate !== undefined) return resolveRate / 100;
+      const tl = d.testedLinks as number | undefined;
+      if (tl) return Math.min(1, ((d.resolved as number) ?? 0) / tl);
+      break;
+    }
+
+    // --- llms-txt-links-markdown ---
+    case 'llms-txt-links-markdown': {
+      if (!d) break;
+      const mr = d.markdownRate as number | undefined;
+      if (mr !== undefined) return mr / 100;
+      break;
+    }
+
+    // --- llms-txt-valid ---
+    case 'llms-txt-valid': {
+      if (!d) break;
+      const validations = d.validations as Array<{ linkCount?: number; hasH1?: boolean; hasBlockquote?: boolean }> | undefined;
+      if (validations && validations.length > 0) {
+        return countByStatus(
+          validations.map((v) => {
+            if ((v.linkCount ?? 0) === 0) return { status: 'fail' };
+            if (v.hasH1 && v.hasBlockquote) return { status: 'pass' };
+            return { status: 'warn' };
+          }),
+          weight.warnCoefficient,
+        );
+      }
+      break;
+    }
+
+    // --- llms-txt-size ---
+    case 'llms-txt-size': {
+      if (!d) break;
+      const sizes = d.sizes as Array<{ characters?: number }> | undefined;
+      const thresholds = d.thresholds as { pass?: number; fail?: number } | undefined;
+      if (sizes && sizes.length > 0) {
+        const passThreshold = thresholds?.pass ?? 50_000;
+        const failThreshold = thresholds?.fail ?? 100_000;
+        return countByStatus(
+          sizes.map((s) => {
+            const chars = s.characters ?? 0;
+            if (chars <= passThreshold) return { status: 'pass' };
+            if (chars <= failThreshold) return { status: 'warn' };
+            return { status: 'fail' };
+          }),
+          weight.warnCoefficient,
+        );
+      }
+      break;
+    }
+
+    // --- llms-txt-freshness ---
+    case 'llms-txt-freshness': {
+      if (!d) break;
+      const cr = d.coverageRate as number | undefined;
+      if (cr !== undefined) return cr / 100;
+      break;
+    }
+
+    // --- Bucket-based checks ---
+    case 'page-size-html':
+    case 'page-size-markdown':
+    case 'content-start-position':
+    case 'cache-header-hygiene':
+    case 'markdown-content-parity': {
+      if (!d) break;
+      return bucketProportion(d, weight.warnCoefficient);
+    }
+
+    // --- pageResults with status field ---
+    case 'markdown-code-fence-validity': {
+      if (!d) break;
+      const pages = d.pageResults as Array<{ status: string }> | undefined;
+      if (pages && pages.length > 0) return countByStatus(pages, weight.warnCoefficient);
+      break;
+    }
+
+    // --- markdown-url-support ---
+    case 'markdown-url-support': {
+      if (!d) break;
+      const pages = d.pageResults as Array<{ supported?: boolean; skipped?: boolean }> | undefined;
+      if (pages && pages.length > 0) {
+        return countByStatus(
+          pages.filter((p) => !p.skipped).map((p) => ({ status: p.supported ? 'pass' : 'fail' })),
+          weight.warnCoefficient,
+        );
+      }
+      break;
+    }
+
+    // --- content-negotiation ---
+    case 'content-negotiation': {
+      if (!d) break;
+      const pages = d.pageResults as Array<{ classification?: string; skipped?: boolean }> | undefined;
+      if (pages && pages.length > 0) {
+        return countByStatus(
+          pages.filter((p) => !p.skipped).map((p) => {
+            if (p.classification === 'markdown-with-correct-type') return { status: 'pass' };
+            if (p.classification === 'markdown-with-wrong-type') return { status: 'warn' };
+            if (p.classification === 'html') return { status: 'fail' };
+            return { status: 'skip' };
+          }),
+          weight.warnCoefficient,
+        );
+      }
+      break;
+    }
+
+    // --- tabbed-content-serialization ---
+    case 'tabbed-content-serialization': {
+      if (!d) break;
+      const pages = d.tabbedPages as Array<{ status: string }> | undefined;
+      if (pages && pages.length > 0) return countByStatus(pages, weight.warnCoefficient);
+      break;
+    }
+
+    // --- section-header-quality ---
+    case 'section-header-quality': {
+      if (!d) break;
+      const analyses = d.analyses as Array<{ hasGenericMajority?: boolean; hasCrossGroupGeneric?: boolean }> | undefined;
+      if (analyses && analyses.length > 0) {
+        return countByStatus(
+          analyses.map((a) => ({
+            status: a.hasGenericMajority ? 'fail' : a.hasCrossGroupGeneric ? 'warn' : 'pass',
+          })),
+          weight.warnCoefficient,
+        );
+      }
+      break;
+    }
+
+    // --- redirect-behavior ---
+    case 'redirect-behavior': {
+      if (!d) break;
+      const pages = d.pageResults as Array<{ classification?: string }> | undefined;
+      if (pages && pages.length > 0) {
+        return countByStatus(
+          pages.map((p) => {
+            if (p.classification === 'no-redirect' || p.classification === 'same-host') return { status: 'pass' };
+            if (p.classification === 'cross-host') return { status: 'warn' };
+            if (p.classification === 'js-redirect') return { status: 'fail' };
+            return { status: 'skip' };
+          }),
+          weight.warnCoefficient,
+        );
+      }
+      break;
+    }
+  }
+
+  // Fallback: status-based proportion
+  return statusToProportion(result.status as 'pass' | 'warn' | 'fail', weight.warnCoefficient);
+}
+
+// ---------------------------------------------------------------------------
+// Coefficients  (afdocs 0.7.2)
+// ---------------------------------------------------------------------------
+
+const DISCOVERY_CHECKS = new Set([
+  'page-size-markdown',
+  'markdown-code-fence-validity',
+  'markdown-content-parity',
+]);
+
+const HTML_PATH_CHECKS = new Set([
+  'page-size-html',
+  'content-start-position',
+  'tabbed-content-serialization',
+  'section-header-quality',
+]);
+
+const INDEX_TRUNCATION_CHECKS = new Set([
+  'llms-txt-links-resolve',
+  'llms-txt-valid',
+  'llms-txt-freshness',
+  'llms-txt-links-markdown',
+]);
+
 function getCoefficient(checkId: string, results: Map<string, CheckResult>): number {
-  // Discovery coefficient: for markdown-url-support only
-  if (checkId === 'markdown-url-support') {
+  if (DISCOVERY_CHECKS.has(checkId)) {
     const cn = results.get('content-negotiation');
     if (cn?.status === 'pass') return 1.0;
     const directive = results.get('llms-txt-directive');
-    if (directive?.status === 'pass' || directive?.status === 'warn') return 0.8;
-    const linksMarkdown = results.get('llms-txt-links-markdown');
-    if (linksMarkdown?.status === 'pass' || linksMarkdown?.status === 'warn') return 0.5;
+    if (directive?.status === 'pass') return 0.8;
+    const linksMd = results.get('llms-txt-links-markdown');
+    if (linksMd?.status === 'pass') return 0.5;
     return 0.0;
   }
 
-  // HTML path coefficient: for HTML page-size and content-start-position
-  if (checkId === 'page-size-html' || checkId === 'content-start-position') {
+  if (HTML_PATH_CHECKS.has(checkId)) {
     const rs = results.get('rendering-strategy');
-    if (!rs?.details) return 1.0;
-    const d = rs.details as Record<string, number>;
-    const total = d.testedPages ?? 1;
-    return Math.min(1, ((d.serverRendered ?? 0) + (d.sparseContent ?? 0) * 0.5) / total);
+    if (!rs || rs.status === 'skip' || rs.status === 'error') return 1.0;
+    const d = rs.details as Record<string, number> | undefined;
+    if (!d) return 1.0;
+    const sr = d.serverRendered ?? 0;
+    const sc = d.sparseContent ?? 0;
+    const spa = d.spaShells ?? 0;
+    const total = sr + sc + spa;
+    if (total === 0) return 1.0;
+    return (sr + sc * 0.5) / total;
   }
 
-  // Index truncation coefficient: for llms-txt-valid, llms-txt-freshness, llms-txt-links-markdown
-  if (['llms-txt-valid', 'llms-txt-freshness', 'llms-txt-links-markdown'].includes(checkId)) {
+  if (INDEX_TRUNCATION_CHECKS.has(checkId)) {
     const sizeResult = results.get('llms-txt-size');
     if (!sizeResult) return 1.0;
     if (sizeResult.status === 'pass') return 1.0;
     if (sizeResult.status === 'warn') return 0.8;
-    const d = sizeResult.details as Record<string, number> | undefined;
-    const maxSize = d?.maxSize ?? d?.size ?? 0;
-    return maxSize > 0 ? Math.min(1, 100_000 / maxSize) : 0.5;
+    if (sizeResult.status === 'fail') {
+      const d = sizeResult.details as Record<string, unknown> | undefined;
+      if (!d) return 0.5;
+      const sizes = d.sizes as Array<{ characters?: number }> | undefined;
+      if (sizes && sizes.length > 0) {
+        const maxSize = Math.max(...sizes.map((s) => s.characters ?? 0));
+        if (maxSize <= 0) return 0.5;
+        return Math.min(1, 100_000 / maxSize);
+      }
+      // Legacy fallback
+      const maxSize = (d.maxSize as number) ?? (d.size as number) ?? 0;
+      return maxSize > 0 ? Math.min(1, 100_000 / maxSize) : 0.5;
+    }
+    return 1.0;
   }
 
   return 1.0;
 }
 
 // ---------------------------------------------------------------------------
-// Hard caps
+// Hard caps  (afdocs 0.7.2)
 // ---------------------------------------------------------------------------
 
 function computeCap(results: Map<string, CheckResult>): ScoreCap | undefined {
+  const caps: ScoreCap[] = [];
+
   const llmsTxt = results.get('llms-txt-exists');
   if (llmsTxt?.status === 'fail') {
-    return { cap: 59, checkId: 'llms-txt-exists', reason: 'No llms.txt found' };
+    caps.push({ cap: 59, checkId: 'llms-txt-exists', reason: 'No llms.txt found. Agents lose primary navigation.' });
   }
 
-  const rs = results.get('rendering-strategy');
-  const rsProportion = rs ? (getProportion(rs) ?? 1) : 1;
-
-  const auth = results.get('auth-gate-detection');
-  const authProportion = auth ? (getProportion(auth) ?? 1) : 1;
-
-  const minCritical = Math.min(rsProportion, authProportion);
-
-  if (minCritical <= 0.25) {
-    const checkId = rsProportion <= authProportion ? 'rendering-strategy' : 'auth-gate-detection';
-    return { cap: 39, checkId, reason: 'Critical accessibility failure' };
-  }
-  if (minCritical <= 0.50) {
-    const checkId = rsProportion <= authProportion ? 'rendering-strategy' : 'auth-gate-detection';
-    return { cap: 59, checkId, reason: 'Significant accessibility issues' };
+  for (const checkId of ['rendering-strategy', 'auth-gate-detection'] as const) {
+    const r = results.get(checkId);
+    if (!r) continue;
+    const weight = CHECK_WEIGHTS[checkId];
+    const prop = getProportion(r, weight);
+    if (prop === undefined) continue;
+    if (prop <= 0.25) caps.push({ cap: 39, checkId, reason: `${checkId}: 75%+ of pages affected` });
+    else if (prop <= 0.5) caps.push({ cap: 59, checkId, reason: `${checkId}: 50%+ of pages affected` });
   }
 
-  return undefined;
+  if (caps.length === 0) return undefined;
+  caps.sort((a, b) => a.cap - b.cap);
+  return caps[0];
 }
 
 // ---------------------------------------------------------------------------
@@ -220,7 +466,7 @@ function computeCap(results: Map<string, CheckResult>): ScoreCap | undefined {
 // ---------------------------------------------------------------------------
 
 export function toGrade(score: number): Grade {
-  if (score === 100) return 'A+';
+  if (score >= 100) return 'A+';
   if (score >= 90) return 'A';
   if (score >= 80) return 'B';
   if (score >= 70) return 'C';
@@ -239,14 +485,14 @@ export function computeScore(results: CheckResult[]): ScoreResult {
   let totalMax = 0;
 
   for (const result of results) {
-    const baseWeight = WEIGHTS[result.id];
-    if (!baseWeight) continue; // unknown check, skip
+    const weight = CHECK_WEIGHTS[result.id];
+    if (!weight) continue;
 
-    const proportion = getProportion(result);
+    const proportion = getProportion(result, weight);
     if (proportion === undefined) continue; // skip/error — excluded
 
     const coefficient = getCoefficient(result.id, resultMap);
-    const effectiveWeight = baseWeight * coefficient;
+    const effectiveWeight = weight.weight * coefficient;
 
     totalEarned += proportion * effectiveWeight;
     totalMax += effectiveWeight;

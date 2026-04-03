@@ -72,6 +72,7 @@ export default function AIFixPrompt({
     <CollapsiblePanel
       title={`Agent Prompt to fix ${issues.length} issue${issues.length !== 1 ? 's' : ''}`}
       copySlot={<CopyButton text={prompt} />}
+      showFade
     >
       <pre className="co-ai-pre">{prompt}</pre>
     </CollapsiblePanel>

@@ -12,6 +12,8 @@ import AIFixPrompt from './AIFixPrompt';
 import CTASection from '@/components/CTASection';
 import SiteFooter from '@/components/SiteFooter';
 import RerunButton from './RerunButton';
+import MatrixBackground from '@/components/MatrixBackground';
+import DotDivider from '@/components/DotDivider';
 import '../company.css';
 
 export const dynamic = 'force-dynamic';
@@ -149,45 +151,69 @@ export default async function CompanyPage({ params }: { params: { slug: string }
   return (
     <main className="co-page">
 
-      {/* Hero: breadcrumb + name/domain/date + score ring */}
-      <div className="co-hero-container">
-        <div className="co-breadcrumb">
-          <Link href="/#leaderboard">Leaderboard</Link>
-          <span className="co-breadcrumb-sep">/</span>
-          <span className="co-breadcrumb-current">{company.name}</span>
-        </div>
-
+      {/* Hero */}
+      <section className="co-hero-container">
         <div className="co-hero">
           <div className="co-hero-left">
-            <h1 className="co-company-name">{company.name}</h1>
-            <a
-              href={company.docsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="co-domain-link"
-            >
-              {domain}
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5" />
-                <path d="M7 1.5h3.5V5" />
-                <path d="M5 7L10.5 1.5" />
-              </svg>
-            </a>
-            <div className="co-last-checked">
-              Last checked {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              {' · '}
-              <RerunButton url={company.docsUrl} slug={company.slug} />
+            {/* Breadcrumb */}
+            <div className="co-breadcrumb">
+              <Link href="/#leaderboard">Leaderboard</Link>
+              <span className="co-breadcrumb-sep">/</span>
+              <span className="co-breadcrumb-current">{company.name}</span>
+            </div>
+
+            {/* Main content */}
+            <div className="co-hero-content">
+              <h1 className="co-company-name">{company.name}</h1>
+              <a href={company.docsUrl} target="_blank" rel="noopener noreferrer" className="co-domain-link">
+                {domain}
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5" />
+                  <path d="M7 1.5h3.5V5" />
+                  <path d="M5 7L10.5 1.5" />
+                </svg>
+              </a>
+              <div className="co-score-row">
+                <ScoreRing score={company.score} grade={company.grade} />
+                <div className="co-score-row-info">
+                  <div className="co-grade-badge" style={{ color }}>Grade {company.grade}</div>
+                  <div className="co-last-checked">
+                    Last checked: {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    {' · '}
+                    <RerunButton url={company.docsUrl} slug={company.slug} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Share bar */}
+            <div className="co-share-section">
+              <div className="co-share-row">
+                <span className="co-share-label">Share on</span>
+                <div className="co-share-icons">
+                  <a href={twitterUrl} className="co-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on X">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                  </a>
+                  <a href={linkedinUrl} className="co-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                    </svg>
+                  </a>
+                  <CopyLinkBtn url={pageUrl} />
+                </div>
+              </div>
             </div>
           </div>
           <div className="co-hero-right">
-            <ScoreRing score={company.score} grade={company.grade} />
-            <div className="co-grade-badge" style={{ color }}>Grade {company.grade}</div>
+            <MatrixBackground />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Stats bar */}
-      <div className="co-stats-bar">
+      <section className="co-stats-bar">
         <div className="co-stat">
           <span className="co-stat-key">Category</span>
           <span className="co-stat-val">{company.category}</span>
@@ -204,10 +230,10 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           <span className="co-stat-key">Failed</span>
           <span className="co-stat-val" style={{ color: '#ff4444' }}>{company.checks.fail}</span>
         </div>
-      </div>
+      </section>
 
       {/* Side-by-side collapsible panels */}
-      <div className="co-panels-row">
+      <section className="co-panels-row">
         <CollapsiblePanel title="Executive Summary" copySlot={<CopyButton text={summary} />}>
           <p className="co-panel-text">{summary}</p>
         </CollapsiblePanel>
@@ -218,33 +244,18 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           grade={company.grade}
           results={checkResults}
         />
-      </div>
+      </section>
+
+      <DotDivider />
 
       {/* Check results */}
-      <div className="co-checks-section">
-        <div className="co-checks-title">Check results</div>
-        <CategoryCheckGroups categories={categories} results={checkResults} />
-      </div>
-
-      {/* Share */}
-      <div className="co-share-section">
-        <div className="co-share-label">Share results</div>
-        <div className="co-share-row">
-          <a href={twitterUrl} className="co-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on X">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-            <span>Share on X</span>
-          </a>
-          <a href={linkedinUrl} className="co-share-btn" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-            </svg>
-            <span>Share on LinkedIn</span>
-          </a>
-          <CopyLinkBtn url={pageUrl} />
+      <section className="co-checks-section">
+        <div className="why-header">
+          <span className="why-label">CHECK RESULTS</span>
+          <h2 className="why-heading">How your docs scored</h2>
         </div>
-      </div>
+        <CategoryCheckGroups categories={categories} results={checkResults} />
+      </section>
 
       <CTASection />
       <SiteFooter />
