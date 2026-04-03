@@ -207,7 +207,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
             </div>
           </div>
           <div className="co-hero-right">
-            <MatrixBackground />
+            <MatrixBackground color={color} />
           </div>
         </div>
       </section>

@@ -151,7 +151,7 @@ function noise(x: number, y: number, t: number) {
 
 type PinnedPhase = number | null;
 
-export default function MatrixBackground() {
+export default function MatrixBackground({ color = '#ffffff' }: { color?: string }) {
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
@@ -168,6 +168,10 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
     const container = containerRef.current!;
     const ctx       = canvas.getContext('2d', { alpha: false })!;
     ctx.imageSmoothingEnabled = false;
+
+    const cr = parseInt(color.slice(1, 3), 16);
+    const cg = parseInt(color.slice(3, 5), 16);
+    const cb = parseInt(color.slice(5, 7), 16);
 
     // Build brightness→char lookup once (measures real glyph brightness via canvas)
     if (!soilLookup) soilLookup = buildSoilLookup();
@@ -234,7 +238,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
           const targetB = Math.max(0.03, Math.min(1, alpha + flow * 0.08));
           const entry = soilLookup![Math.round(targetB * 255)]!;
           ctx.font = entry.font;
-          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+          ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`;
           ctx.fillText(entry.char, x * SOIL_CELL, y * SOIL_CELL);
         }
       }
@@ -245,7 +249,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
       // ─── BUD ─────────────────────────────────────────────────
       if (phaseIdx === 0) {
         const stemCells = Math.max(1, Math.ceil(within * STEM_MAX * 0.55));
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = color;
         for (let i = 1; i <= stemCells; i++) {
           ctx.fillRect(rootX * CELL + 1, (curSurf - i) * CELL + 1, CELL - 2, CELL - 2);
         }
@@ -258,7 +262,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
       // ─── UNFURLING ───────────────────────────────────────────
       else if (phaseIdx === 1) {
         const stemCells = Math.min(STEM_MAX, Math.ceil(STEM_MAX * 0.55 + within * STEM_MAX * 0.45));
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = color;
         for (let i = 1; i <= stemCells; i++) {
           ctx.fillRect(rootX * CELL + 1, (curSurf - i) * CELL + 1, CELL - 2, CELL - 2);
         }
@@ -282,7 +286,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
 
       // ─── MATURE ───────────────────────────────────────────────
       else {
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = color;
         for (let i = 1; i <= STEM_MAX; i++) {
           ctx.fillRect(rootX * CELL + 1, (curSurf - i) * CELL + 1, CELL - 2, CELL - 2);
         }
@@ -314,7 +318,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', resize);
     };
-  }, []);
+  }, [color]);
 
   return (
     <div ref={containerRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>

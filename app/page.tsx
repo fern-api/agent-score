@@ -249,7 +249,7 @@ export default async function HomePage() {
                 <div className="sp-quote-gray-bar"></div>
               </div>
               <p className="sp-featured-text">
-                My agent couldn&apos;t use the docs. I started digging into why. The result is AFDocs, a standard that codifies what agents need to help developers complete their tasks. Agent Score makes that standard measurable.
+                My agent couldn&apos;t use the docs and I started digging into why. The result is AFDocs, a standard that codifies what agents need to help developers complete their tasks. Agent Score makes that standard measurable.
               </p>
             </div>
             <div className="sp-author">
@@ -265,10 +265,9 @@ export default async function HomePage() {
           {testimonials.map((t) => (
             <div key={t.name} className="sp-card">
               <div className="sp-author">
-                {t.avatar
-                  ? <div className="sp-avatar-ring"><img src={t.avatar} alt={t.name} className="sp-avatar sp-avatar-img" /></div>
-                  : <div className="sp-avatar">{t.initials}</div>
-                }
+                {t.avatar && (
+                  <div className="sp-avatar-ring"><img src={t.avatar} alt={t.name} className="sp-avatar sp-avatar-img" /></div>
+                )}
                 <div>
                   <div className="sp-author-name">{t.name}</div>
                   <div className="sp-author-role">{t.role}</div>
