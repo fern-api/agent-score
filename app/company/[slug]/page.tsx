@@ -14,6 +14,7 @@ import SiteFooter from '@/components/SiteFooter';
 import RerunButton from './RerunButton';
 import MatrixBackground from '@/components/MatrixBackground';
 import DotDivider from '@/components/DotDivider';
+import { scoreColor } from '@/lib/gradeColors';
 import '../company.css';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!company) return {};
   return {
     title: `${company.name} — Agent Score`,
-    description: `${company.name} scored ${company.score}/100 (${company.grade}) on Agent Score — ${company.checks.pass} of ${company.checks.total} agent-readiness checks passed.`,
+    description: `${company.name} scored ${company.score}/100 (${company.grade}) on Agent Score. ${company.checks.pass} of ${company.checks.total} agent-readiness checks passed.`,
     openGraph: {
       title: `${company.name} scored ${company.score} (${company.grade}) on Agent Score`,
       description: `${company.checks.pass}/${company.checks.total} agent-readiness checks passed. See how ${company.name}'s docs serve AI coding agents.`,
@@ -103,13 +104,6 @@ function buildSyntheticResults(checks: { total: number; pass: number; warn: numb
   return results;
 }
 
-function gradeColor(score: number): string {
-  if (score >= 80) return '#00e87b';
-  if (score >= 65) return '#a8e63d';
-  if (score >= 45) return '#ffaa00';
-  return '#ff4444';
-}
-
 function buildSummary(company: { name: string; score: number; grade: string; checks: { total: number; pass: number; warn: number; fail: number } }): string {
   const { name, score, grade, checks } = company;
   const passRate = checks.total > 0 ? Math.round((checks.pass / checks.total) * 100) : 0;
@@ -140,7 +134,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
 
   const domain = company.docsUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
   const pageUrl = `https://agentscore.buildwithfern.com/company/${company.slug}`;
-  const color = gradeColor(company.score);
+  const color = scoreColor(company.score);
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     `${company.name} scored ${company.score}/100 on the Agent Score leaderboard for AI-ready documentation.`
@@ -254,7 +248,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           <span className="why-label">CHECK RESULTS</span>
           <h2 className="why-heading">How your docs scored</h2>
         </div>
-        <CategoryCheckGroups categories={categories} results={checkResults} />
+        <CategoryCheckGroups categories={categories} results={checkResults} categoryScores={company.categoryScores} />
       </section>
 
       <CTASection />

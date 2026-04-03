@@ -300,7 +300,7 @@ a.agent-badge:hover img {
   letter-spacing: 0.2px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -314,18 +314,13 @@ a.agent-badge:hover img {
 
 .hero-attribution .fern-logo-dark,
 .hero-attribution .fern-logo-light {
-  opacity: 0.6;
-  transition: opacity 0.15s, filter 0.15s;
+  filter: grayscale(1) opacity(0.5);
+  transition: filter 0.2s;
 }
 
-.hero-attribution a:hover .fern-logo-dark {
-  opacity: 1;
-  filter: brightness(0) invert(1);
-}
-
+.hero-attribution a:hover .fern-logo-dark,
 .hero-attribution a:hover .fern-logo-light {
-  opacity: 1;
-  filter: brightness(0);
+  filter: grayscale(0) opacity(1);
 }
 
 .hero-form-strip {
@@ -433,8 +428,8 @@ a.agent-badge:hover img {
 
 .hsf-error {
   position: absolute;
-  bottom: calc(100% + 8px);
-  left: 20px;
+  bottom: calc(100% + 24px);
+  left: 32px;
   font-family: 'Geist Mono', 'Courier New', monospace;
   font-size: 12px;
   color: #ff4444;
@@ -1597,11 +1592,11 @@ a.agent-badge:hover img {
 }
 
 .tier-badge-grade-a-plus { color: var(--accent); }
-.tier-badge-grade-a { color: #ccff44; }
-.tier-badge-grade-b { color: #ffcc00; }
-.tier-badge-grade-c { color: #ff8800; }
-.tier-badge-grade-d { color: #ff4444; }
-.tier-badge-grade-f { color: #ff2222; }
+.tier-badge-grade-a { color: var(--accent); }
+.tier-badge-grade-b { color: #ccff44; }
+.tier-badge-grade-c { color: #ffcc00; }
+.tier-badge-grade-d { color: #ff8800; }
+.tier-badge-grade-f { color: #ff4444; }
 
 .tier-grid-compact {
   display: grid;
@@ -1672,11 +1667,11 @@ a.agent-badge:hover img {
 }
 
 .grade-a-plus { color: var(--accent); }
-.grade-a { color: #ccff44; }
-.grade-b { color: #ffcc00; }
-.grade-c { color: #ff8800; }
-.grade-d { color: #ff4444; }
-.grade-f { color: #ff2222; }
+.grade-a { color: var(--accent); }
+.grade-b { color: #ccff44; }
+.grade-c { color: #ffcc00; }
+.grade-d { color: #ff8800; }
+.grade-f { color: #ff4444; }
 
 .card-checks { display: flex; gap: 4px; }
 
@@ -1786,40 +1781,6 @@ a.agent-badge:hover img {
 
 /* NOTE: Old 900px and 600px breakpoints removed — superseded by
    1024px / 768px / 480px responsive queries below. */
-
-/* ==================
-   MOBILE: ScoreChecker
-================== */
-@media (max-width: 480px) {
-  .hsf-form {
-    flex-direction: column;
-    min-height: auto;
-  }
-
-  .hsf-input {
-    padding: 16px 16px;
-    font-size: 14px;
-  }
-
-  .hsf-btn-container {
-    padding: 0 8px 8px 8px;
-  }
-
-  .hsf-btn {
-    width: 100%;
-    padding: 14px 0;
-    font-size: 14px;
-  }
-
-  .hsf-error {
-    position: static;
-    padding: 4px 16px 8px;
-  }
-
-  .hsf-running {
-    padding: 12px 16px 40px 24px;
-  }
-}
 
 /* ==================
    RESPONSIVE: TABLET (max-width: 1024px)
@@ -2416,6 +2377,35 @@ a.agent-badge:hover img {
   .hero-form-strip {
     height: auto;
     min-height: 80px;
+  }
+
+  .hsf-form {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .hsf-input {
+    padding: 16px 16px;
+    font-size: 14px;
+  }
+
+  .hsf-btn-container {
+    padding: 0 8px 8px 8px;
+  }
+
+  .hsf-btn {
+    width: 100%;
+    padding: 14px 0;
+    font-size: 14px;
+  }
+
+  .hsf-error {
+    position: static;
+    padding: 4px 16px 8px;
+  }
+
+  .hsf-running {
+    padding: 12px 16px 40px 24px;
   }
 
   .hsf-step {

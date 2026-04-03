@@ -168,6 +168,7 @@ async function main() {
           fail: result.summary.fail,
         },
         results: result.results,
+        categoryScores: scored.categoryScores,
       });
       stopSaving();
       const capNote = scored.cap ? ` (capped: ${scored.cap.reason})` : '';

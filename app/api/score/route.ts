@@ -44,6 +44,38 @@ function buildRateLimitCookie(timestamps: number[]): string {
 }
 
 // ---------------------------------------------------------------------------
+// Domain blocklist — adult / NSFW sites
+// ---------------------------------------------------------------------------
+
+const BLOCKED_TLDS = new Set(['.xxx', '.porn', '.sex', '.adult']);
+
+const BLOCKED_DOMAINS = new Set([
+  'pornhub.com', 'xvideos.com', 'xhamster.com', 'xnxx.com', 'redtube.com',
+  'youporn.com', 'tube8.com', 'beeg.com', 'brazzers.com', 'onlyfans.com',
+  'chaturbate.com', 'cam4.com', 'myfreecams.com', 'livejasmin.com', 'stripchat.com',
+  'spankbang.com', 'eporner.com', 'tnaflix.com', 'drtuber.com', 'nuvid.com',
+  'slutload.com', 'empflix.com', 'xtube.com', 'hclips.com', 'txxx.com',
+  'porntrex.com', 'anysex.com', 'fuq.com', 'ixxx.com', 'rulertube.com',
+]);
+
+function isBlockedDomain(url: string): boolean {
+  try {
+    const normalized = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    const { hostname } = new URL(normalized);
+    const host = hostname.replace(/^www\./, '').toLowerCase();
+    if (BLOCKED_TLDS.has('.' + host.split('.').pop())) return true;
+    if (BLOCKED_DOMAINS.has(host)) return true;
+    // Check if host ends with a blocked domain (e.g. subdomain.pornhub.com)
+    for (const d of BLOCKED_DOMAINS) {
+      if (host === d || host.endsWith('.' + d)) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Visibility heuristics
 // ---------------------------------------------------------------------------
 
@@ -221,6 +253,7 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
         fail: result.summary.fail,
       },
       results: result.results,
+      categoryScores: scored.categoryScores,
     };
 
     try {
@@ -269,6 +302,26 @@ export async function POST(request: Request) {
 
     if (!url) {
       return NextResponse.json({ error: "url is required" }, { status: 400 });
+    }
+
+    if (isBlockedDomain(url)) {
+      try {
+        const blockedSlug = slugParam || urlToSlug(url);
+        await upsertScore({
+          name: blockedSlug,
+          slug: blockedSlug,
+          category: 'Other',
+          docsUrl: url,
+          score: 0,
+          grade: 'F',
+          hidden: true,
+          scoredAt: new Date().toISOString(),
+          checks: { total: 0, pass: 0, warn: 0, fail: 0 },
+        });
+      } catch (e) {
+        console.error("[score] blocked domain DB record failed:", e);
+      }
+      return NextResponse.json({ error: "blocked", message: "This site is not eligible for scoring." }, { status: 403 });
     }
 
     // Rate limiting — cookie-based

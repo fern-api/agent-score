@@ -3,14 +3,16 @@ import Navbar from '@/components/Navbar';
 import './globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://agentscore.dev'),
   title: 'Agent Score | Is Your Documentation AI-Ready?',
   description:
-    '21 checks. 8 categories. One score. Agent Score evaluates how well your docs serve AI coding agents like Cursor, Copilot, and Claude Code.',
+    'AI agents can\'t use docs they can\'t read. Run 21 checks and get a letter grade in seconds.',
   openGraph: {
     title: 'Agent Score | Is Your Documentation AI-Ready?',
     description:
-      '21 checks. 8 categories. One score. Agent Score evaluates how well your docs serve AI coding agents.',
+      'AI agents can\'t use docs they can\'t read. Run 21 checks and get a letter grade in seconds.',
     type: 'website',
+    images: [{ url: '/agent-score-og.png', width: 1200, height: 630, alt: 'Agent Score' }],
   },
 };
 

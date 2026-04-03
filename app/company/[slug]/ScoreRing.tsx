@@ -1,17 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { scoreColor } from '@/lib/gradeColors';
 
 interface ScoreRingProps {
   score: number;
   grade: string;
-}
-
-function scoreColor(score: number): string {
-  if (score >= 80) return '#00e87b';
-  if (score >= 65) return '#a8e63d';
-  if (score >= 45) return '#ffaa00';
-  return '#ff4444';
 }
 
 export default function ScoreRing({ score, grade }: ScoreRingProps) {

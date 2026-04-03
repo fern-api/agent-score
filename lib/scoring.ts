@@ -27,6 +27,7 @@ export interface ScoreResult {
   overall: number;
   grade: Grade;
   cap?: ScoreCap;
+  categoryScores: Record<string, number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -484,6 +485,9 @@ export function computeScore(results: CheckResult[]): ScoreResult {
   let totalEarned = 0;
   let totalMax = 0;
 
+  const categoryEarned = new Map<string, number>();
+  const categoryMax = new Map<string, number>();
+
   for (const result of results) {
     const weight = CHECK_WEIGHTS[result.id];
     if (!weight) continue;
@@ -496,11 +500,21 @@ export function computeScore(results: CheckResult[]): ScoreResult {
 
     totalEarned += proportion * effectiveWeight;
     totalMax += effectiveWeight;
+
+    const cat = result.category;
+    categoryEarned.set(cat, (categoryEarned.get(cat) ?? 0) + proportion * effectiveWeight);
+    categoryMax.set(cat, (categoryMax.get(cat) ?? 0) + effectiveWeight);
   }
 
   const raw = totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : 0;
   const cap = computeCap(resultMap);
   const overall = cap ? Math.min(raw, cap.cap) : raw;
 
-  return { overall, grade: toGrade(overall), cap };
+  const categoryScores: Record<string, number> = {};
+  for (const [cat, maxW] of categoryMax.entries()) {
+    const earned = categoryEarned.get(cat) ?? 0;
+    categoryScores[cat] = maxW > 0 ? Math.round((earned / maxW) * 100) : 0;
+  }
+
+  return { overall, grade: toGrade(overall), cap, categoryScores };
 }

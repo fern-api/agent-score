@@ -7,15 +7,19 @@ interface ScoreBarProps {
 }
 
 function getBarColor(score: number): string {
-  if (score >= 70) return '#00e87b';
-  if (score >= 50) return '#fbbf24';
-  return '#ef4444';
+  if (score >= 90) return '#00e87b';
+  if (score >= 80) return '#ccff44';
+  if (score >= 70) return '#ffcc00';
+  if (score >= 60) return '#ff8800';
+  return '#ff4444';
 }
 
 function getBarGlow(score: number): string {
-  if (score >= 70) return '0 0 8px rgba(0, 232, 123, 0.3)';
-  if (score >= 50) return '0 0 8px rgba(251, 191, 36, 0.3)';
-  return '0 0 8px rgba(239, 68, 68, 0.3)';
+  if (score >= 90) return '0 0 8px rgba(0, 232, 123, 0.3)';
+  if (score >= 80) return '0 0 8px rgba(204, 255, 68, 0.3)';
+  if (score >= 70) return '0 0 8px rgba(255, 204, 0, 0.3)';
+  if (score >= 60) return '0 0 8px rgba(255, 136, 0, 0.3)';
+  return '0 0 8px rgba(255, 68, 68, 0.3)';
 }
 
 export default function ScoreBar({ score, showLabel = true, height = 'md' }: ScoreBarProps) {

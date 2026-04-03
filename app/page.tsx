@@ -69,6 +69,7 @@ const testimonials = [
     companyLogo: '/social/resend-social.svg',
     company: 'Resend',
     docsUrl: 'https://resend.com/docs',
+    companySlug: 'resend',
     quote: 'Making our docs agent-ready was one of the best investments we made. When Cursor and Claude can read your API reference cleanly, developers ship integrations without ever opening a browser tab.',
   },
   // {
@@ -87,7 +88,18 @@ const testimonials = [
     companyLogo: '/social/postman-social.svg',
     company: 'Postman',
     docsUrl: 'https://learning.postman.com/docs',
+    companySlug: 'postman',
     quote: 'Postman\'s agent mode, like all agents, relies on LLM-ready docs to use APIs accurately with less hallucination. Agent Score gives you a concrete target to close that gap.',
+  },
+  {
+    name: 'Dave Nunez',
+    role: 'CEO, Falconer',
+    avatar: '/social/dave-social.png',
+    companyLogo: '/social/falconer-social.svg',
+    company: 'Falconer',
+    docsUrl: 'https://falconer.ai',
+    companySlug: 'falconer',
+    quote: 'We spend a lot of time on our content, but it doesn\'t matter if agents can\'t discover it. Agent Score is a beautifully designed tool that tells us how we suck.',
   },
   // {
   //   name: 'Paul Asjes',
@@ -114,7 +126,12 @@ const testimonials = [
 
 export default async function HomePage() {
   const companies = await getLeaderboard();
-  const categories = Array.from(new Set(companies.map((c) => c.category))).sort();
+  const categories = Array.from(new Set(companies.map((c) => c.category)))
+    .sort((a, b) => {
+      if (a === 'Other') return 1;
+      if (b === 'Other') return -1;
+      return a.localeCompare(b);
+    });
 
   return (
     <main>
@@ -132,16 +149,15 @@ export default async function HomePage() {
               <a className="agent-badge" href="https://platform.openai.com/docs" target="_blank" rel="noopener noreferrer"><img src="/openai-simple-logo.svg" alt="ChatGPT" style={{width:'14px',height:'14px',display:'block',flexShrink:0}} /> ChatGPT</a>.
             </p>
             <p className="hero-attribution">
-              <span style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>
+              <span style={{display:'inline-flex',alignItems:'center',gap:'4px'}}>
                 Developed by
                 <a href="https://buildwithfern.com" target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center'}}>
-                  <Image src="/fern-labs-dark.svg" alt="Fern Labs" width={64} height={13} className="fern-logo-dark" />
-                  <Image src="/fern-labs-light.svg" alt="Fern Labs" width={64} height={13} className="fern-logo-light" />
+                  <Image src="/fern-labs-dark.svg" alt="Fern Labs" width={77} height={14} className="fern-logo-dark" style={{ marginBottom: '3px' }} />
                 </a>
               </span>
               <span style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>
                 in partnership with
-                <a href="https://github.com/dacharyc" target="_blank" rel="noreferrer">Dachary Carey</a>
+                <a href="https://github.com/dacharyc" target="_blank" rel="noreferrer">Dachary Carey.</a>
               </span>
             </p>
           </div>
@@ -274,7 +290,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <p className="sp-quote">{t.quote}</p>
-              <a href={t.docsUrl} target="_blank" rel="noopener noreferrer" className="sp-company-logo-link">
+              <a href={t.companySlug ? `/company/${t.companySlug}` : t.docsUrl} {...(!t.companySlug ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="sp-company-logo-link">
                 <img src={t.companyLogo} alt={t.company} className="sp-company-logo" />
               </a>
             </div>

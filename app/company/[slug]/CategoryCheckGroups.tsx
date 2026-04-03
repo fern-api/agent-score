@@ -5,8 +5,10 @@ import type { CheckResult } from '@/lib/scores';
 import '../company.css';
 
 function barColor(score: number): string {
-  if (score >= 80) return '#00e87b';
-  if (score >= 50) return '#ffcc00';
+  if (score >= 90) return '#00e87b';
+  if (score >= 80) return '#ccff44';
+  if (score >= 70) return '#ffcc00';
+  if (score >= 60) return '#ff8800';
   return '#ff4444';
 }
 
@@ -34,6 +36,7 @@ interface Category {
 interface Props {
   categories: Category[];
   results: CheckResult[];
+  categoryScores?: Record<string, number>;
 }
 
 const STATUS_PRIORITY: Record<string, number> = { fail: 0, error: 0, warn: 1, pass: 2, skip: 3 };
@@ -52,14 +55,14 @@ function buildGroupMap(results: CheckResult[]) {
 }
 
 function calcCategoryScore(items: CheckResult[]): number {
-  if (items.length === 0) return 0;
-  const total = items.length;
-  const pass = items.filter(r => r.status === 'pass').length;
-  const warn = items.filter(r => r.status === 'warn').length;
-  return Math.round(((pass + warn * 0.5) / total) * 100);
+  const scorable = items.filter(r => r.status !== 'skip' && r.status !== 'error');
+  if (scorable.length === 0) return 0;
+  const pass = scorable.filter(r => r.status === 'pass').length;
+  const warn = scorable.filter(r => r.status === 'warn').length;
+  return Math.round(((pass + warn * 0.5) / scorable.length) * 100);
 }
 
-export default function CategoryCheckGroups({ categories, results }: Props) {
+export default function CategoryCheckGroups({ categories, results, categoryScores }: Props) {
   const groupMap = buildGroupMap(results);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
 
@@ -81,7 +84,7 @@ export default function CategoryCheckGroups({ categories, results }: Props) {
         const items = [...(groupMap.get(cat.name) || [])].sort(
           (a, b) => statusPriority(a.status) - statusPriority(b.status)
         );
-        const score = calcCategoryScore(items);
+        const score = categoryScores?.[cat.name] ?? calcCategoryScore(items);
         const passCount = items.filter(r => r.status === 'pass').length;
         const warnCount = items.filter(r => r.status === 'warn').length;
 

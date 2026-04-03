@@ -21,6 +21,7 @@ export interface CompanyScore {
     fail: number;
   };
   results?: CheckResult[];
+  categoryScores?: Record<string, number>;
   hidden?: boolean;
 }
 

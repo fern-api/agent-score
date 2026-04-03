@@ -10,10 +10,10 @@ interface LeaderboardProps {
 }
 
 function scoreColor(s: number): string {
-  if (s >= 80) return '#00ff66';
-  if (s >= 65) return '#ccff44';
-  if (s >= 45) return '#ffcc00';
-  if (s >= 30) return '#ff8800';
+  if (s >= 90) return '#00ff66';
+  if (s >= 80) return '#ccff44';
+  if (s >= 70) return '#ffcc00';
+  if (s >= 60) return '#ff8800';
   return '#ff4444';
 }
 

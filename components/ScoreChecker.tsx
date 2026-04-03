@@ -15,10 +15,10 @@ const PROGRESS_STEPS = [
 ];
 
 function scoreColor(s: number): string {
-  if (s >= 80) return '#00ff66';
-  if (s >= 65) return '#ccff44';
-  if (s >= 45) return '#ffcc00';
-  if (s >= 30) return '#ff8800';
+  if (s >= 90) return '#00ff66';
+  if (s >= 80) return '#ccff44';
+  if (s >= 70) return '#ffcc00';
+  if (s >= 60) return '#ff8800';
   return '#ff4444';
 }
 
@@ -61,12 +61,11 @@ export default function ScoreChecker() {
     if (!url.trim()) return;
     setState('running'); setCurrentStep(0); setError(''); jobIdRef.current = null;
     const rawUrl = url.trim();
-    const normalizedUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
     try {
       const res = await fetch('/api/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: normalizedUrl }),
+        body: JSON.stringify({ url: rawUrl }),
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -146,10 +145,7 @@ export default function ScoreChecker() {
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            onBlur={() => {
-              const v = url.trim();
-              if (v && !/^https?:\/\//i.test(v)) setUrl(`https://${v}`);
-            }}
+            onBlur={() => {}}
             placeholder="https://docs.yourcompany.com"
             autoComplete="off"
             className="hsf-input"
