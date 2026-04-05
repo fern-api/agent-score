@@ -1,12 +1,8 @@
 import { ImageResponse } from 'next/og';
 import { getCompanyWithFallback } from '@/lib/scores';
 import { scoreColor, scoreBg } from '@/lib/gradeColors';
-import {
-  inter_latin_400_normal,
-  inter_latin_700_normal,
-  geist_mono_latin_400_normal,
-  geist_mono_latin_700_normal,
-} from './og-fonts';
+import fs from 'fs';
+import path from 'path';
 import {
   dynamic_og_a_image,
   dynamic_og_b_image,
@@ -20,9 +16,12 @@ export const dynamic = 'force-dynamic';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-function b64ToArrayBuffer(b64: string): ArrayBuffer {
-  const binary = Buffer.from(b64, 'base64');
-  return binary.buffer.slice(binary.byteOffset, binary.byteOffset + binary.byteLength) as ArrayBuffer;
+function loadFont(weight: 400 | 700): ArrayBuffer {
+  const file = `inter-latin-${weight}-normal.woff`;
+  const buf = fs.readFileSync(
+    path.join(process.cwd(), 'node_modules/@fontsource/inter/files', file)
+  );
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
 }
 
 function gradeImageSrc(grade: string): string {
@@ -33,26 +32,14 @@ function gradeImageSrc(grade: string): string {
   return dynamic_og_f_image;
 }
 
-export async function generateStaticParams() {
-  try {
-    const { getAllScores } = await import('@/lib/supabase');
-    const scores = await getAllScores();
-    return scores.map(s => ({ slug: s.slug }));
-  } catch {
-    return [];
-  }
-}
-
 export default async function Image({ params }: { params: { slug: string } }) {
   try {
     const company = await getCompanyWithFallback(params.slug);
     if (!company) return new Response('Not found', { status: 404 });
 
     const fonts: { name: string; data: ArrayBuffer; weight: 400 | 700; style: 'normal' }[] = [
-      { name: 'Inter', data: b64ToArrayBuffer(inter_latin_400_normal), weight: 400, style: 'normal' },
-      { name: 'Inter', data: b64ToArrayBuffer(inter_latin_700_normal), weight: 700, style: 'normal' },
-      { name: 'Geist Mono', data: b64ToArrayBuffer(geist_mono_latin_400_normal), weight: 400, style: 'normal' },
-      { name: 'Geist Mono', data: b64ToArrayBuffer(geist_mono_latin_700_normal), weight: 700, style: 'normal' },
+      { name: 'Inter', data: loadFont(400), weight: 400, style: 'normal' },
+      { name: 'Inter', data: loadFont(700), weight: 700, style: 'normal' },
     ];
 
     const { score, grade, name, docsUrl } = company;
@@ -110,10 +97,10 @@ export default async function Image({ params }: { params: { slug: string } }) {
                 fontWeight: '300',
                 color: '#ffffff',
                 lineHeight: '1.15',
-                letterSpacing: '-1px',
+                letterSpacing: -1,
               }}
             >
-              {`Is ${name} ready for AI agents?`}
+              {`${name} ready for AI agents?`}
             </div>
 
             {/* Domain */}
@@ -121,8 +108,8 @@ export default async function Image({ params }: { params: { slug: string } }) {
               style={{
                 fontSize: `${domainFontSize}px`,
                 color: '#666666',
-                fontFamily: 'monospace',
-                letterSpacing: '0.2px',
+                fontFamily: 'Inter',
+                letterSpacing: 0.2,
               }}
             >
               {domain}
@@ -138,7 +125,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
               }}
             >
               {/* Score ring */}
-              <div style={{ display: 'flex', position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', position: 'relative', width: '160px', height: '160px' }}>
                 <svg width="160" height="160" viewBox="0 0 160 160">
                   <g transform={`rotate(-90 80 80)`}>
                     <circle cx="80" cy="80" r={r} fill="none" stroke="#1a1a1a" strokeWidth="8" />
@@ -158,14 +145,18 @@ export default async function Image({ params }: { params: { slug: string } }) {
                 <div
                   style={{
                     position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '160px',
+                    height: '160px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '80px',
                     fontWeight: '700',
-                    fontFamily: 'Geist Mono',
+                    fontFamily: 'Inter',
                     color: '#ffffff',
-                    letterSpacing: '-2px',
+                    letterSpacing: -2,
                   }}
                 >
                   {score}
@@ -178,11 +169,16 @@ export default async function Image({ params }: { params: { slug: string } }) {
                   display: 'flex',
                   alignItems: 'center',
                   background: bg,
-                  border: `1px solid ${color}`,
-                  padding: '10px 24px',
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: color,
+                  paddingTop: '10px',
+                  paddingBottom: '10px',
+                  paddingLeft: '24px',
+                  paddingRight: '24px',
                 }}
               >
-                <span style={{ fontSize: '32px', fontWeight: '700', color: color, fontFamily: 'Geist Mono' }}>
+                <span style={{ fontSize: '32px', fontWeight: '700', color: color, fontFamily: 'Inter' }}>
                   {`Grade ${grade}`}
                 </span>
               </div>
@@ -205,8 +201,6 @@ export default async function Image({ params }: { params: { slug: string } }) {
               style={{
                 width: '400px',
                 height: '630px',
-                objectFit: 'cover',
-                objectPosition: 'center top',
               }}
             />
           </div>

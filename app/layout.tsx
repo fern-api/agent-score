@@ -3,16 +3,16 @@ import Navbar from '@/components/Navbar';
 import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://agentscore.dev'),
+  metadataBase: new URL('https://labs.buildwithfern.com/agent-score'),
   title: 'Agent Score | Is Your Documentation AI-Ready?',
   description:
-    'AI agents can\'t use docs they can\'t read. Run 21 checks and get a letter grade in seconds.',
+    'AI agents can\'t use docs they can\'t read. Run 22 checks and get a letter grade in seconds.',
   openGraph: {
     title: 'Agent Score | Is Your Documentation AI-Ready?',
     description:
-      'AI agents can\'t use docs they can\'t read. Run 21 checks and get a letter grade in seconds.',
+      'AI agents can\'t use docs they can\'t read. Run 22 checks and get a letter grade in seconds.',
     type: 'website',
-    images: [{ url: '/agent-score-og.png', width: 1200, height: 630, alt: 'Agent Score' }],
+    images: [{ url: 'https://labs.buildwithfern.com/agent-score/agent-score-og.png', width: 1200, height: 630, alt: 'Agent Score' }],
   },
 };
 

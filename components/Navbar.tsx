@@ -68,7 +68,7 @@ export default function Navbar() {
         {[
           { label: 'Leaderboard',    href: '/#leaderboard' },
           { label: 'Why it matters', href: '/#why-it-matters' },
-          { label: 'Social proof',   href: '/#humans' },
+          { label: 'From the field', href: '/#humans' },
           { label: 'Methodology',    href: '/#methodology' },
         ].map(({ label, href }) => (
           <Link
@@ -78,12 +78,12 @@ export default function Navbar() {
               fontFamily: "'Geist Mono', monospace",
               fontSize: '12px',
               fontWeight: 400,
-              color: 'var(--fg-dim)',
+              color: 'var(--fg-mid)',
               textDecoration: 'none',
               letterSpacing: '0.3px',
             }}
             onMouseEnter={e => (e.currentTarget.style.color = 'var(--fg)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-dim)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-mid)')}
           >
             {label}
           </Link>

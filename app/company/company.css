@@ -113,19 +113,19 @@
   gap: 5px;
   font-family: 'Geist Mono', monospace;
   font-size: 13px;
-  color: var(--fg-dim);
+  color: var(--fg-mid);
   text-decoration: none;
   letter-spacing: 0.2px;
   transition: color 0.15s;
 }
 
 .co-domain-link:hover {
-  color: var(--fg-mid);
+  color: var(--fg);
 }
 
 .co-domain-link svg {
   flex-shrink: 0;
-  opacity: 0.6;
+  opacity: 0.8;
 }
 
 /* =====================================================
@@ -173,7 +173,7 @@
 .co-last-checked {
   font-family: 'Geist Mono', monospace;
   font-size: 11px;
-  color: var(--fg-dim);
+  color: var(--fg-mid);
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
@@ -181,7 +181,7 @@
 .rerun-btn {
   font-family: 'Geist Mono', monospace;
   font-size: 11px;
-  color: var(--fg-dim);
+  color: var(--fg-mid);
   letter-spacing: 0.3px;
   text-decoration: underline;
   cursor: pointer;
@@ -243,7 +243,7 @@
 .co-stat-key {
   font-family: 'Geist Mono', monospace;
   font-size: 10px;
-  color: var(--fg-dim);
+  color: var(--fg-mid);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -324,7 +324,7 @@
 .co-share-label {
   font-family: 'Geist Mono', monospace;
   font-size: 12px;
-  color: var(--fg-dim);
+  color: var(--fg-mid);
 }
 
 .co-share-row {
@@ -347,7 +347,7 @@
   background: transparent;
   border: 1px solid var(--border);
   margin-left: -1px;
-  color: var(--fg-dim);
+  color: var(--fg-mid);
   padding: 10px 16px;
   min-height: 44px;
   min-width: 44px;
@@ -512,7 +512,7 @@
   gap: 5px;
   background: transparent;
   border: 1px solid var(--border);
-  color: var(--fg-dim);
+  color: var(--fg-mid);
   font-family: 'Geist Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.8px;
@@ -764,7 +764,7 @@
 
 .co-check-group-name {
   font-family: 'Geist Mono', monospace;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--fg);
   white-space: nowrap;
@@ -774,8 +774,8 @@
 
 .co-check-group-count {
   font-family: 'Geist Mono', monospace;
-  font-size: 11px;
-  color: var(--fg-dim);
+  font-size: 12px;
+  color: var(--fg-mid);
 }
 
 .co-check-group-bar-track {
@@ -795,7 +795,7 @@
 
 .co-check-group-score {
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--fg-mid);
   text-align: right;
@@ -832,7 +832,7 @@
   grid-template-columns: 12px 1fr 2fr;
   align-items: baseline;
   gap: 12px;
-  padding: 8px 24px;
+  padding: 8px 32px;
   border-top: 1px solid var(--border);
   min-height: unset;
 }
@@ -847,17 +847,17 @@
 
 .co-check-item-id {
   font-family: 'Geist Mono', monospace;
-  font-size: 11px;
-  color: var(--fg-mid);
+  font-size: 12px;
+  color: var(--fg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .co-check-item-msg {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist Mono', monospace;
   font-size: 12px;
-  color: var(--fg-dim);
+  color: var(--fg-mid);
   line-height: 1.4;
 }
 
@@ -1114,7 +1114,7 @@
   .co-check-group-body .co-check-item {
     grid-template-columns: 12px 1fr 2fr;
     gap: 8px;
-    padding: 8px 20px;
+    padding: 8px 24px;
   }
 
   .co-check-item {
@@ -1283,6 +1283,7 @@
 
   .co-check-item-msg {
     font-size: 11px;
+    grid-column: 2;
   }
 
   .co-check-item {

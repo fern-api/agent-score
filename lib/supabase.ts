@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { CompanyScore } from './scores';
+import { isBlockedDomain } from './blocked-domains';
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -84,7 +85,22 @@ export async function getScoreBySlug(slug: string): Promise<CompanyScore | null>
   if (!res.ok) return null;
   const rows: ScoreRow[] = await res.json();
   if (!rows.length) return null;
-  return rowToCompany(rows[0]);
+  const company = rowToCompany(rows[0]);
+  // Never surface blocked-domain records — treat them as not found
+  if (isBlockedDomain(company.docsUrl)) return null;
+  return company;
+}
+
+export async function deleteScoresByFilter(filter: { slugs?: string[]; docsUrls?: string[] }): Promise<void> {
+  const sb = getSupabase();
+  if (filter.slugs?.length) {
+    const { error } = await sb.from('scores').delete().in('slug', filter.slugs);
+    if (error) console.error('[supabase] deleteScoresByFilter slugs error:', error.message);
+  }
+  if (filter.docsUrls?.length) {
+    const { error } = await sb.from('scores').delete().in('docs_url', filter.docsUrls);
+    if (error) console.error('[supabase] deleteScoresByFilter docsUrls error:', error.message);
+  }
 }
 
 export async function getAllScores(): Promise<CompanyScore[]> {

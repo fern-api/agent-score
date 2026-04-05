@@ -31,7 +31,7 @@ const PATTERNS: Array<{ category: Category; pattern: RegExp }> = [
   {
     category: 'AI/ML',
     pattern:
-      /\b(openai|anthropic|cohere|huggingface|hugging.face|replicate|togetherai|together\.ai|mistral|groq|perplexity|pinecone|weaviate|chromadb|chroma\.tech|qdrant|milvus|langchain|llamaindex|llama.?index|mem0|roboflow|clearml|wandb|neptune\.ai|haystack|stability\.ai|stabilityai|midjourney|runway|leonardo\.ai|leonardoai|fireworks\.ai|fireworksai|anyscale|modal\.com|runpod|banana\.dev|baseten|beam\.cloud|inferless|octoai|lepton|deepinfra|novita|cerebras|ai21|aleph.?alpha|xai\.com|grok|gemini|vertex\.ai|bedrock|sagemaker|mlflow|bentoml|ray\.io|dstack|flyte|zenml|metaflow|prefect|dagster|airflow|mlops|llmops|vector\s*db|embedding|fine.?tun|model\s*serv|inference\s*api|ai\s*platform|machine\s*learn|deep\s*learn)\b/i,
+      /\b(openai|anthropic|claude\b|cohere|huggingface|hugging.face|replicate|togetherai|together\.ai|mistral|groq|perplexity|pinecone|weaviate|chromadb|chroma\.tech|qdrant|milvus|langchain|llamaindex|llama.?index|mem0|roboflow|clearml|wandb|neptune\.ai|haystack|stability\.ai|stabilityai|midjourney|runway|leonardo\.ai|leonardoai|fireworks\.ai|fireworksai|anyscale|modal\.com|runpod|banana\.dev|baseten|beam\.cloud|inferless|octoai|lepton|deepinfra|novita|cerebras|ai21|aleph.?alpha|xai\.com|grok|gemini|vertex\.ai|bedrock|sagemaker|mlflow|bentoml|ray\.io|dstack|flyte|zenml|metaflow|prefect|dagster|airflow|mlops|llmops|vector\s*db|embedding|fine.?tun|model\s*serv|inference\s*api|ai\s*platform|machine\s*learn|deep\s*learn)\b/i,
   },
 
   // Payments & Fintech
@@ -109,14 +109,14 @@ function matchPatterns(docsUrl: string, name?: string): Category | undefined {
 
 /**
  * Ask Claude to classify the company when pattern-matching returns nothing.
- * Requires ANTHROPIC_API_KEY in the environment.
+ * Requires OPENAI_API_KEY in the environment.
  * Returns null on any failure so the caller can fall back gracefully.
  */
 async function inferCategoryWithLLM(
   docsUrl: string,
   name?: string,
 ): Promise<Category | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
   const prompt = `You are classifying a company's API/developer documentation site into exactly one category.
@@ -132,15 +132,14 @@ Rules:
 - Reply with ONLY the category name, nothing else.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${apiKey}`,
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'gpt-4o-mini',
         max_tokens: 16,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -148,12 +147,12 @@ Rules:
     });
 
     if (!res.ok) {
-      console.warn('[categorize] Anthropic API error:', res.status);
+      console.warn('[categorize] OpenAI API error:', res.status);
       return null;
     }
 
     const data = await res.json();
-    const raw = (data?.content?.[0]?.text ?? '').trim();
+    const raw = (data?.choices?.[0]?.message?.content ?? '').trim();
     const match = CATEGORIES.find(
       (c) => c.toLowerCase() === raw.toLowerCase(),
     );
@@ -167,7 +166,7 @@ Rules:
 /**
  * Infer a category for a docs URL + company name.
  * 1. Fast pattern match — if it hits, return immediately (no API call).
- * 2. Ask Claude Haiku if patterns don't match.
+ * 2. Ask GPT-4o mini if patterns don't match.
  * 3. Fall back to 'Other' if the API call fails or is unavailable.
  */
 export async function inferCategory(

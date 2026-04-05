@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import { waitUntil } from "@vercel/functions";
-import { calculateGrade } from "@/lib/scores";
 import { upsertScore, getScoreBySlug } from "@/lib/supabase";
 import { fetchOgName, domainToName } from "@/lib/og-name";
-import { computeScore } from "@/lib/scoring";
+import { computeScore } from "afdocs";
 import { inferCategory } from "@/lib/categorize";
+import { isBlockedDomain } from "@/lib/blocked-domains";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -41,38 +41,6 @@ function checkCookieRateLimit(request: Request): { allowed: boolean; timestamps:
 function buildRateLimitCookie(timestamps: number[]): string {
   const value = encodeURIComponent(JSON.stringify([...timestamps, Date.now()]));
   return `${RL_COOKIE}=${value}; Path=/; Max-Age=3600; HttpOnly; SameSite=Strict`;
-}
-
-// ---------------------------------------------------------------------------
-// Domain blocklist — adult / NSFW sites
-// ---------------------------------------------------------------------------
-
-const BLOCKED_TLDS = new Set(['.xxx', '.porn', '.sex', '.adult']);
-
-const BLOCKED_DOMAINS = new Set([
-  'pornhub.com', 'xvideos.com', 'xhamster.com', 'xnxx.com', 'redtube.com',
-  'youporn.com', 'tube8.com', 'beeg.com', 'brazzers.com', 'onlyfans.com',
-  'chaturbate.com', 'cam4.com', 'myfreecams.com', 'livejasmin.com', 'stripchat.com',
-  'spankbang.com', 'eporner.com', 'tnaflix.com', 'drtuber.com', 'nuvid.com',
-  'slutload.com', 'empflix.com', 'xtube.com', 'hclips.com', 'txxx.com',
-  'porntrex.com', 'anysex.com', 'fuq.com', 'ixxx.com', 'rulertube.com',
-]);
-
-function isBlockedDomain(url: string): boolean {
-  try {
-    const normalized = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-    const { hostname } = new URL(normalized);
-    const host = hostname.replace(/^www\./, '').toLowerCase();
-    if (BLOCKED_TLDS.has('.' + host.split('.').pop())) return true;
-    if (BLOCKED_DOMAINS.has(host)) return true;
-    // Check if host ends with a blocked domain (e.g. subdomain.pornhub.com)
-    for (const d of BLOCKED_DOMAINS) {
-      if (host === d || host.endsWith('.' + d)) return true;
-    }
-    return false;
-  } catch {
-    return false;
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -166,13 +134,13 @@ async function detectDocsUrl(url: string): Promise<{ isLikely: boolean; warning?
     return {
       isLikely: false,
       warning: `This URL looks like a marketing or product site, not a documentation site.`,
-      suggestion: `Try: docs.${baseDomain}, ${parsed.origin}/docs, or ${parsed.origin}/api`,
+      suggestion: `docs.${baseDomain}, ${parsed.origin}/docs, or ${parsed.origin}/api`,
     };
   } catch {
     return {
       isLikely: false,
       warning: `Could not fetch the URL — it may be protected by bot-detection.`,
-      suggestion: `Try: docs.${parsed.hostname.replace(/^www\./, "")}`,
+      suggestion: `docs.${parsed.hostname.replace(/^www\./, "")}`,
     };
   }
 }
@@ -218,16 +186,12 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
         maxLinksToTest: 10,
       }),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Scoring timed out — the docs site may be slow or blocking automated requests.")), 50_000)
+        setTimeout(() => reject(new Error("Scoring timed out — the docs site may be slow or blocking automated requests.")), 120_000)
       ),
     ]);
     console.log("[score] runChecks complete:", JSON.stringify(result.summary));
 
-    // Exclude llms-txt-valid when the only issue is a missing blockquote
-    const scorableResults = result.results.filter(
-      (r: { id: string; message: string }) => !(r.id === "llms-txt-valid" && r.message.includes("No blockquote summary found"))
-    );
-    const scored = computeScore(scorableResults as Parameters<typeof computeScore>[0]);
+    const scored = computeScore(result);
     const score = scored.overall;
     const grade = scored.grade;
 
@@ -253,7 +217,9 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
         fail: result.summary.fail,
       },
       results: result.results,
-      categoryScores: scored.categoryScores,
+      categoryScores: Object.fromEntries(
+        Object.entries(scored.categoryScores).map(([k, v]) => [k, typeof v === 'number' ? v : (v as { score: number }).score])
+      ),
     };
 
     try {
@@ -297,12 +263,15 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { url, slug: slugParam, name: nameParam, skipDetection, force } = body;
-    console.log("[score] POST received", { url, slugParam, skipDetection, force });
+    const { url: rawUrl, slug: slugParam, name: nameParam, skipDetection, force } = body;
+    console.log("[score] POST received", { url: rawUrl, slugParam, skipDetection, force });
 
-    if (!url) {
+    if (!rawUrl) {
       return NextResponse.json({ error: "url is required" }, { status: 400 });
     }
+
+    // Normalize — prepend https:// if no protocol so URL parsing works everywhere
+    const url: string = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
 
     if (isBlockedDomain(url)) {
       try {
@@ -346,7 +315,10 @@ export async function POST(request: Request) {
     const effectiveName: string | null = nameParam ?? derivedName ?? null;
     console.log("[score] name candidates — og:", ogName, "domain:", fromDomain, "chosen:", effectiveName);
 
-    const effectiveSlug = slugParam || (effectiveName ? nameToSlug(effectiveName) : urlToSlug(url));
+    // When the URL has a meaningful path (e.g. docs.nvidia.com/dynamo vs docs.nvidia.com/heavyai),
+    // use the full URL slug so path-scoped sites don't collide on the domain-derived name slug.
+    const urlPath = (() => { try { return new URL(url).pathname.replace(/^\/|\/$/g, ''); } catch { return ''; } })();
+    const effectiveSlug = slugParam || (effectiveName && !urlPath ? nameToSlug(effectiveName) : urlToSlug(url));
     console.log("[score] resolved slug:", effectiveSlug, "name:", effectiveName);
 
     // Return cached result if company already exists (skip when force=true)

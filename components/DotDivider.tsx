@@ -1,7 +1,6 @@
 export default function DotDivider() {
   return (
     <div className="dot-divider" style={{
-      height: 56,
       width: '100%',
       borderBottom: '1px solid var(--border)',
     }}>

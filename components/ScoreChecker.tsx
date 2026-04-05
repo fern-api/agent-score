@@ -46,7 +46,7 @@ export default function ScoreChecker() {
         if (data.status === 'complete') {
           stopPolling();
           setResult({ score: data.score, grade: data.grade });
-          if (data.slug) { window.location.href = `/company/${data.slug}`; }
+          if (data.slug && data.slug !== 'unknown') { window.location.href = `/company/${data.slug}`; }
           else { setState('complete'); }
         } else if (data.status === 'error') {
           stopPolling();
@@ -74,7 +74,7 @@ export default function ScoreChecker() {
         throw new Error(msg + suggestion);
       }
       const data = await res.json();
-      if (data.existing && data.slug) {
+      if (data.existing && data.slug && data.slug !== 'unknown') {
         window.location.href = `/company/${data.slug}`;
         return;
       }

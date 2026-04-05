@@ -47,6 +47,15 @@ For each issue above, please:
 - **Auth walls**: Ensure docs pages return 200 without requiring login cookies or tokens
 - **No Last-Modified header**: Configure your server/CDN to include Last-Modified response headers
 - **Tab content hidden**: Ensure tabbed content is rendered in the HTML (not JS-only) so agents can read all variants
+
+## Run afdocs Locally for More Detail
+
+To get deeper visibility into what's failing, run afdocs against your docs:
+
+  npx afdocs ${url} --fixes --verbose
+
+- **--fixes**: Adds "Fix:" lines to the output for each warn/fail check with actionable remediation steps
+- **-v, --verbose**: Shows per-page details (specific URLs, character counts, error codes) for checks with issues — useful for per-URL visibility into what's failing
 `.trim();
 }
 

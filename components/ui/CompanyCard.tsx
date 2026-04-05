@@ -88,7 +88,7 @@ export default function CompanyCard({ company }: CompanyCardProps) {
           padding: '3px 10px',
           borderRadius: 0,
           border: '1px solid rgba(255, 255, 255, 0.06)',
-          color: 'var(--color-text-body)',
+          color: 'var(--fg-mid)',
           background: 'transparent',
           flexShrink: 0,
         }}
