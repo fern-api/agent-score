@@ -21,7 +21,6 @@
    name/domain, score ring, and panels.
    ===================================================== */
 .co-hero-container {
-  border-bottom: 1px solid var(--border);
 }
 
 /* =====================================================
@@ -338,6 +337,7 @@
 .co-share-icons {
   display: flex;
   align-items: center;
+  height: 46px;
 }
 
 .co-share-btn {
@@ -349,8 +349,8 @@
   margin-left: -1px;
   color: var(--fg-mid);
   padding: 10px 16px;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 48px;
+  min-width: 46px;
   cursor: pointer;
   text-decoration: none;
   position: relative;
