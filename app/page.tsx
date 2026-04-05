@@ -7,6 +7,7 @@ import CTASection from '@/components/CTASection';
 import SiteFooter from '@/components/SiteFooter';
 import DotDivider from '@/components/DotDivider';
 import PingPongVideo from '@/components/PingPongVideo';
+import BoneyardShell from '@/components/BoneyardShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -146,6 +147,7 @@ export default async function HomePage() {
     });
 
   return (
+    <BoneyardShell name="home">
     <main>
       {/* HERO */}
       <section className="hero" id="why">
@@ -260,7 +262,7 @@ export default async function HomePage() {
       <section className="sp-section" id="humans">
         <div className="sp-top-row">
           <div className="sp-header">
-            <span className="why-label">SOCIAL PROOF</span>
+            <span className="why-label">FROM THE FIELD</span>
             <h2 className="why-heading">
               Here&apos;s what <span className="accent">humans</span> are saying about it
             </h2>
@@ -284,7 +286,7 @@ export default async function HomePage() {
               <div className="sp-avatar-ring"><img src="/social/dachary-social.png" alt="Dachary Carey" className="sp-avatar sp-avatar-img" /></div>
               <div>
                 <div className="sp-author-name">Dachary Carey</div>
-                <div className="sp-author-role">Defined the AFDocs standard</div>
+                <div className="sp-author-role">Creator of the AFDocs standard</div>
               </div>
             </div>
           </div>
@@ -338,5 +340,6 @@ export default async function HomePage() {
       <DotDivider />
       <SiteFooter />
     </main>
+    </BoneyardShell>
   );
 }

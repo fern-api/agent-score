@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Navbar from '@/components/Navbar';
 import './globals.css';
+import './bones/registry';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://labs.buildwithfern.com/agent-score'),
