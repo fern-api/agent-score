@@ -48,8 +48,8 @@ export default async function Image({ params }: { params: { slug: string } }) {
     const bg = scoreBg(score);
     const gradeImgSrc = gradeImageSrc(grade);
 
-    // Score ring math (r=68, circumference≈427.3)
-    const r = 68;
+    // Score ring math (r=90, circumference≈565.5)
+    const r = 90;
     const circumference = +(2 * Math.PI * r).toFixed(2);
     const offset = +((1 - score / 100) * circumference).toFixed(2);
 
@@ -125,17 +125,17 @@ export default async function Image({ params }: { params: { slug: string } }) {
               }}
             >
               {/* Score ring */}
-              <div style={{ display: 'flex', position: 'relative', width: '160px', height: '160px' }}>
-                <svg width="160" height="160" viewBox="0 0 160 160">
-                  <g transform={`rotate(-90 80 80)`}>
-                    <circle cx="80" cy="80" r={r} fill="none" stroke="#1a1a1a" strokeWidth="8" />
+              <div style={{ display: 'flex', position: 'relative', width: '200px', height: '200px' }}>
+                <svg width="200" height="200" viewBox="0 0 200 200">
+                  <g transform={`rotate(-90 100 100)`}>
+                    <circle cx="100" cy="100" r={r} fill="none" stroke="#1a1a1a" strokeWidth="10" />
                     <circle
-                      cx="80"
-                      cy="80"
+                      cx="100"
+                      cy="100"
                       r={r}
                       fill="none"
                       stroke={color}
-                      strokeWidth="8"
+                      strokeWidth="10"
                       strokeLinecap="round"
                       strokeDasharray={String(circumference)}
                       strokeDashoffset={String(offset)}
@@ -147,12 +147,12 @@ export default async function Image({ params }: { params: { slug: string } }) {
                     position: 'absolute',
                     top: 0,
                     left: 0,
-                    width: '160px',
-                    height: '160px',
+                    width: '200px',
+                    height: '200px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '80px',
+                    fontSize: '88px',
                     fontWeight: '700',
                     fontFamily: 'Inter',
                     color: '#ffffff',
