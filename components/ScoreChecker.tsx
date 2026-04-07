@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { lines_3 } from 'cli-loaders';
+import DemoModal from './DemoModal';
 
 type CheckerState = 'idle' | 'running' | 'complete' | 'error';
 
@@ -9,7 +10,6 @@ const PROGRESS_STEPS = [
   'Checking llms.txt...',
   'Checking markdown format...',
   'Analyzing page structure...',
-  'Evaluating URL patterns...',
   'Checking authentication docs...',
   'Calculating score...',
 ];
@@ -28,7 +28,10 @@ export default function ScoreChecker() {
   const [currentStep, setCurrentStep] = useState(0);
   const [stepFrame, setStepFrame] = useState(0);
   const [error, setError] = useState('');
+  const [isTimeout, setIsTimeout] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
   const [result, setResult] = useState<{ score: number; grade: string } | null>(null);
+  const [elapsed, setElapsed] = useState(0);
   const jobIdRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -36,20 +39,33 @@ export default function ScoreChecker() {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
   };
 
-  const startPolling = useCallback((jobId: string) => {
+  const startPolling = useCallback((jobId: string, slug?: string, since?: number) => {
     stopPolling();
+    const deadline = Date.now() + 150_000; // 2.5 minute client-side safety net
+    const params = new URLSearchParams();
+    if (slug) params.set('slug', slug);
+    if (since) params.set('since', String(since));
+    const query = params.toString() ? `?${params}` : '';
     pollRef.current = setInterval(async () => {
+      if (Date.now() > deadline) {
+        stopPolling();
+        setIsTimeout(true);
+        setError('Scoring timed out — the docs site may be slow or blocking automated requests.');
+        setState('error');
+        return;
+      }
       try {
-        const res = await fetch(`/api/score/${jobId}`);
+        const res = await fetch(`/agent-score/api/score/${jobId}${query}`);
         if (!res.ok) return;
         const data = await res.json();
         if (data.status === 'complete') {
           stopPolling();
           setResult({ score: data.score, grade: data.grade });
-          if (data.slug && data.slug !== 'unknown') { window.location.href = `/company/${data.slug}`; }
+          if (data.slug && data.slug !== 'unknown') { window.location.href = `/agent-score/company/${data.slug}`; }
           else { setState('complete'); }
         } else if (data.status === 'error') {
           stopPolling();
+          setIsTimeout(!!data.isTimeout);
           setError(data.message ?? 'Scoring failed');
           setState('error');
         }
@@ -59,10 +75,10 @@ export default function ScoreChecker() {
 
   const runCheck = useCallback(async () => {
     if (!url.trim()) return;
-    setState('running'); setCurrentStep(0); setError(''); jobIdRef.current = null;
+    setState('running'); setCurrentStep(0); setError(''); setIsTimeout(false); jobIdRef.current = null;
     const rawUrl = url.trim();
     try {
-      const res = await fetch('/api/score', {
+      const res = await fetch('/agent-score/api/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: rawUrl }),
@@ -75,11 +91,13 @@ export default function ScoreChecker() {
       }
       const data = await res.json();
       if (data.existing && data.slug && data.slug !== 'unknown') {
-        window.location.href = `/company/${data.slug}`;
+        window.location.href = `/agent-score/company/${data.slug}`;
         return;
       }
       jobIdRef.current = data.jobId;
-      startPolling(data.jobId);
+      // cached=true means slug already exists in Supabase — no since needed
+      // new jobs pass since so the poll only accepts results scored after this run started
+      startPolling(data.jobId, data.slug, data.cached ? undefined : Date.now());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not score this URL. Please check and try again.');
       setState('error');
@@ -92,13 +110,19 @@ export default function ScoreChecker() {
     const stepId = setInterval(() => {
       step = Math.min(step + 1, PROGRESS_STEPS.length - 1);
       setCurrentStep(step);
-    }, 4000);
+    }, 8000);
     return () => clearInterval(stepId);
   }, [state]);
 
   useEffect(() => {
     if (state !== 'running') return;
     const id = setInterval(() => setStepFrame(f => (f + 1) % lines_3.keyframes.length), lines_3.speed);
+    return () => clearInterval(id);
+  }, [state]);
+
+  useEffect(() => {
+    if (state !== 'running') { setElapsed(0); return; }
+    const id = setInterval(() => setElapsed(s => s + 1), 1000);
     return () => clearInterval(id);
   }, [state]);
 
@@ -112,6 +136,10 @@ export default function ScoreChecker() {
   if (state === 'running') {
     return (
       <div className="hsf-running">
+        <div className="hsf-running-url-row">
+          <span className="hsf-timer">{String(Math.floor(elapsed / 60)).padStart(2, '0')}:{String(elapsed % 60).padStart(2, '0')}</span>
+          <span className="hsf-running-url">{url}</span>
+        </div>
         {PROGRESS_STEPS.map((step, i) => (
           <div key={step} className={`hsf-step ${i < currentStep ? 'done' : i === currentStep ? 'active' : 'pending'}`}>
             <span className="hsf-step-icon">
@@ -138,24 +166,37 @@ export default function ScoreChecker() {
   }
 
   return (
-    <div className="hsf-container-outer">
-      <div className="hsf-container">
-        <form onSubmit={handleSubmit} className="hsf-form">
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onBlur={() => {}}
-            placeholder="https://docs.yourcompany.com"
-            autoComplete="off"
-            className="hsf-input"
-          />
-          <div className="hsf-btn-container">
-            <button type="submit" className="hsf-btn">Score your docs</button>
-          </div>
-          {error && <div className="hsf-error">{error}</div>}
-        </form>
+    <>
+      <div className="hsf-container-outer">
+        <div className="hsf-container">
+          <form onSubmit={handleSubmit} className="hsf-form">
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onBlur={() => {}}
+              placeholder="https://docs.yourcompany.com"
+              autoComplete="off"
+              className="hsf-input"
+            />
+            <div className="hsf-btn-container">
+              <button type="submit" className="hsf-btn">Score your docs</button>
+            </div>
+            {error && (
+              <div className="hsf-error">
+                {isTimeout ? (
+                  <>
+                    Wow! That&apos;s a really big site.{' '}
+                    <button className="hsf-timeout-link" onClick={() => setDemoOpen(true)}>Give us your email</button>
+                    {' '}and we&apos;ll get back to you on a score.
+                  </>
+                ) : error}
+              </div>
+            )}
+          </form>
+        </div>
       </div>
-    </div>
+      {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} source="scoring timeout" />}
+    </>
   );
 }

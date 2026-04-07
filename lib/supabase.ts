@@ -28,6 +28,7 @@ export interface ScoreRow {
   results: CompanyScore['results'];
   category_scores?: Record<string, number> | null;
   hidden?: boolean;
+  is_fern?: boolean;
 }
 
 function rowToCompany(row: ScoreRow): CompanyScore {
@@ -47,6 +48,8 @@ function rowToCompany(row: ScoreRow): CompanyScore {
     },
     results: row.results,
     categoryScores: row.category_scores ?? undefined,
+    hidden: row.hidden ?? false,
+    isFern: row.is_fern ?? false,
   };
 }
 
@@ -68,6 +71,7 @@ export async function upsertScore(company: CompanyScore): Promise<void> {
   };
   // Only write hidden when explicitly provided — preserves manual overrides
   if (company.hidden !== undefined) payload.hidden = company.hidden;
+  if (company.isFern !== undefined) payload.is_fern = company.isFern;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await getSupabase().from('scores').upsert(payload as any, { onConflict: 'slug' });
   if (error) throw new Error(`Supabase upsert failed: ${error.message}`);

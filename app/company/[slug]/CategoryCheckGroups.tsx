@@ -87,6 +87,7 @@ export default function CategoryCheckGroups({ categories, results, categoryScore
         const score = categoryScores?.[cat.name] ?? calcCategoryScore(items);
         const passCount = items.filter(r => r.status === 'pass').length;
         const warnCount = items.filter(r => r.status === 'warn').length;
+        const failCount = items.filter(r => r.status === 'fail' || r.status === 'error').length;
 
         const bodyId = `check-group-body-${formatCategoryName(cat.name)}`;
 
@@ -106,7 +107,9 @@ export default function CategoryCheckGroups({ categories, results, categoryScore
             >
               <div className="co-check-group-name-wrap">
                 <span className="co-check-group-name">{formatCategoryName(cat.name)}</span>
-                <span className="co-check-group-count">{passCount}p / {warnCount}w</span>
+                <span className="co-check-group-count">
+                  {passCount} passed{warnCount > 0 ? ` / ${warnCount} warnings` : ''}{failCount > 0 ? ` / ${failCount} failed` : ''}
+                </span>
               </div>
               <div className="co-check-group-bar-track">
                 <div

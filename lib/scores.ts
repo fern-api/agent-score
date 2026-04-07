@@ -23,6 +23,7 @@ export interface CompanyScore {
   results?: CheckResult[];
   categoryScores?: Record<string, number>;
   hidden?: boolean;
+  isFern?: boolean;
 }
 
 export async function getCompanyWithFallback(slug: string): Promise<CompanyScore | null> {

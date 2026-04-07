@@ -66,8 +66,8 @@ const testimonials = [
   {
     name: 'Zeno Rocha',
     role: 'CEO, Resend',
-    avatar: '/social/zeno-social.png',
-    companyLogo: '/social/resend-social.svg',
+    avatar: '/agent-score/social/zeno-social.png',
+    companyLogo: '/agent-score/social/resend-social.svg',
     company: 'Resend',
     docsUrl: 'https://resend.com/docs',
     companySlug: 'resend',
@@ -76,8 +76,8 @@ const testimonials = [
   {
     name: 'Alex Atallah',
     role: 'CEO, OpenRouter',
-    avatar: '/social/alex-social.png',
-    companyLogo: '/social/openrouter-social.svg',
+    avatar: '/agent-score/social/alex-social.png',
+    companyLogo: '/agent-score/social/openrouter-social.svg',
     company: 'OpenRouter',
     docsUrl: 'https://openrouter.ai/docs',
     companySlug: 'openrouter-ai-docs-quickstart',
@@ -86,8 +86,8 @@ const testimonials = [
   {
     name: 'Balaji Raghavan',
     role: 'Head of Engineering, Postman',
-    avatar: '/social/balaji-social.png',
-    companyLogo: '/social/postman-social.svg',
+    avatar: '/agent-score/social/balaji-social.png',
+    companyLogo: '/agent-score/social/postman-social.svg',
     company: 'Postman',
     docsUrl: 'https://learning.postman.com/docs',
     companySlug: 'postman',
@@ -96,8 +96,8 @@ const testimonials = [
   {
     name: 'Michael Grinich',
     role: 'Founder, WorkOS',
-    avatar: '/social/michael-social.png',
-    companyLogo: '/social/workos-social.svg',
+    avatar: '/agent-score/social/michael-social.png',
+    companyLogo: '/agent-score/social/workos-social.svg',
     company: 'WorkOS',
     docsUrl: 'https://workos.com/docs',
     companySlug: 'workos',
@@ -106,27 +106,41 @@ const testimonials = [
   {
     name: 'Dave Nunez',
     role: 'CEO, Falconer',
-    avatar: '/social/dave-social.png',
-    companyLogo: '/social/falconer-social.svg',
+    avatar: '/agent-score/social/dave-social.png',
+    companyLogo: '/agent-score/social/falconer-social.svg',
     company: 'Falconer',
     docsUrl: 'https://falconer.com/docs',
     companySlug: 'falconer',
     quote: 'We spend a lot of time on our content, but it doesn\'t matter if agents can\'t discover it. Agent Score is a beautifully designed tool that tells us how we suck.',
   },
   // {
-  //   name: 'Paul Asjes',
-  //   role: 'DevEx, ElevenLabs',
-  //   avatar: '/social/paul-social.png',
-  //   companyLogo: '/social/elevenlabs-social.svg',
-  //   company: 'ElevenLabs',
-  //   docsUrl: 'https://elevenlabs.io/docs',
-  //   quote: 'The developers who find us through AI agents convert at a higher rate than any other channel. Agent-readable docs aren\'t a nice-to-have. They\'re a growth lever.',
-  // },
+  {
+    name: 'Paul Asjes',
+    role: 'DevEx, ElevenLabs',
+    avatar: '/agent-score/social/paul-social.png',
+    companyLogo: '/agent-score/social/elevenlabs-social.svg',
+    logoHeight: 14,
+    company: 'ElevenLabs',
+    docsUrl: 'https://elevenlabs.io/docs',
+    companySlug: 'elevenlabs',
+    quote: 'Like moving from punch cards to IDEs or machine code to syntactic languages, agents are the next big leap in software engineering. Agent experience is now at the forefront of how products are adopted and it all starts with good, agent-first documentation.',
+  },
+  {
+    name: 'Sylvain Kalache',
+    role: 'Head of AI Labs, Rootly',
+    avatar: '/agent-score/social/sylvain-social.png',
+    companyLogo: '/agent-score/social/rootly-social.svg',
+    company: 'Rootly',
+    docsUrl: 'https://rootly.com/docs',
+    companySlug: 'rootly',
+    quote: 'Incident response is about speed. Rootly invested early in being agent-ready, but had no way to measure how far ahead we actually were. Agent Score changed that.',
+  },
   {
     name: 'Gil Feig',
     role: 'CTO, Merge',
-    avatar: '/social/gil-social.png',
-    companyLogo: '/social/merge-social.svg',
+    avatar: '/agent-score/social/gil-social.png',
+    companyLogo: '/agent-score/social/merge-social.svg',
+    logoHeight: 20,
     company: 'Merge',
     docsUrl: 'https://docs.merge.dev',
     companySlug: 'merge',
@@ -157,22 +171,31 @@ export default async function HomePage() {
               Is your documentation ready for <span className="accent">AI agents</span>?
             </h1>
             <p className="hero-subtitle">
-              Improve your agent readiness to allow AI agents to discover and call APIs directly — evaluated across{' '}
-              <a className="agent-badge" href="https://docs.cursor.com" target="_blank" rel="noopener noreferrer"><img src="/cursor-simple-logo.svg" alt="Cursor" style={{width:'12px',height:'14px',display:'block',flexShrink:0}} /> Cursor</a>,{' '}
-              <a className="agent-badge" href="https://docs.anthropic.com" target="_blank" rel="noopener noreferrer"><img src="/claude-simple-logo.svg" alt="Claude" style={{width:'14px',height:'14px',display:'block',flexShrink:0}} /> Claude</a> and{' '}
-              <a className="agent-badge" href="https://platform.openai.com/docs" target="_blank" rel="noopener noreferrer"><img src="/openai-simple-logo.svg" alt="ChatGPT" style={{width:'14px',height:'14px',display:'block',flexShrink:0}} /> ChatGPT</a>.
+              When an agent can&apos;t use your docs, developers don&apos;t get an error. They reach for a competitor. Find out where you stand across{' '}
+              <span className="agent-badge"><img src="/agent-score/cursor-simple-logo.svg" alt="Cursor" style={{width:'12px',height:'14px',display:'block',flexShrink:0}} /> Cursor</span>,{' '}
+              <span className="agent-badge"><img src="/agent-score/claude-simple-logo.svg" alt="Claude" style={{width:'14px',height:'14px',display:'block',flexShrink:0}} /> Claude</span> and{' '}
+              <span className="agent-badge"><img src="/agent-score/openai-simple-logo.svg" alt="ChatGPT" style={{width:'14px',height:'14px',display:'block',flexShrink:0}} /> ChatGPT</span>.
             </p>
-            <p className="hero-attribution">
+            <p className="hero-attribution hero-attribution-desktop">
               <span style={{display:'inline-flex',alignItems:'center',gap:'4px'}}>
                 Developed by
                 <a href="https://buildwithfern.com" target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center'}}>
-                  <Image src="/fern-labs-dark.svg" alt="Fern Labs" width={77} height={14} className="fern-logo-dark" style={{ marginBottom: '3px' }} />
+                  <Image src="/agent-score/fern-labs-dark.svg" alt="Fern Labs" width={77} height={14} className="fern-logo-dark" style={{ marginBottom: '3px' }} />
                 </a>
               </span>
               <span style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>
                 in partnership with
                 <a href="https://github.com/dacharyc" target="_blank" rel="noreferrer">Dachary Carey.</a>
               </span>
+            </p>
+            <p className="hero-attribution hero-attribution-mobile">
+              <a href="https://buildwithfern.com" target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center'}}>
+                <Image src="/agent-score/fern-labs-dark.svg" alt="Fern Labs" width={77} height={14} className="fern-logo-dark" style={{ marginBottom: '3px' }} />
+              </a>
+              <svg className="hero-attribution-x" width="6" height="6" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
+              </svg>
+              <a href="https://github.com/dacharyc" target="_blank" rel="noreferrer">Dachary Carey</a>
             </p>
           </div>
           <div className="hero-form-strip" id="hero-score-btn">
@@ -183,6 +206,29 @@ export default async function HomePage() {
         <div className="hero-right">
           <MatrixBackground />
         </div>
+      </section>
+
+      {/* HERO QUOTES */}
+      <section className="hero-quotes">
+        {[testimonials[1], testimonials[0]].map((t, i) => (
+          <div key={t.name} className={`sp-card hero-quote-card${i === 0 ? ' hero-quote-card-left' : ''}`}>
+            <div className="hero-quote-header">
+              <div className="sp-author">
+                {t.avatar && (
+                  <div className="sp-avatar-ring"><img src={t.avatar} alt={t.name} className="sp-avatar sp-avatar-img" /></div>
+                )}
+                <div>
+                  <div className="sp-author-name">{t.name}</div>
+                  <div className="sp-author-role">{t.role}</div>
+                </div>
+              </div>
+              <a href={t.companySlug ? `/agent-score/company/${t.companySlug}` : t.docsUrl} {...(!t.companySlug ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="sp-company-logo-link">
+                <img src={t.companyLogo} alt={t.company} className="sp-company-logo" style={t.logoHeight ? { height: `${t.logoHeight}px`, width: 'auto' } : undefined} />
+              </a>
+            </div>
+            <p className="sp-quote">{t.quote}</p>
+          </div>
+        ))}
       </section>
 
       {/* LEADERBOARD */}
@@ -205,7 +251,7 @@ export default async function HomePage() {
         <div className="why-grid">
           {/* Row 1 */}
           <div className="why-cell why-cell-img">
-            <video autoPlay muted playsInline loop className="why-cell-video"><source src="/invisible-audience.mp4" type="video/mp4" /></video>
+            <video autoPlay muted playsInline loop className="why-cell-video"><source src="/agent-score/invisible-audience.mp4" type="video/mp4" /></video>
           </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">The invisible audience</div>
@@ -216,7 +262,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="why-cell why-cell-img">
-            <video autoPlay muted playsInline loop className="why-cell-video"><source src="/lighthouse.mp4" type="video/mp4" /></video>
+            <video autoPlay muted playsInline loop className="why-cell-video"><source src="/agent-score/lighthouse.mp4" type="video/mp4" /></video>
           </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">Lighthouse for AI agents</div>
@@ -229,7 +275,7 @@ export default async function HomePage() {
 
           {/* Row 2 */}
           <div className="why-cell why-cell-img">
-            <video autoPlay muted playsInline loop className="why-cell-video"><source src="/agent-readiness.mp4" type="video/mp4" /></video>
+            <video autoPlay muted playsInline loop className="why-cell-video"><source src="/agent-score/agent-readiness.mp4" type="video/mp4" /></video>
           </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">Agent readiness = competitive moat</div>
@@ -240,7 +286,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="why-cell why-cell-img">
-            <PingPongVideo src="/open-source.mp4" className="why-cell-video" />
+            <PingPongVideo src="/agent-score/open-source.mp4" className="why-cell-video" />
           </div>
           <div className="why-cell why-cell-text">
             <div className="why-cell-title">Open source, no black boxes</div>
@@ -283,7 +329,7 @@ export default async function HomePage() {
               </p>
             </div>
             <div className="sp-author">
-              <div className="sp-avatar-ring"><img src="/social/dachary-social.png" alt="Dachary Carey" className="sp-avatar sp-avatar-img" /></div>
+              <div className="sp-avatar-ring"><img src="/agent-score/social/dachary-social.png" alt="Dachary Carey" className="sp-avatar sp-avatar-img" /></div>
               <div>
                 <div className="sp-author-name">Dachary Carey</div>
                 <div className="sp-author-role">Creator of the AFDocs standard</div>
@@ -304,8 +350,8 @@ export default async function HomePage() {
                 </div>
               </div>
               <p className="sp-quote">{t.quote}</p>
-              <a href={t.companySlug ? `/company/${t.companySlug}` : t.docsUrl} {...(!t.companySlug ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="sp-company-logo-link">
-                <img src={t.companyLogo} alt={t.company} className="sp-company-logo" />
+              <a href={t.companySlug ? `/agent-score/company/${t.companySlug}` : t.docsUrl} {...(!t.companySlug ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="sp-company-logo-link">
+                <img src={t.companyLogo} alt={t.company} className="sp-company-logo" style={t.logoHeight ? { height: `${t.logoHeight}px`, width: 'auto' } : undefined} />
               </a>
             </div>
           ))}
@@ -317,10 +363,41 @@ export default async function HomePage() {
       {/* METHODOLOGY */}
       <section className="method-section" id="methodology">
         <div className="method-header">
-          <h2 className="method-header-title">22 checks across 7 categories</h2>
-          <p className="method-header-sub">
-            A comprehensive framework for evaluating agent-readiness
-          </p>
+          <div className="method-header-left">
+            <span className="why-label">METHODOLOGY</span>
+            <h2 className="method-header-title">22 checks across 7 categories</h2>
+            <p className="method-header-sub">
+              A comprehensive framework for evaluating agent-readiness
+            </p>
+          </div>
+          <div className="method-header-right">
+            <a
+              href="https://github.com/agent-ecosystem/afdocs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="method-gh-link"
+            >
+              <svg className="method-gh-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clipRule="evenodd"/></svg>
+              <div className="method-gh-link-body">
+                <span className="method-gh-link-title">afdocs</span>
+                <span className="method-gh-link-desc">Contribute to the open-source spec</span>
+              </div>
+              <svg className="method-gh-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9,4 13,8 9,12"/></svg>
+            </a>
+            <a
+              href="https://afdocs.dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="method-gh-link"
+            >
+              <svg className="method-gh-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 2c-2 2.5-3 5-3 8s1 5.5 3 8"/><path d="M10 2c2 2.5 3 5 3 8s-1 5.5-3 8"/><line x1="2" y1="10" x2="18" y2="10"/></svg>
+              <div className="method-gh-link-body">
+                <span className="method-gh-link-title">afdocs.dev</span>
+                <span className="method-gh-link-desc">The agent-friendly docs standard</span>
+              </div>
+              <svg className="method-gh-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9,4 13,8 9,12"/></svg>
+            </a>
+          </div>
         </div>
         <div className="method-grid">
           {methodCells.map((cell) => (

@@ -45,10 +45,6 @@ export default function Leaderboard({ companies, categories }: LeaderboardProps)
               <span className="lb-stat-num">{passing}</span>
               <span className="lb-stat-label">passing (80+)</span>
             </div>
-            <div className="lb-stat">
-              <span className="lb-stat-num">{avgScore}</span>
-              <span className="lb-stat-label">average score</span>
-            </div>
           </div>
         </div>
         <div className="lb-toolbar">
@@ -88,7 +84,7 @@ export default function Leaderboard({ companies, categories }: LeaderboardProps)
             </div>
             <div className="lb-grid">
               {gradeItems.map((c) => (
-                <Link href={`/company/${c.slug}`} className="lb-item" key={c.slug}>
+                <Link href={`/agent-score/company/${c.slug}`} className="lb-item" key={c.slug}>
                   <span className="lb-info">
                     <span className="lb-name">{c.name}</span>
                     <span className="lb-cat">{c.category}</span>

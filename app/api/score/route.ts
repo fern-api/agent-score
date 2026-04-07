@@ -201,6 +201,15 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
     const category = await inferCategory(url, effectiveName);
     console.log("[score] inferred category:", category, "for:", effectiveName);
 
+    let isFern = false;
+    try {
+      const fernRes = await fetch(`${url}/api/fern-docs/llms.txt`, {
+        signal: AbortSignal.timeout(3000),
+      });
+      isFern = fernRes.ok;
+    } catch { /* not fern */ }
+    console.log("[score] isFern:", isFern, "for:", url);
+
     const companyData = {
       name: effectiveName,
       slug: effectiveSlug,
@@ -208,7 +217,8 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
       docsUrl: url,
       score,
       grade,
-      hidden: hidden ?? false,
+      ...(hidden !== undefined ? { hidden } : {}),
+      isFern,
       scoredAt: new Date().toISOString(),
       checks: {
         total: result.summary.total,
@@ -249,10 +259,19 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
     });
   } catch (error) {
     console.error("[score] runJob error:", error instanceof Error ? error.stack : error);
-    writeJob(jobId, {
-      status: "error",
-      message: error instanceof Error ? error.message : "Scoring failed",
-    });
+    const message = error instanceof Error ? error.message : "Scoring failed";
+    const isTimeout = message.includes("timed out");
+    writeJob(jobId, { status: "error", message, isTimeout });
+    if (isTimeout) {
+      const webhookUrl = process.env.SLACK_DEMO_WEBHOOK_URL;
+      if (webhookUrl) {
+        fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: `:hourglass: *Scoring timeout* for <${url}|${url}>` }),
+        }).catch(() => {});
+      }
+    }
   }
 }
 
@@ -293,9 +312,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "blocked", message: "This site is not eligible for scoring." }, { status: 403 });
     }
 
-    // Rate limiting — cookie-based
+    // Rate limiting — cookie-based (skip on localhost)
+    const host = request.headers.get('host') ?? '';
+    const isLocalhost = host.startsWith('localhost') || host.startsWith('127.0.0.1');
     const { allowed, timestamps } = checkCookieRateLimit(request);
-    if (!allowed) {
+    if (!isLocalhost && !allowed) {
       console.log("[score] rate limit exceeded");
       return NextResponse.json(
         { error: "rate_limit", message: `You can score up to ${RATE_LIMIT} sites per hour. Try again later.` },
@@ -341,7 +362,7 @@ export async function POST(request: Request) {
             },
             results: existing.results,
           });
-          return NextResponse.json({ jobId });
+          return NextResponse.json({ jobId, slug: effectiveSlug, cached: true });
         }
       } catch { /* Supabase check failed — proceed with scoring */ }
     }
@@ -358,8 +379,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // Determine visibility heuristics
-    const hidden = await shouldHide(url);
+    // New sites are always hidden until manually approved.
+    // Reruns (force=true) pass undefined so upsertScore doesn't overwrite the existing value.
+    const hidden = force ? undefined : true;
     console.log("[score] hidden:", hidden, url);
 
     // Start job
@@ -370,7 +392,7 @@ export async function POST(request: Request) {
     waitUntil(runJob(jobId, url, effectiveSlug, effectiveName ?? undefined, hidden));
 
     // Set updated rate limit cookie
-    const response = NextResponse.json({ jobId });
+    const response = NextResponse.json({ jobId, slug: effectiveSlug });
     response.headers.set('Set-Cookie', buildRateLimitCookie(timestamps));
     return response;
   } catch (error) {

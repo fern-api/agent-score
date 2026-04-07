@@ -12,6 +12,9 @@ import AIFixPrompt from './AIFixPrompt';
 import CTASection from '@/components/CTASection';
 import SiteFooter from '@/components/SiteFooter';
 import RerunButton from './RerunButton';
+import LeaderboardRequestButton from './LeaderboardRequestButton';
+import FernBadge from './FernBadge';
+import GradeCTA from './GradeCTA';
 import MatrixBackground from '@/components/MatrixBackground';
 import DotDivider from '@/components/DotDivider';
 import { scoreColor } from '@/lib/gradeColors';
@@ -133,8 +136,10 @@ export default async function CompanyPage({ params }: { params: { slug: string }
   const summary = buildSummary(company);
 
   const domain = company.docsUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  const pageUrl = `https://agentscore.buildwithfern.com/company/${company.slug}`;
+  const pageUrl = `https://buildwithfern.com/agent-score/company/${company.slug}`;
   const color = scoreColor(company.score);
+
+  const isFern = company.isFern ?? false;
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     `${company.name} scored ${company.score}/100 on the Agent Score leaderboard for AI-ready documentation.`
@@ -151,13 +156,14 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           <div className="co-hero-left">
             {/* Breadcrumb */}
             <div className="co-breadcrumb">
-              <Link href="/#leaderboard">Leaderboard</Link>
+              <Link href="/agent-score#leaderboard">Leaderboard</Link>
               <span className="co-breadcrumb-sep">/</span>
               <span className="co-breadcrumb-current">{company.name}</span>
             </div>
 
             {/* Main content */}
             <div className="co-hero-content">
+              {isFern && <FernBadge />}
               <h1 className="co-company-name">{company.name}</h1>
               <a href={company.docsUrl} target="_blank" rel="noopener noreferrer" className="co-domain-link">
                 {domain}
@@ -171,10 +177,12 @@ export default async function CompanyPage({ params }: { params: { slug: string }
                 <ScoreRing score={company.score} grade={company.grade} />
                 <div className="co-score-row-info">
                   <div className="co-grade-badge" style={{ color }}>Grade {company.grade}</div>
+                  {['C', 'D', 'F'].includes(company.grade) && <GradeCTA />}
                   <div className="co-last-checked">
                     Last checked: {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                     {' · '}
                     <RerunButton url={company.docsUrl} slug={company.slug} />
+                    {company.hidden && <LeaderboardRequestButton pageUrl={pageUrl} slug={company.slug} />}
                   </div>
                 </div>
               </div>
@@ -212,23 +220,23 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           <span className="co-stat-key">Category</span>
           <span className="co-stat-val">{company.category}</span>
         </div>
-        <div className="co-stat">
+        <a href="#checks" className="co-stat co-stat-link co-stat-link--pass">
           <span className="co-stat-key">Checks passed</span>
           <span className="co-stat-val" style={{ color: '#00e87b' }}>{company.checks.pass}/{company.checks.total}</span>
-        </div>
-        <div className="co-stat">
+        </a>
+        <a href="#checks" className="co-stat co-stat-link co-stat-link--warn">
           <span className="co-stat-key">Warnings</span>
           <span className="co-stat-val" style={{ color: '#ffcc00' }}>{company.checks.warn}</span>
-        </div>
-        <div className="co-stat">
+        </a>
+        <a href="#checks" className="co-stat co-stat-link co-stat-link--fail">
           <span className="co-stat-key">Failed</span>
           <span className="co-stat-val" style={{ color: '#ff4444' }}>{company.checks.fail}</span>
-        </div>
+        </a>
       </section>
 
       {/* Side-by-side collapsible panels */}
       <section className="co-panels-row">
-        <CollapsiblePanel title="Executive Summary" copySlot={<CopyButton text={summary} />}>
+        <CollapsiblePanel title="Executive Summary" copySlot={<CopyButton text={summary} />} alwaysOpen>
           <p className="co-panel-text">{summary}</p>
         </CollapsiblePanel>
         <AIFixPrompt
@@ -243,7 +251,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
       <DotDivider />
 
       {/* Check results */}
-      <section className="co-checks-section">
+      <section className="co-checks-section" id="checks">
         <div className="why-header">
           <span className="why-label">CHECK RESULTS</span>
           <h2 className="why-heading">How your docs scored</h2>

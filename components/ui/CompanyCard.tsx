@@ -20,7 +20,7 @@ interface CompanyCardProps {
 export default function CompanyCard({ company }: CompanyCardProps) {
   return (
     <Link
-      href={`/company/${company.slug}`}
+      href={`/agent-score/company/${company.slug}`}
       style={{
         display: 'flex',
         alignItems: 'center',

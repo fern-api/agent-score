@@ -28,14 +28,16 @@ export default function Navbar() {
 
   useEffect(() => {
     if (showScoreBtn) {
-      // small delay so the element is in the DOM before animating in
-      requestAnimationFrame(() => setVisible(true));
+      // double rAF ensures the browser paints the initial off-screen state before transitioning
+      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
     } else {
       setVisible(false);
     }
   }, [showScoreBtn]);
 
   return (
+    <>
+    {showScoreBtn && <div style={{ height: 44, flexShrink: 0 }} />}
     <nav style={{
       borderBottom: '1px solid var(--border)',
       height: '44px',
@@ -45,12 +47,16 @@ export default function Navbar() {
       justifyContent: 'space-between',
       gap: '24px',
       background: 'var(--bg)',
-      position: 'sticky',
+      position: showScoreBtn ? 'fixed' : 'sticky',
       top: 0,
+      left: 0,
+      right: 0,
       zIndex: 100,
+      transform: showScoreBtn && !visible ? 'translateY(-100%)' : 'translateY(0)',
+      transition: 'transform 0.25s ease',
     }}>
       {/* Logo */}
-      <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+      <Link href="/agent-score" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
         <div style={{ width: 10, height: 10, background: 'var(--accent)', flexShrink: 0 }} />
         <span style={{
           fontFamily: "'Geist Mono', monospace",
@@ -66,10 +72,10 @@ export default function Navbar() {
       {/* Center nav links -- Geist Mono, hidden on mobile */}
       <div style={{ display: isMobile ? 'none' : 'flex', gap: '32px', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
         {[
-          { label: 'Leaderboard',    href: '/#leaderboard' },
-          { label: 'Why it matters', href: '/#why-it-matters' },
-          { label: 'From the field', href: '/#humans' },
-          { label: 'Methodology',    href: '/#methodology' },
+          { label: 'Leaderboard',    href: '/agent-score#leaderboard' },
+          { label: 'Why it matters', href: '/agent-score#why-it-matters' },
+          { label: 'From the field', href: '/agent-score#humans' },
+          { label: 'Methodology',    href: '/agent-score#methodology' },
         ].map(({ label, href }) => (
           <Link
             key={href}
@@ -93,7 +99,7 @@ export default function Navbar() {
 
       {/* Score docs CTA -- always in DOM to reserve space, slides in from right */}
       <Link
-        href="/"
+        href="/agent-score"
         onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
         style={{
           fontFamily: "'Geist Mono', monospace",
@@ -117,5 +123,6 @@ export default function Navbar() {
         Score docs
       </Link>
     </nav>
+    </>
   );
 }

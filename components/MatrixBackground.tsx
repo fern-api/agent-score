@@ -3,8 +3,9 @@
 import { useRef, useEffect, useState } from 'react';
 import { prepareWithSegments, walkLineRanges } from '@chenglou/pretext';
 
-const CELL      = 14;
-const SOIL_CELL = 7;   // finer grid for soil — 2× density
+const CELL_DESKTOP = 14;
+const CELL_MOBILE  = 9;
+const SOIL_CELL    = 7; // fixed density for soil lookup table
 const CYCLE_MS  = 5_000;
 
 const PT     = [0, 0.20, 0.50, 1.0];
@@ -176,11 +177,13 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
     // Build brightness→char lookup once (measures real glyph brightness via canvas)
     if (!soilLookup) soilLookup = buildSoilLookup();
 
+    let CELL = window.innerWidth < 640 ? CELL_MOBILE : CELL_DESKTOP;
     let cols = 0, rows = 0, soilCols = 0, soilRows = 0, logW = 0, logH = 0, frame = 0, animId = 0;
     const cycleStart = Date.now();
 
     function resize() {
       const { width, height } = container.getBoundingClientRect();
+      CELL = width < 640 ? CELL_MOBILE : CELL_DESKTOP;
       const dpr = window.devicePixelRatio || 1;
       logW = width; logH = height;
       canvas.width  = Math.round(width  * dpr);
@@ -327,6 +330,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
         style={{ display: 'block', width: '100%', height: '100%' }}
       />
       <div
+        className="matrix-overlay"
         onClick={cyclePhase}
         title={pinnedPhase !== null ? `Phase ${pinnedPhase + 1}/${PNAMES.length} — click to advance` : 'Click to pin a phase'}
         style={{
@@ -338,7 +342,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
           userSelect: 'none',
         }}
       >
-        Simulation: Fern //{' '}
+        <span className="matrix-sim-label">Simulation: </span>Fern //{' '}
         <span style={{ color: '#00ff66' }}>{overlay.phase.toLowerCase()}</span>
         {pinnedPhase !== null && (
           <span style={{ color: '#00ff66', marginLeft: 4 }}>●</span>
