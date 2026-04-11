@@ -23,7 +23,7 @@ export default function CTASection() {
           <div className="cta-built-trusted-label">Trusted by</div>
           <div className="cta-built-logos">
             <img src="/agent-score/nvidia-top.svg"     alt="NVIDIA"     className="cta-logo" />
-            <img src="/agent-score/square-top.svg"     alt="Square"     className="cta-logo" />
+            <img src="/agent-score/openrouter-top.svg" alt="OpenRouter" className="cta-logo" style={{ height: '16px' }} />
             <img src="/agent-score/elevenlabs-top.svg" alt="ElevenLabs" className="cta-logo" />
             <img src="/agent-score/twilio-top.svg"     alt="Twilio"     className="cta-logo" />
             <img src="/agent-score/adobe-top.svg"      alt="Adobe"      className="cta-logo" />

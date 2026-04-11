@@ -52,7 +52,7 @@ For each issue above, please:
 
 To get deeper visibility into what's failing, run afdocs against your docs:
 
-  npx afdocs ${url} --fixes --verbose
+  npx afdocs check ${url} --fixes --verbose
 
 - **--fixes**: Adds "Fix:" lines to the output for each warn/fail check with actionable remediation steps
 - **-v, --verbose**: Shows per-page details (specific URLs, character counts, error codes) for checks with issues — useful for per-URL visibility into what's failing

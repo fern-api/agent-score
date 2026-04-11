@@ -1075,7 +1075,7 @@
 .co-check-group-body .co-check-item {
   display: grid;
   grid-template-columns: 12px 1fr 2fr;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
   padding: 8px 32px;
   border-top: 1px solid var(--border);

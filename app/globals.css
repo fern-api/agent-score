@@ -9,88 +9,6 @@
   box-sizing: border-box;
 }
 
-/* ===== LIGHT THEME OVERRIDE ===== */
-[data-theme="light"] {
-  --bg: #f5f5f0;
-  --fg: #0d0d0d;
-  --fg-dim: #888888;
-  --fg-mid: #555555;
-  --accent: #00aa44;
-  --accent-dim: rgba(0, 170, 68, 0.08);
-  --grid: #eeeeea;
-  --border: #d8d8d2;
-  --color-bg: #f5f5f0;
-  --color-surface: #eeeeea;
-  --color-card: #eeeeea;
-  --color-text-primary: #0d0d0d;
-  --color-text-heading: #0d0d0d;
-  --color-text-muted: #888888;
-  --color-text-body: #555555;
-  --color-accent: #00aa44;
-  --color-accent-hover: #008833;
-  --color-border: #d8d8d2;
-  --color-border-subtle: #d8d8d2;
-  --color-border-card: #d8d8d2;
-  --color-navbar-bg: #f5f5f0;
-}
-
-/* ===== LIGHT THEME COMPONENT OVERRIDES ===== */
-
-
-/* Agent badge: invert alpha-white to alpha-black */
-[data-theme="light"] .agent-badge {
-  background: rgba(0,0,0,0.05);
-  border-color: rgba(0,0,0,0.12);
-  color: var(--fg-mid);
-}
-[data-theme="light"] .agent-badge img {
-  filter: brightness(0) invert(0.4);
-}
-[data-theme="light"] a.agent-badge:hover img {
-  filter: invert(30%) sepia(90%) saturate(600%) hue-rotate(110deg) brightness(90%);
-}
-
-/* Hero form strip gradient: use light-mode accent transparent stop */
-[data-theme="light"] .hero-form-strip::before,
-[data-theme="light"] .hero-form-strip::after {
-  background-image:
-    linear-gradient(to right, var(--accent) 0%, rgba(0, 170, 68, 0) 70%),
-    linear-gradient(to right, var(--accent) 0%, rgba(0, 170, 68, 0) 70%);
-}
-
-/* Input placeholder: lighten for legibility on off-white bg */
-[data-theme="light"] .hsf-input::placeholder { color: #aaaaaa; }
-
-/* Score checker step states */
-[data-theme="light"] .hsf-step.active { color: var(--fg); }
-[data-theme="light"] .hsf-step.pending { color: var(--fg-dim); }
-
-/* Hero right panel: replace dark scanline with light-compatible one */
-[data-theme="light"] .hero-right {
-  background-image: linear-gradient(
-    to bottom,
-    rgba(0,0,0,0) 50%,
-    rgba(0,0,0,0.04) 50%
-  );
-}
-
-/* Leaderboard item hover: accent tint */
-[data-theme="light"] .lb-item:hover {
-  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 60%, transparent);
-}
-
-/* Company card hover */
-[data-theme="light"] .company-card:hover { background: rgba(0,0,0,0.03); }
-
-/* Table row hover */
-[data-theme="light"] .leaderboard-table tr:hover td { background: rgba(0,0,0,0.03); }
-
-/* CTA trusted logos: invert filter so they render dark on light bg */
-[data-theme="light"] .cta-logo {
-  filter: brightness(0);
-  opacity: 0.35;
-}
 
 /* ===== V3 DESIGN SYSTEM VARIABLES ===== */
 :root {
@@ -316,14 +234,12 @@ a.agent-badge:hover img {
 }
 .hero-attribution a:hover { color: var(--accent); }
 
-.hero-attribution .fern-logo-dark,
-.hero-attribution .fern-logo-light {
+.hero-attribution .fern-logo-dark {
   filter: grayscale(1) opacity(0.5);
   transition: filter 0.2s;
 }
 
-.hero-attribution a:hover .fern-logo-dark,
-.hero-attribution a:hover .fern-logo-light {
+.hero-attribution a:hover .fern-logo-dark {
   filter: grayscale(0) opacity(1);
 }
 
@@ -1429,23 +1345,8 @@ a.agent-badge:hover img {
   filter: brightness(0) invert(1);
 }
 
-/* ==================
-   LOGO THEME TOGGLE
-================== */
 .fern-logo-dark  { display: block; }
 .fern-logo-light { display: none; }
-
-[data-theme="light"] .fern-logo-dark  { display: none; }
-[data-theme="light"] .fern-logo-light { display: block; }
-
-@media (prefers-color-scheme: light) {
-  .fern-logo-dark  { display: none; }
-  .fern-logo-light { display: block; }
-}
-@media (prefers-color-scheme: light) {
-  [data-theme="dark"] .fern-logo-dark  { display: block; }
-  [data-theme="dark"] .fern-logo-light { display: none; }
-}
 
 /* ==================
    SITE FOOTER
@@ -2392,8 +2293,7 @@ a.agent-badge:hover img {
 
   .hero-attribution-x { margin-top: 2px; }
 
-  .hero-attribution .fern-logo-dark,
-  .hero-attribution .fern-logo-light {
+  .hero-attribution .fern-logo-dark {
     width: 66px !important;
     height: 12px !important;
   }

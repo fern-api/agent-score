@@ -37,7 +37,7 @@ export async function getLeaderboard(category?: string): Promise<CompanyScore[]>
   const entries = category
     ? all.filter((e) => e.category.toLowerCase() === category.toLowerCase())
     : all;
-  return entries.sort((a, b) => b.score - a.score);
+  return entries.sort((a, b) => b.score - a.score || (a.isFern ? -1 : 1));
 }
 
 export function calculateGrade(score: number): string {

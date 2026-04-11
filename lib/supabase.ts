@@ -108,7 +108,7 @@ export async function deleteScoresByFilter(filter: { slugs?: string[]; docsUrls?
 }
 
 export async function getAllScores(): Promise<CompanyScore[]> {
-  const url = `${process.env.SUPABASE_URL}/rest/v1/scores?select=slug,name,category,docs_url,score,grade,scored_at,checks_total,checks_pass,checks_warn,checks_fail&hidden=eq.false&order=scored_at.desc`;
+  const url = `${process.env.SUPABASE_URL}/rest/v1/scores?select=slug,name,category,docs_url,score,grade,scored_at,checks_total,checks_pass,checks_warn,checks_fail,is_fern&hidden=eq.false&order=scored_at.desc&limit=10000`;
   const res = await fetch(url, {
     cache: 'no-store',
     headers: {

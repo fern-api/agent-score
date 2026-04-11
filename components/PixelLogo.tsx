@@ -97,13 +97,6 @@ const SWAY_PERIOD = 3500; // ms per full sway cycle
 const SWAY_MAX = 2;       // max pixel offset at top of fern
 const BASE_ROW = 15;      // root — no sway here
 
-function getLightMode(): boolean {
-  if (typeof window === 'undefined') return false;
-  const attr = document.documentElement.getAttribute('data-theme');
-  if (attr === 'light') return true;
-  if (attr === 'dark') return false;
-  return window.matchMedia('(prefers-color-scheme: light)').matches;
-}
 
 export default function PixelLogo() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -134,8 +127,7 @@ export default function PixelLogo() {
     startRef.current = performance.now();
 
     function draw(now: number) {
-      const isLight = getLightMode();
-      const color = isLight ? 'rgba(4, 166, 90, 0.9)' : 'rgba(0, 232, 123, 0.9)';
+      const color = 'rgba(0, 232, 123, 0.9)';
       ctx!.clearRect(0, 0, W, H);
       ctx!.fillStyle = color;
 

@@ -41,7 +41,7 @@ export default function ScoreChecker() {
 
   const startPolling = useCallback((jobId: string, slug?: string, since?: number) => {
     stopPolling();
-    const deadline = Date.now() + 150_000; // 2.5 minute client-side safety net
+    const deadline = process.env.NODE_ENV === 'development' ? Infinity : Date.now() + 300_000;
     const params = new URLSearchParams();
     if (slug) params.set('slug', slug);
     if (since) params.set('since', String(since));
@@ -55,7 +55,9 @@ export default function ScoreChecker() {
         return;
       }
       try {
-        const res = await fetch(`/agent-score/api/score/${jobId}${query}`);
+        const res = await fetch(`/agent-score/api/score/${jobId}${query}`, {
+          signal: AbortSignal.timeout(4000),
+        });
         if (!res.ok) return;
         const data = await res.json();
         if (data.status === 'complete') {
@@ -188,7 +190,7 @@ export default function ScoreChecker() {
                   <>
                     Wow! That&apos;s a really big site.{' '}
                     <button className="hsf-timeout-link" onClick={() => setDemoOpen(true)}>Give us your email</button>
-                    {' '}and we&apos;ll get back to you on a score.
+                    {' '}and we&apos;ll run the score locally and get back to you.
                   </>
                 ) : error}
               </div>

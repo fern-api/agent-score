@@ -178,17 +178,20 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
   try {
     const { runChecks } = await import("afdocs");
 
-    const result = await Promise.race([
-      runChecks(url, {
-        requestTimeout: 8000,
-        requestDelay: 0,
-        maxConcurrency: 6,
-        maxLinksToTest: 10,
-      }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Scoring timed out — the docs site may be slow or blocking automated requests.")), 120_000)
-      ),
-    ]);
+    const runChecksPromise = runChecks(url, {
+      requestTimeout: process.env.NODE_ENV === 'development' ? 60_000 : 8000,
+      requestDelay: 0,
+      maxConcurrency: 6,
+      maxLinksToTest: 10,
+    });
+    const result = process.env.NODE_ENV === 'development'
+      ? await runChecksPromise
+      : await Promise.race([
+          runChecksPromise,
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Scoring timed out — the docs site may be slow or blocking automated requests.")), 120_000)
+          ),
+        ]);
     console.log("[score] runChecks complete:", JSON.stringify(result.summary));
 
     const scored = computeScore(result);
@@ -342,8 +345,8 @@ export async function POST(request: Request) {
     const effectiveSlug = slugParam || (effectiveName && !urlPath ? nameToSlug(effectiveName) : urlToSlug(url));
     console.log("[score] resolved slug:", effectiveSlug, "name:", effectiveName);
 
-    // Return cached result if company already exists (skip when force=true)
-    if (!force) {
+    // Return cached result if company already exists (skip when force=true or in development)
+    if (!force && process.env.NODE_ENV !== 'development') {
       try {
         const existing = await getScoreBySlug(effectiveSlug);
         if (existing) {
@@ -389,7 +392,11 @@ export async function POST(request: Request) {
     writeJob(jobId, { status: "running" });
     console.log("[score] job created:", jobId);
 
-    waitUntil(runJob(jobId, url, effectiveSlug, effectiveName ?? undefined, hidden));
+    if (process.env.NODE_ENV === 'development') {
+      runJob(jobId, url, effectiveSlug, effectiveName ?? undefined, hidden).catch(console.error);
+    } else {
+      waitUntil(runJob(jobId, url, effectiveSlug, effectiveName ?? undefined, hidden));
+    }
 
     // Set updated rate limit cookie
     const response = NextResponse.json({ jobId, slug: effectiveSlug });

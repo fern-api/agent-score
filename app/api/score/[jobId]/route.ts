@@ -19,8 +19,8 @@ export async function GET(req: Request, { params }: { params: { jobId: string } 
     }
   } catch { /* file not on this instance */ }
 
-  // Supabase fallback — handles cross-instance polling on Vercel
-  if (slug) {
+  // Supabase fallback — handles cross-instance polling on Vercel (not needed in dev)
+  if (slug && process.env.NODE_ENV !== 'development') {
     try {
       const company = await getScoreBySlug(slug);
       if (company) {
