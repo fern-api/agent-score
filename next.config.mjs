@@ -5,15 +5,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      // afdocs is ESM and reads its own package.json via import.meta.url at module load.
-      // Webpack bakes in the build-time path which doesn't exist at Vercel runtime.
-      // Forcing it external makes Node.js resolve it from node_modules at runtime instead.
-      const prev = Array.isArray(config.externals) ? config.externals : [];
-      config.externals = [...prev, 'afdocs'];
-    }
-    return config;
+  experimental: {
+    // afdocs is ESM-only. Marking it external prevents webpack from bundling it
+    // and emitting require(), which fails for ESM. Instead Next.js leaves it as
+    // a native import() which Node.js CAN handle from a CJS context.
+    serverComponentsExternalPackages: ['afdocs'],
   },
   async redirects() {
     return [
