@@ -6,6 +6,16 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // afdocs is ESM and reads its own package.json via import.meta.url at the top level.
+      // Webpack bakes in the build-time path which doesn't exist at runtime on Vercel.
+      // Force it to remain external so Node.js resolves it from node_modules at runtime.
+      const prev = Array.isArray(config.externals) ? config.externals : [];
+      config.externals = [...prev, 'afdocs'];
+    }
+    return config;
+  },
   async redirects() {
     return [
       {
