@@ -280,11 +280,13 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
     const webhookUrl = process.env.SLACK_DEMO_WEBHOOK_URL;
     if (webhookUrl) {
       const icon = isTimeout ? ":hourglass:" : ":x:";
-      const label = isTimeout ? "Scoring timeout" : "Scoring failure";
+      const label = isTimeout
+        ? "Failed scoring request — site timed out, user wants to be notified when working"
+        : "Failed scoring request — user wants to be notified when working";
       fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: `${icon} *${label}* for <${url}|${url}>\n*Error:* ${message}` }),
+        body: JSON.stringify({ text: `${icon} *${label}*\n*URL:* <${url}|${url}>\n*Error:* ${message}` }),
       }).catch(() => {});
     }
   }

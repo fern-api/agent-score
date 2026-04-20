@@ -15,7 +15,7 @@ export async function POST(request: Request) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: `:bell: *Score notification request*\n*Email:* ${email}\n*URL:* <${url}|${url}>`,
+          text: `:bell: *Failed scoring request — user wants to be notified when working*\n*Email:* ${email}\n*URL:* <${url}|${url}>`,
         }),
       });
     }
