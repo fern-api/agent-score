@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { lines_3 } from 'cli-loaders';
 import DemoModal from './DemoModal';
+import NotifyModal from './NotifyModal';
 
 type CheckerState = 'idle' | 'running' | 'complete' | 'error';
 
@@ -30,10 +31,9 @@ export default function ScoreChecker() {
   const [error, setError] = useState('');
   const [isTimeout, setIsTimeout] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
+  const [notifyOpen, setNotifyOpen] = useState(false);
   const [result, setResult] = useState<{ score: number; grade: string } | null>(null);
   const [elapsed, setElapsed] = useState(0);
-  const [notifyEmail, setNotifyEmail] = useState('');
-  const [notifyState, setNotifyState] = useState<'idle' | 'sending' | 'sent'>('idle');
   const jobIdRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -79,7 +79,7 @@ export default function ScoreChecker() {
 
   const runCheck = useCallback(async () => {
     if (!url.trim()) return;
-    setState('running'); setCurrentStep(0); setError(''); setIsTimeout(false); setNotifyEmail(''); setNotifyState('idle'); jobIdRef.current = null;
+    setState('running'); setCurrentStep(0); setError(''); setIsTimeout(false); setNotifyOpen(false); jobIdRef.current = null;
     const rawUrl = url.trim();
     try {
       const res = await fetch('/agent-score/api/score', {
@@ -131,22 +131,6 @@ export default function ScoreChecker() {
   }, [state]);
 
   useEffect(() => () => stopPolling(), []);
-
-  const handleNotify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!notifyEmail.trim()) return;
-    setNotifyState('sending');
-    try {
-      await fetch('/agent-score/api/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: notifyEmail.trim(), url }),
-      });
-      setNotifyState('sent');
-    } catch {
-      setNotifyState('sent'); // optimistic — don't show error for this
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,39 +187,27 @@ export default function ScoreChecker() {
               <button type="submit" className="hsf-btn">Score your docs</button>
             </div>
             {error && (
-              <>
-                <div className="hsf-error">
-                  {isTimeout ? (
-                    <>
-                      Wow! That&apos;s a really big site.{' '}
-                      <button className="hsf-timeout-link" onClick={() => setDemoOpen(true)}>Give us your email</button>
-                      {' '}and we&apos;ll run the score locally and get back to you.
-                    </>
-                  ) : error}
-                </div>
-                {notifyState === 'sent' ? (
-                  <p className="hsf-notify-sent">We&apos;ll reach out when scoring is available.</p>
+              <div className="hsf-error">
+                {isTimeout ? (
+                  <>
+                    Wow! That&apos;s a really big site.{' '}
+                    <button className="hsf-timeout-link" onClick={() => setDemoOpen(true)}>Give us your email</button>
+                    {' '}and we&apos;ll run the score locally and get back to you.
+                  </>
                 ) : (
-                  <form onSubmit={handleNotify} className="hsf-notify-form">
-                    <input
-                      type="email"
-                      value={notifyEmail}
-                      onChange={e => setNotifyEmail(e.target.value)}
-                      placeholder="Get notified — enter your email"
-                      className="hsf-notify-input"
-                      required
-                    />
-                    <button type="submit" className="hsf-notify-btn" disabled={notifyState === 'sending'}>
-                      {notifyState === 'sending' ? '...' : 'Notify me'}
-                    </button>
-                  </form>
+                  <>
+                    {error}{' '}
+                    <button className="hsf-timeout-link" onClick={() => setNotifyOpen(true)}>Get notified</button>
+                    {' '}when scoring is available.
+                  </>
                 )}
-              </>
+              </div>
             )}
           </form>
         </div>
       </div>
       {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} source="scoring timeout" />}
+      {notifyOpen && <NotifyModal url={url} onClose={() => setNotifyOpen(false)} />}
     </>
   );
 }
