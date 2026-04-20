@@ -178,20 +178,32 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
   try {
     const { runChecks } = await import("afdocs");
 
-    const runChecksPromise = runChecks(url, {
+    const scoringOpts = {
       requestTimeout: process.env.NODE_ENV === 'development' ? 60_000 : 8000,
       requestDelay: 0,
       maxConcurrency: 6,
       maxLinksToTest: 10,
-    });
+    };
+    console.log("[score] runChecks options:", JSON.stringify(scoringOpts));
+    const runChecksStart = Date.now();
+    const runChecksPromise = runChecks(url, scoringOpts);
+
+    let heartbeat: ReturnType<typeof setInterval> | undefined;
     const result = process.env.NODE_ENV === 'development'
       ? await runChecksPromise
       : await Promise.race([
-          runChecksPromise,
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("Scoring timed out — the docs site may be slow or blocking automated requests.")), 120_000)
-          ),
+          runChecksPromise.finally(() => clearInterval(heartbeat)),
+          new Promise<never>((_, reject) => {
+            heartbeat = setInterval(() => {
+              console.log(`[score] still running after ${Math.round((Date.now() - runChecksStart) / 1000)}s for: ${url}`);
+            }, 15_000);
+            setTimeout(() => {
+              clearInterval(heartbeat);
+              reject(new Error("Scoring timed out — the docs site may be slow or blocking automated requests."));
+            }, 120_000);
+          }),
         ]);
+    console.log(`[score] runChecks finished in ${Math.round((Date.now() - runChecksStart) / 1000)}s`);
     console.log("[score] runChecks complete:", JSON.stringify(result.summary));
 
     const scored = computeScore(result);
