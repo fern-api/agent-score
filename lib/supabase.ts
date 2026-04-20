@@ -7,7 +7,7 @@ function getSupabase() {
   if (!_supabase) {
     _supabase = createClient(
       process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SECRET_KEY!
     );
   }
   return _supabase;
@@ -82,8 +82,8 @@ export async function getScoreBySlug(slug: string): Promise<CompanyScore | null>
   const res = await fetch(url, {
     cache: 'no-store',
     headers: {
-      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+      apikey: process.env.SUPABASE_SECRET_KEY!,
+      Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY!}`,
     },
   });
   if (!res.ok) return null;
@@ -112,8 +112,8 @@ export async function getAllScores(): Promise<CompanyScore[]> {
   const res = await fetch(url, {
     cache: 'no-store',
     headers: {
-      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+      apikey: process.env.SUPABASE_SECRET_KEY!,
+      Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY!}`,
     },
   });
   if (!res.ok) {

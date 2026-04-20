@@ -15,10 +15,10 @@ import { computeScore } from '../lib/scoring';
 import type { CheckResult } from '../lib/scoring';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const KEY = process.env.SUPABASE_SECRET_KEY!;
 
 if (!SUPABASE_URL || !KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars');
+  console.error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY env vars');
   process.exit(1);
 }
 

@@ -4,7 +4,7 @@
  */
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const KEY = process.env.SUPABASE_SECRET_KEY!;
 
 const headers = {
   apikey: KEY,

@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const url = process.env.SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const key = process.env.SUPABASE_SECRET_KEY;
 
 console.log('SUPABASE_URL set:', !!url, url ? url.slice(0, 40) + '...' : 'MISSING');
 console.log('SERVICE_ROLE_KEY set:', !!key);

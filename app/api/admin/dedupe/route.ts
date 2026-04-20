@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
   const supabase = createClient(
     process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SECRET_KEY!
   );
 
   // Fetch all rows ordered by scored_at desc (most recent first)
