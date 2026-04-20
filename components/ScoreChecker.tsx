@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { lines_3 } from 'cli-loaders';
 import DemoModal from './DemoModal';
+import NotifyModal from './NotifyModal';
 
 type CheckerState = 'idle' | 'running' | 'complete' | 'error';
 
@@ -30,6 +31,7 @@ export default function ScoreChecker() {
   const [error, setError] = useState('');
   const [isTimeout, setIsTimeout] = useState(false);
   const [demoOpen, setDemoOpen] = useState(false);
+  const [notifyOpen, setNotifyOpen] = useState(false);
   const [result, setResult] = useState<{ score: number; grade: string } | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const jobIdRef = useRef<string | null>(null);
@@ -77,7 +79,7 @@ export default function ScoreChecker() {
 
   const runCheck = useCallback(async () => {
     if (!url.trim()) return;
-    setState('running'); setCurrentStep(0); setError(''); setIsTimeout(false); jobIdRef.current = null;
+    setState('running'); setCurrentStep(0); setError(''); setIsTimeout(false); setNotifyOpen(false); jobIdRef.current = null;
     const rawUrl = url.trim();
     try {
       const res = await fetch('/agent-score/api/score', {
@@ -192,13 +194,20 @@ export default function ScoreChecker() {
                     <button className="hsf-timeout-link" onClick={() => setDemoOpen(true)}>Give us your email</button>
                     {' '}and we&apos;ll run the score locally and get back to you.
                   </>
-                ) : error}
+                ) : (
+                  <>
+                    {error}{' '}
+                    <button type="button" className="hsf-timeout-link" onClick={() => setNotifyOpen(true)}>Get notified</button>
+                    {' '}when scoring is available.
+                  </>
+                )}
               </div>
             )}
           </form>
         </div>
       </div>
       {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} source="scoring timeout" />}
+      {notifyOpen && <NotifyModal url={url} onClose={() => setNotifyOpen(false)} />}
     </>
   );
 }

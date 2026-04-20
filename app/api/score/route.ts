@@ -277,15 +277,17 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
     const message = error instanceof Error ? error.message : "Scoring failed";
     const isTimeout = message.includes("timed out");
     writeJob(jobId, { status: "error", message, isTimeout });
-    if (isTimeout) {
-      const webhookUrl = process.env.SLACK_DEMO_WEBHOOK_URL;
-      if (webhookUrl) {
-        fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: `:hourglass: *Scoring timeout* for <${url}|${url}>` }),
-        }).catch(() => {});
-      }
+    const webhookUrl = process.env.SLACK_DEMO_WEBHOOK_URL;
+    if (webhookUrl) {
+      const icon = isTimeout ? ":hourglass:" : ":x:";
+      const label = isTimeout
+        ? "Failed scoring request — site timed out, user wants to be notified when working"
+        : "Failed scoring request — user wants to be notified when working";
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: `${icon} *${label}*\n*URL:* <${url}|${url}>\n*Error:* ${message}` }),
+      }).catch(() => {});
     }
   }
 }
