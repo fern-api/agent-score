@@ -80,7 +80,7 @@ const testimonials = [
     companyLogo: '/agent-score/social/openrouter-social.svg',
     company: 'OpenRouter',
     docsUrl: 'https://openrouter.ai/docs',
-    companySlug: 'openrouter-ai-docs-quickstart',
+    companySlug: 'openrouter-ai-docs',
     quote: 'At OpenRouter we see firsthand how much traffic comes through AI coding agents. If your docs aren\'t well-indexed and agent-optimized, you\'re invisible to the fastest-growing buyer segment.',
   },
   {
