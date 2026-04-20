@@ -33,6 +33,16 @@ export default function SiteFooter() {
           >
             Contact us
           </a>
+          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: 'var(--fg-mid)' }}>·</span>
+          <a
+            href="https://github.com/fern-api/agent-score"
+            target="_blank"
+            rel="noopener"
+            className="footer-link"
+            style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11 }}
+          >
+            GitHub
+          </a>
         </div>
         <div className="footer-cell footer-cell-right">
           <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: 'var(--fg-mid)' }}>
