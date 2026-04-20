@@ -15,7 +15,7 @@ import { computeScore } from '../lib/scoring';
 import { upsertScore } from '../lib/supabase';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const KEY = process.env.SUPABASE_SECRET_KEY!;
 const DELAY_MS = parseInt(process.env.DELAY_MS ?? '1000', 10);
 const DEFAULT_SLUGS = [
   'zendesk', 'ydc', 'workos', 'vercel', 'twilio', 'tanstack-router', 'support',
@@ -26,7 +26,7 @@ const DEFAULT_SLUGS = [
 const FILTER_SLUGS = process.env.SLUGS ? process.env.SLUGS.split(',').map((s) => s.trim()) : DEFAULT_SLUGS;
 
 if (!SUPABASE_URL || !KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars');
+  console.error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY env vars');
   process.exit(1);
 }
 

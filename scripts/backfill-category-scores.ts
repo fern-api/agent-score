@@ -17,14 +17,14 @@ import { computeScore } from '../lib/scoring';
 import type { CheckResult } from '../lib/scores';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const KEY = process.env.SUPABASE_SECRET_KEY!;
 const SKIP_EXISTING = process.env.SKIP_EXISTING !== 'false';
 const LOG_FILE = process.env.LOG_FILE ?? './backfill-category-scores.log';
 const FILTER_SLUGS = process.env.SLUGS ? process.env.SLUGS.split(',').map((s) => s.trim()) : null;
 const PAGE_SIZE = 100;
 
 if (!SUPABASE_URL || !KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars');
+  console.error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY env vars');
   process.exit(1);
 }
 
