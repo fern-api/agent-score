@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import Navbar from '@/components/Navbar';
 import './globals.css';
 import './bones/registry';
@@ -48,6 +49,7 @@ export default function RootLayout({
             })`,
           }}
         />
+        <SpeedInsights />
         <div className="page-shell">
           <Navbar />
           {children}

@@ -15,6 +15,7 @@
     "@fontsource/inter": "^5.2.8",
     "@supabase/supabase-js": "^2.99.2",
     "@vercel/functions": "^3.4.3",
+    "@vercel/speed-insights": "^2.0.0",
     "afdocs": "^0.14.0",
     "boneyard-js": "^1.6.2",
     "cli-loaders": "^3.0.0",
