@@ -2,6 +2,7 @@
 const nextConfig = {
   assetPrefix: process.env.NODE_ENV === 'production' ? 'https://fern-agent-score.vercel.app' : '',
   transpilePackages: ['boneyard-js'],
+  serverExternalPackages: ['afdocs'],
   images: {
     unoptimized: true,
   },
