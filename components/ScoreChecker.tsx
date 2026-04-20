@@ -36,6 +36,15 @@ export default function ScoreChecker() {
   const [elapsed, setElapsed] = useState(0);
   const jobIdRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scoringUrlRef = useRef<string>('');
+
+  const notifyError = useCallback((errorUrl: string, message: string) => {
+    fetch('/agent-score/api/score-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: errorUrl, message }),
+    }).catch(() => {});
+  }, []);
 
   const stopPolling = () => {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
@@ -51,9 +60,11 @@ export default function ScoreChecker() {
     pollRef.current = setInterval(async () => {
       if (Date.now() > deadline) {
         stopPolling();
+        const msg = 'Scoring timed out — the docs site may be slow or blocking automated requests.';
         setIsTimeout(true);
-        setError('Scoring timed out — the docs site may be slow or blocking automated requests.');
+        setError(msg);
         setState('error');
+        notifyError(scoringUrlRef.current, msg);
         return;
       }
       try {
@@ -69,9 +80,11 @@ export default function ScoreChecker() {
           else { setState('complete'); }
         } else if (data.status === 'error') {
           stopPolling();
+          const msg = data.message ?? 'Scoring failed';
           setIsTimeout(!!data.isTimeout);
-          setError(data.message ?? 'Scoring failed');
+          setError(msg);
           setState('error');
+          notifyError(scoringUrlRef.current, msg);
         }
       } catch { /* keep polling */ }
     }, 2000);
@@ -79,7 +92,7 @@ export default function ScoreChecker() {
 
   const runCheck = useCallback(async () => {
     if (!url.trim()) return;
-    setState('running'); setCurrentStep(0); setError(''); setIsTimeout(false); setNotifyOpen(false); jobIdRef.current = null;
+    setState('running'); setCurrentStep(0); setError(''); setIsTimeout(false); setNotifyOpen(false); jobIdRef.current = null; scoringUrlRef.current = rawUrl;
     const rawUrl = url.trim();
     try {
       const res = await fetch('/agent-score/api/score', {
@@ -103,10 +116,12 @@ export default function ScoreChecker() {
       // new jobs pass since so the poll only accepts results scored after this run started
       startPolling(data.jobId, data.slug, data.cached ? undefined : Date.now());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not score this URL. Please check and try again.');
+      const msg = err instanceof Error ? err.message : 'Could not score this URL. Please check and try again.';
+      setError(msg);
       setState('error');
+      notifyError(rawUrl, msg);
     }
-  }, [url, startPolling]);
+  }, [url, startPolling, notifyError]);
 
   useEffect(() => {
     if (state !== 'running') return;
