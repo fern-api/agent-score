@@ -197,7 +197,7 @@ export default function ScoreChecker() {
                 ) : (
                   <>
                     {error}{' '}
-                    <button className="hsf-timeout-link" onClick={() => setNotifyOpen(true)}>Get notified</button>
+                    <button type="button" className="hsf-timeout-link" onClick={() => setNotifyOpen(true)}>Get notified</button>
                     {' '}when scoring is available.
                   </>
                 )}
