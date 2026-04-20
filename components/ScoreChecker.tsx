@@ -92,8 +92,9 @@ export default function ScoreChecker() {
 
   const runCheck = useCallback(async () => {
     if (!url.trim()) return;
-    setState('running'); setCurrentStep(0); setError(''); setIsTimeout(false); setNotifyOpen(false); jobIdRef.current = null; scoringUrlRef.current = rawUrl;
+    setState('running'); setCurrentStep(0); setError(''); setIsTimeout(false); setNotifyOpen(false); jobIdRef.current = null;
     const rawUrl = url.trim();
+    scoringUrlRef.current = rawUrl;
     try {
       const res = await fetch('/agent-score/api/score', {
         method: 'POST',
