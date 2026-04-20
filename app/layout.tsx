@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { PHProvider } from './posthog-provider';
 import Navbar from '@/components/Navbar';
 import './globals.css';
 import './bones/registry';
@@ -35,10 +37,13 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <div className="page-shell">
-          <Navbar />
-          {children}
-        </div>
+        <PHProvider>
+          <SpeedInsights />
+          <div className="page-shell">
+            <Navbar />
+            {children}
+          </div>
+        </PHProvider>
       </body>
     </html>
   );
