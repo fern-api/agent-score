@@ -61,8 +61,6 @@ export default function Navbar() {
     {showScoreBtn && <div style={{ height: 44, flexShrink: 0 }} />}
     <nav style={{
       borderBottom: '1px solid var(--border)',
-      borderLeft: '1px solid var(--border)',
-      borderRight: '1px solid var(--border)',
       height: '44px',
       display: 'flex',
       alignItems: 'center',
@@ -120,7 +118,6 @@ export default function Navbar() {
             {label}
           </Link>
         ))}
-
       </div>
 
       {/* View as Agent link -- hidden on mobile */}
