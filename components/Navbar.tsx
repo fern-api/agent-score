@@ -26,15 +26,21 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    setShowScoreBtn(false);
+    setVisible(false);
     const target = document.getElementById('hero-score-btn');
-    if (!target) return;
+    if (!target) {
+      setShowScoreBtn(true);
+      setVisible(true);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => setShowScoreBtn(!entry!.isIntersecting),
       { threshold: 0 }
     );
     observer.observe(target);
     return () => observer.disconnect();
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (showScoreBtn) {
@@ -61,8 +67,6 @@ export default function Navbar() {
     {showScoreBtn && <div style={{ height: 44, flexShrink: 0 }} />}
     <nav style={{
       borderBottom: '1px solid var(--border)',
-      borderLeft: '1px solid var(--border)',
-      borderRight: '1px solid var(--border)',
       height: '44px',
       display: 'flex',
       alignItems: 'center',
@@ -120,7 +124,6 @@ export default function Navbar() {
             {label}
           </Link>
         ))}
-
       </div>
 
       {/* View as Agent link -- hidden on mobile */}
@@ -157,7 +160,7 @@ export default function Navbar() {
       {/* Score docs CTA -- always in DOM to reserve space, slides in from right */}
       <Link
         href="/agent-score"
-        onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+        onClick={e => { if (pathname === '/agent-score') { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}
         style={{
           fontFamily: "'Geist Mono', monospace",
           fontSize: '12px',

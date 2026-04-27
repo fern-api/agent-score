@@ -10,7 +10,7 @@ import { isBlockedDomain } from "@/lib/blocked-domains";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const DOCS_SUBDOMAINS = /^(docs|developer|api|reference|developers)\./i;
+const DOCS_SUBDOMAINS = /^(docs|developer|api|reference|developers|learn)\./i;
 const DOCS_PATHS = /\/(docs|api|reference|guides|developer|sdk|learn|manual|documentation)\//i;
 const DOCS_PLATFORMS = /(readme\.io|gitbook\.io|mintlify\.app|buildwithfern\.com\/learn|\.fern\.dev|\.readme\.io|\.gitbook\.io|github\.io|notion\.site)/i;
 
