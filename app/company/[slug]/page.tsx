@@ -211,7 +211,6 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           </div>
           <div className="co-hero-right">
             <MatrixBackground color={color} />
-            <VoiceOrb text={summary} />
           </div>
         </div>
       </section>
@@ -238,7 +237,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
 
       {/* Side-by-side collapsible panels */}
       <section className="co-panels-row">
-        <CollapsiblePanel title="Executive Summary" copySlot={<CopyButton text={summary} />} alwaysOpen>
+        <CollapsiblePanel title="Executive Summary" copySlot={<><VoiceOrb text={summary} /><CopyButton text={summary} /></>} alwaysOpen>
           <p className="co-panel-text">{summary}</p>
         </CollapsiblePanel>
         <AIFixPrompt

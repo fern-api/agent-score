@@ -2,86 +2,64 @@
 
 import { useState, useRef, useEffect } from 'react';
 
-// Layout constants
-const CANVAS_SIZE = 80; // total container size in px
-const BTN_SIZE    = 40;
-const OFFSET      = (CANVAS_SIZE - BTN_SIZE) / 2; // 20 — gap between container edge and button
-
-// Radial bar constants
-const BAR_COUNT = 48;
-const INNER_R   = 23; // px from canvas center to bar inner edge (just outside button radius 20)
-const MAX_BAR   = 11; // max bar length in px
-const MIN_BAR   = 2;  // min bar length in px
-
 type OrbState = 'idle' | 'loading' | 'playing';
 
-export default function VoiceOrb({ text }: { text: string }) {
-  const [state, setState] = useState<OrbState>('idle');
-  const audioRef   = useRef<HTMLAudioElement | null>(null);
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const barsRef    = useRef(
-    Array.from({ length: BAR_COUNT }, () => ({ current: MIN_BAR, target: MIN_BAR }))
-  );
+// Inline equalizer bars rendered via canvas when playing
+function EqBars() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const barsRef   = useRef([
+    { current: 3, target: 3 },
+    { current: 6, target: 6 },
+    { current: 4, target: 4 },
+    { current: 8, target: 8 },
+    { current: 3, target: 3 },
+  ]);
   const animRef = useRef(0);
 
-  // Drive the canvas animation while playing
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    if (state !== 'playing') {
-      cancelAnimationFrame(animRef.current);
-      barsRef.current.forEach(b => { b.current = MIN_BAR; b.target = MIN_BAR; });
-      const ctx = canvas.getContext('2d');
-      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
-
+    const canvas = canvasRef.current!;
     const dpr = window.devicePixelRatio || 1;
-    canvas.width  = CANVAS_SIZE * dpr;
-    canvas.height = CANVAS_SIZE * dpr;
+    const W = 14, H = 13;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
     const ctx = canvas.getContext('2d')!;
     ctx.scale(dpr, dpr);
 
-    const cx = CANVAS_SIZE / 2;
-    const cy = CANVAS_SIZE / 2;
-    let lastTargetUpdate = 0;
-
+    let lastUpdate = 0;
     const tick = (time: number) => {
-      // Randomise bar targets every ~80 ms
-      if (time - lastTargetUpdate > 80) {
-        barsRef.current.forEach(b => {
-          b.target = MIN_BAR + Math.random() * (MAX_BAR - MIN_BAR);
-        });
-        lastTargetUpdate = time;
+      if (time - lastUpdate > 90) {
+        barsRef.current.forEach(b => { b.target = 2 + Math.random() * 9; });
+        lastUpdate = time;
       }
+      barsRef.current.forEach(b => { b.current += (b.target - b.current) * 0.35; });
 
-      // Lerp each bar toward its target
-      barsRef.current.forEach(b => {
-        b.current += (b.target - b.current) * 0.3;
-      });
-
-      ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-      ctx.lineWidth  = 1.5;
-      ctx.lineCap    = 'round';
-      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-
-      barsRef.current.forEach((b, i) => {
-        const angle = (i / BAR_COUNT) * Math.PI * 2 - Math.PI / 2;
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        ctx.beginPath();
-        ctx.moveTo(cx + cos * INNER_R,              cy + sin * INNER_R);
-        ctx.lineTo(cx + cos * (INNER_R + b.current), cy + sin * (INNER_R + b.current));
-        ctx.stroke();
-      });
-
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = 'currentColor';
+      const barW = 1.5, gap = 1.2;
+      const totalW = barsRef.current.length * barW + (barsRef.current.length - 1) * gap;
+      let x = (W - totalW) / 2;
+      for (const b of barsRef.current) {
+        const h = Math.max(2, b.current);
+        ctx.fillRect(x, H - h, barW, h);
+        x += barW + gap;
+      }
       animRef.current = requestAnimationFrame(tick);
     };
-
     animRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animRef.current);
-  }, [state]);
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ width: 14, height: 13, display: 'block', color: 'inherit' }}
+    />
+  );
+}
+
+export default function VoiceOrb({ text }: { text: string }) {
+  const [state, setState] = useState<OrbState>('idle');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleClick = async () => {
     if (state === 'playing' || state === 'loading') {
@@ -114,74 +92,29 @@ export default function VoiceOrb({ text }: { text: string }) {
   };
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: OFFSET - OFFSET,   // = 0 — container top-right corner of co-hero-right
-        right: OFFSET - OFFSET, // = 0
-        width:  CANVAS_SIZE,
-        height: CANVAS_SIZE,
-        zIndex: 10,
-        pointerEvents: 'none',  // let canvas clicks fall through to the button
-      }}
+    <button
+      className="co-copy-btn"
+      onClick={handleClick}
+      aria-label={state === 'playing' ? 'Stop audio' : 'Listen to executive summary'}
     >
-      {/* Radial-bar canvas — behind the button */}
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width:  CANVAS_SIZE,
-          height: CANVAS_SIZE,
-          pointerEvents: 'none',
-          opacity: state === 'playing' ? 1 : 0,
-          transition: 'opacity 0.4s',
-        }}
-      />
-
-      {/* Play / pause button — centered inside the canvas container */}
-      <button
-        onClick={handleClick}
-        style={{
-          position: 'absolute',
-          top:  OFFSET,
-          left: OFFSET,
-          width:  BTN_SIZE,
-          height: BTN_SIZE,
-          borderRadius: '50%',
-          background:   'rgba(0,0,0,0.55)',
-          border:       `1px solid ${state === 'playing' ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)'}`,
-          backdropFilter: 'blur(6px)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'auto',
-          transition: 'background 0.15s, border-color 0.15s',
-        }}
-        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.75)')}
-        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.55)')}
-        aria-label={state === 'playing' ? 'Stop audio' : 'Play executive summary'}
-        title={state === 'playing' ? 'Stop' : 'Listen to executive summary'}
-      >
-        {state === 'loading' ? (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
-            <path d="M8 2a6 6 0 016 6" stroke="white" strokeWidth="2" strokeLinecap="round">
-              <animateTransform attributeName="transform" type="rotate" values="0 8 8;360 8 8" dur="0.75s" repeatCount="indefinite" />
-            </path>
-          </svg>
-        ) : state === 'playing' ? (
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="white">
-            <rect x="1.5" y="1.5" width="4" height="10" rx="1" />
-            <rect x="7.5" y="1.5" width="4" height="10" rx="1" />
-          </svg>
-        ) : (
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="white">
-            <path d="M3 1.5l8 5-8 5V1.5z" />
-          </svg>
-        )}
-      </button>
-    </div>
+      {state === 'loading' ? (
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeOpacity="0.4" strokeWidth="2" />
+          <path d="M8 2a6 6 0 016 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <animateTransform attributeName="transform" type="rotate" values="0 8 8;360 8 8" dur="0.75s" repeatCount="indefinite" />
+          </path>
+        </svg>
+      ) : state === 'playing' ? (
+        <EqBars />
+      ) : (
+        // Speaker + sound waves icon
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="3,7 8,7 13,3 13,17 8,13 3,13" fill="currentColor" stroke="none" />
+          <path d="M16 7a4 4 0 010 6" />
+          <path d="M18.5 4.5a8 8 0 010 11" />
+        </svg>
+      )}
+      <span>{state === 'playing' ? 'Stop' : state === 'loading' ? 'Loading…' : 'Listen'}</span>
+    </button>
   );
 }
