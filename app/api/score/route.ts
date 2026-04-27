@@ -4,6 +4,7 @@ import { waitUntil } from "@vercel/functions";
 import { upsertScore, getScoreBySlug } from "@/lib/supabase";
 import { fetchOgName, domainToName } from "@/lib/og-name";
 import { computeScore } from "afdocs";
+import { normalizeCategoryScores } from "@/lib/scoring";
 import { inferCategory } from "@/lib/categorize";
 import { isBlockedDomain } from "@/lib/blocked-domains";
 
@@ -242,8 +243,8 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
         fail: result.summary.fail,
       },
       results: result.results,
-      categoryScores: Object.fromEntries(
-        Object.entries(scored.categoryScores).map(([k, v]) => [k, typeof v === 'number' ? v : (v as { score: number }).score])
+      categoryScores: normalizeCategoryScores(
+        scored.categoryScores as Record<string, number | { score: number | null }>,
       ),
     };
 

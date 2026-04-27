@@ -11,6 +11,27 @@ export interface ScoreResult {
   categoryScores: Record<string, number>;
 }
 
+/**
+ * Convert afdocs's `categoryScores` map (whose values may be either a plain
+ * number or a `CategoryScore` object since v0.16, with `score: number | null`
+ * since v0.17) into a flat numeric map.
+ *
+ * Categories whose score is `null` (all checks were `notApplicable` because
+ * fewer than 5 pages were sampled — see v0.17 migration guide) are dropped
+ * from the map. Downstream consumers fall back to local calculation when a
+ * category is missing.
+ */
+export function normalizeCategoryScores(
+  raw: Record<string, number | { score: number | null }>,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [cat, val] of Object.entries(raw)) {
+    const num = typeof val === 'number' ? val : val.score;
+    if (num !== null && num !== undefined) out[cat] = num;
+  }
+  return out;
+}
+
 export function computeScore(results: CheckResult[]): ScoreResult {
   const counts = { pass: 0, warn: 0, fail: 0, skip: 0, error: 0 };
   for (const r of results) {
@@ -27,10 +48,12 @@ export function computeScore(results: CheckResult[]): ScoreResult {
 
   const scored = afdocsComputeScore(report);
 
-  const categoryScores: Record<string, number> = {};
-  for (const [cat, val] of Object.entries(scored.categoryScores)) {
-    categoryScores[cat] = typeof val === 'number' ? val : val.score;
-  }
-
-  return { overall: scored.overall, grade: scored.grade, cap: scored.cap, categoryScores };
+  return {
+    overall: scored.overall,
+    grade: scored.grade,
+    cap: scored.cap,
+    categoryScores: normalizeCategoryScores(
+      scored.categoryScores as Record<string, number | { score: number | null }>,
+    ),
+  };
 }

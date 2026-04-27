@@ -12,6 +12,7 @@
 import { upsertScore } from "../lib/supabase";
 import { inferCategory } from "../lib/categorize";
 import { computeScore } from "afdocs";
+import { normalizeCategoryScores } from "../lib/scoring";
 
 function elapsed(start: number): string {
   const s = Math.floor((Date.now() - start) / 1000);
@@ -88,7 +89,7 @@ async function main() {
     skip: results.filter((r) => r.status === "skip").length,
     error: results.filter((r) => r.status === "error").length,
   };
-  const result = { url, timestamp: new Date().toISOString(), results, summary };
+  const result = { url, timestamp: new Date().toISOString(), specUrl: "", results, summary };
 
   console.log(`Checks done: ${summary.pass}/${summary.total} pass, ${summary.fail} fail, ${summary.warn} warn`);
 
@@ -127,11 +128,8 @@ async function main() {
       fail: result.summary.fail,
     },
     results: result.results,
-    categoryScores: Object.fromEntries(
-      Object.entries(scored.categoryScores).map(([k, v]) => [
-        k,
-        typeof v === "number" ? v : (v as { score: number }).score,
-      ])
+    categoryScores: normalizeCategoryScores(
+      scored.categoryScores as Record<string, number | { score: number | null }>,
     ),
   };
 

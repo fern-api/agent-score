@@ -9,15 +9,19 @@ import type { CheckResult } from '../lib/scoring';
 const url = process.argv[2];
 if (!url) { console.error('Usage: npx tsx scripts/debug-score.ts <url>'); process.exit(1); }
 
+// Reference weights for local debug output. Mirrors afdocs's internal weights.
+// Note: in afdocs v0.17 `llms-txt-directive` was split into two checks
+// (`llms-txt-directive-html` kept the High/7 weight, `llms-txt-directive-md`
+// is Medium/4) and `llms-txt-freshness` was renamed to `llms-txt-coverage`.
 const WEIGHTS: Record<string, number> = {
   'llms-txt-exists': 10, 'rendering-strategy': 10, 'auth-gate-detection': 10,
   'llms-txt-size': 7, 'llms-txt-links-resolve': 7, 'llms-txt-links-markdown': 7,
   'markdown-url-support': 7, 'page-size-html': 7, 'page-size-markdown': 7,
-  'http-status-codes': 7, 'llms-txt-directive': 7,
+  'http-status-codes': 7, 'llms-txt-directive-html': 7,
   'llms-txt-valid': 4, 'content-negotiation': 4, 'content-start-position': 4,
   'tabbed-content-serialization': 4, 'markdown-code-fence-validity': 4,
-  'llms-txt-freshness': 4, 'markdown-content-parity': 4, 'auth-alternative-access': 4,
-  'redirect-behavior': 4,
+  'llms-txt-coverage': 4, 'llms-txt-directive-md': 4, 'markdown-content-parity': 4,
+  'auth-alternative-access': 4, 'redirect-behavior': 4,
   'section-header-quality': 2, 'cache-header-hygiene': 2,
 };
 

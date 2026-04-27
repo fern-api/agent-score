@@ -273,8 +273,9 @@ export default function MasterPlanPage() {
                 <tr><td></td><td>markdown-code-fence-validity</td><td>3</td><td>Broken fences corrupt downstream content</td></tr>
                 <tr><td><strong>URL Stability</strong></td><td>http-status-codes</td><td>4</td><td>Soft 404s silently mislead agents</td></tr>
                 <tr><td></td><td>redirect-behavior</td><td>3</td><td>Cross-host redirects break workflows</td></tr>
-                <tr><td><strong>Discoverability</strong></td><td>llms-txt-directive</td><td>3</td><td>Helps agents find index from any page</td></tr>
-                <tr><td><strong>Health</strong></td><td>llms-txt-freshness</td><td>4</td><td>Stale index = stale agent knowledge</td></tr>
+                <tr><td><strong>Discoverability</strong></td><td>llms-txt-directive-html</td><td>2</td><td>Helps agents find index from HTML pages</td></tr>
+                <tr><td></td><td>llms-txt-directive-md</td><td>1</td><td>Helps agents find index from markdown pages</td></tr>
+                <tr><td><strong>Health</strong></td><td>llms-txt-coverage</td><td>4</td><td>Sitemap pages missing from llms.txt = invisible to agents</td></tr>
                 <tr><td></td><td>markdown-content-parity</td><td>3</td><td>Divergent content = unreliable answers</td></tr>
                 <tr><td></td><td>cache-header-hygiene</td><td>2</td><td>Enables timely updates</td></tr>
                 <tr><td><strong>Auth</strong></td><td>auth-gate-detection</td><td>8</td><td>Gated docs are invisible to agents</td></tr>

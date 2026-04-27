@@ -44,7 +44,7 @@ const methodCells = [
   },
   {
     name: 'Discoverability',
-    checks: '1 check',
+    checks: '2 checks',
     desc: 'Can agents find your llms.txt from any page?',
     icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="5"/><line x1="14" y1="14" x2="17" y2="17"/></svg>,
   },
