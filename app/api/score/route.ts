@@ -243,7 +243,7 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
       },
       results: result.results,
       categoryScores: Object.fromEntries(
-        Object.entries(scored.categoryScores).map(([k, v]) => [k, typeof v === 'number' ? v : (v as { score: number }).score])
+        Object.entries(scored.categoryScores).map(([k, v]) => [k, typeof v === 'number' ? v : ((v as { score: number | null }).score ?? 0)])
       ),
     };
 
