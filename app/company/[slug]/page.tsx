@@ -16,6 +16,7 @@ import LeaderboardRequestButton from './LeaderboardRequestButton';
 import FernBadge from './FernBadge';
 import GradeCTA from './GradeCTA';
 import MatrixBackground from '@/components/MatrixBackground';
+import VoiceOrb from '@/components/VoiceOrb';
 import DotDivider from '@/components/DotDivider';
 import { scoreColor } from '@/lib/gradeColors';
 import '../company.css';
@@ -210,6 +211,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           </div>
           <div className="co-hero-right">
             <MatrixBackground color={color} />
+            <VoiceOrb text={summary} />
           </div>
         </div>
       </section>
