@@ -5,13 +5,13 @@ import { useState, useRef, useEffect } from 'react';
 type OrbState = 'idle' | 'loading' | 'playing';
 
 // Inline equalizer bars rendered via canvas when playing
-function EqBars() {
+function EqBars({ color }: { color: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const barsRef   = useRef([
     { current: 3, target: 3 },
-    { current: 6, target: 6 },
+    { current: 7, target: 7 },
     { current: 4, target: 4 },
-    { current: 8, target: 8 },
+    { current: 9, target: 9 },
     { current: 3, target: 3 },
   ]);
   const animRef = useRef(0);
@@ -19,7 +19,7 @@ function EqBars() {
   useEffect(() => {
     const canvas = canvasRef.current!;
     const dpr = window.devicePixelRatio || 1;
-    const W = 14, H = 13;
+    const W = 13, H = 13;
     canvas.width  = W * dpr;
     canvas.height = H * dpr;
     const ctx = canvas.getContext('2d')!;
@@ -27,15 +27,15 @@ function EqBars() {
 
     let lastUpdate = 0;
     const tick = (time: number) => {
-      if (time - lastUpdate > 90) {
-        barsRef.current.forEach(b => { b.target = 2 + Math.random() * 9; });
+      if (time - lastUpdate > 85) {
+        barsRef.current.forEach(b => { b.target = 2 + Math.random() * 10; });
         lastUpdate = time;
       }
-      barsRef.current.forEach(b => { b.current += (b.target - b.current) * 0.35; });
+      barsRef.current.forEach(b => { b.current += (b.target - b.current) * 0.3; });
 
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = 'currentColor';
-      const barW = 1.5, gap = 1.2;
+      ctx.fillStyle = color;
+      const barW = 1.5, gap = 1.3;
       const totalW = barsRef.current.length * barW + (barsRef.current.length - 1) * gap;
       let x = (W - totalW) / 2;
       for (const b of barsRef.current) {
@@ -47,14 +47,9 @@ function EqBars() {
     };
     animRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animRef.current);
-  }, []);
+  }, [color]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{ width: 14, height: 13, display: 'block', color: 'inherit' }}
-    />
-  );
+  return <canvas ref={canvasRef} style={{ width: 13, height: 13, display: 'block', flexShrink: 0 }} />;
 }
 
 export default function VoiceOrb({ text }: { text: string }) {
@@ -105,13 +100,13 @@ export default function VoiceOrb({ text }: { text: string }) {
           </path>
         </svg>
       ) : state === 'playing' ? (
-        <EqBars />
+        <EqBars color="var(--fg-mid, #888)" />
       ) : (
-        // Speaker + sound waves icon
-        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        // Speaker + sound waves icon — viewBox has room for the waves on the right
+        <svg width="13" height="13" viewBox="0 0 22 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="3,7 8,7 13,3 13,17 8,13 3,13" fill="currentColor" stroke="none" />
-          <path d="M16 7a4 4 0 010 6" />
-          <path d="M18.5 4.5a8 8 0 010 11" />
+          <path d="M15.5 7.5a3.5 3.5 0 010 5" />
+          <path d="M18.5 5a7 7 0 010 10" />
         </svg>
       )}
       <span>{state === 'playing' ? 'Stop' : state === 'loading' ? 'Loading…' : 'Listen'}</span>
