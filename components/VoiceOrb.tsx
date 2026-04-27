@@ -100,7 +100,7 @@ export default function VoiceOrb({ text }: { text: string }) {
           </path>
         </svg>
       ) : state === 'playing' ? (
-        <EqBars color="var(--fg-mid, #888)" />
+        <EqBars color="#888888" />
       ) : (
         // Speaker + sound waves icon — viewBox has room for the waves on the right
         <svg width="13" height="13" viewBox="0 0 22 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
