@@ -31,6 +31,7 @@ export default function Navbar() {
     const target = document.getElementById('hero-score-btn');
     if (!target) {
       setShowScoreBtn(true);
+      setVisible(true);
       return;
     }
     const observer = new IntersectionObserver(
