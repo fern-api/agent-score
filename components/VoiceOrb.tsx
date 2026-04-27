@@ -40,7 +40,7 @@ function EqBars({ color }: { color: string }) {
       let x = (W - totalW) / 2;
       for (const b of barsRef.current) {
         const h = Math.max(2, b.current);
-        ctx.fillRect(x, H - h, barW, h);
+        ctx.fillRect(x, (H - h) / 2, barW, h);
         x += barW + gap;
       }
       animRef.current = requestAnimationFrame(tick);
