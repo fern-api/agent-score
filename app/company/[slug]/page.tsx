@@ -16,6 +16,7 @@ import LeaderboardRequestButton from './LeaderboardRequestButton';
 import FernBadge from './FernBadge';
 import GradeCTA from './GradeCTA';
 import MatrixBackground from '@/components/MatrixBackground';
+import VoiceOrb from '@/components/VoiceOrb';
 import DotDivider from '@/components/DotDivider';
 import { scoreColor } from '@/lib/gradeColors';
 import '../company.css';
@@ -236,7 +237,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
 
       {/* Side-by-side collapsible panels */}
       <section className="co-panels-row">
-        <CollapsiblePanel title="Executive Summary" copySlot={<CopyButton text={summary} />} alwaysOpen>
+        <CollapsiblePanel title="Executive Summary" copySlot={<><VoiceOrb text={summary} /><CopyButton text={summary} /></>} alwaysOpen>
           <p className="co-panel-text">{summary}</p>
         </CollapsiblePanel>
         <AIFixPrompt
