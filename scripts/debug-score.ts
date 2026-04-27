@@ -13,10 +13,10 @@ const WEIGHTS: Record<string, number> = {
   'llms-txt-exists': 10, 'rendering-strategy': 10, 'auth-gate-detection': 10,
   'llms-txt-size': 7, 'llms-txt-links-resolve': 7, 'llms-txt-links-markdown': 7,
   'markdown-url-support': 7, 'page-size-html': 7, 'page-size-markdown': 7,
-  'http-status-codes': 7, 'llms-txt-directive': 7,
+  'http-status-codes': 7, 'llms-txt-directive-html': 7,
   'llms-txt-valid': 4, 'content-negotiation': 4, 'content-start-position': 4,
   'tabbed-content-serialization': 4, 'markdown-code-fence-validity': 4,
-  'llms-txt-freshness': 4, 'markdown-content-parity': 4, 'auth-alternative-access': 4,
+  'llms-txt-coverage': 4, 'llms-txt-directive-md': 4, 'markdown-content-parity': 4, 'auth-alternative-access': 4,
   'redirect-behavior': 4,
   'section-header-quality': 2, 'cache-header-hygiene': 2,
 };

@@ -29,7 +29,7 @@ export function computeScore(results: CheckResult[]): ScoreResult {
 
   const categoryScores: Record<string, number> = {};
   for (const [cat, val] of Object.entries(scored.categoryScores)) {
-    categoryScores[cat] = typeof val === 'number' ? val : val.score;
+    categoryScores[cat] = typeof val === 'number' ? val : (val.score ?? 0);
   }
 
   return { overall: scored.overall, grade: scored.grade, cap: scored.cap, categoryScores };

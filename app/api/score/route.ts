@@ -243,13 +243,23 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
       },
       results: result.results,
       categoryScores: Object.fromEntries(
-        Object.entries(scored.categoryScores).map(([k, v]) => [k, typeof v === 'number' ? v : (v as { score: number }).score])
+        Object.entries(scored.categoryScores).map(([k, v]) => [k, typeof v === 'number' ? v : ((v as { score: number | null }).score ?? 0)])
       ),
     };
 
     try {
       await upsertScore(companyData);
       console.log("[score] Supabase upsert complete for:", effectiveSlug);
+      const webhookUrl = process.env.SLACK_DEMO_WEBHOOK_URL;
+      if (webhookUrl) {
+        const scoredPageUrl = `https://fern-agent-score.vercel.app/agent-score/company/${effectiveSlug}`;
+        const docsHost = new URL(url).hostname;
+        fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: `:white_check_mark: *${effectiveName} scored ${score} (${grade})*\n*Docs:* <${url}|${docsHost}>\n*Results:* <${scoredPageUrl}|View score>` }),
+        }).catch(() => {});
+      }
     } catch (dbErr) {
       console.error("[score] Supabase upsert failed:", dbErr instanceof Error ? dbErr.message : dbErr);
     }
