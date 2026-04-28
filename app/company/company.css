@@ -256,6 +256,16 @@
   white-space: nowrap;
 }
 
+.co-afdocs-version {
+  color: var(--fg-mid);
+  text-decoration: underline;
+  transition: color 0.12s;
+}
+
+.co-afdocs-version:hover {
+  color: var(--fg);
+}
+
 .co-lb-request {
   font-family: 'Geist Mono', monospace;
   font-size: 11px;
@@ -1071,10 +1081,11 @@
 }
 
 /* Individual check item rows inside a group body.
-   Overrides the generic .co-check-item for the group context. */
+   Overrides the generic .co-check-item for the group context.
+   Four columns: dot, id, message (grows), learn (end of row). */
 .co-check-group-body .co-check-item {
   display: grid;
-  grid-template-columns: 12px 1fr 2fr;
+  grid-template-columns: 12px auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 8px 32px;
@@ -1104,6 +1115,35 @@
   font-size: 12px;
   color: var(--fg-mid);
   line-height: 1.4;
+}
+
+.co-check-group-body .co-check-item .co-check-item-msg {
+  min-width: 0;
+}
+
+.co-check-item-learn {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: var(--fg-dim);
+  text-decoration: underline;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  justify-self: end;
+  transition: color 0.12s;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.co-check-item-learn-icon {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.co-check-item-learn:hover {
+  color: var(--fg);
 }
 
 /* AI fix prompt preformatted block */
@@ -1365,7 +1405,7 @@
   }
 
   .co-check-group-body .co-check-item {
-    grid-template-columns: 12px 1fr 2fr;
+    grid-template-columns: 12px auto minmax(0, 1fr) auto;
     gap: 8px;
     padding: 8px 24px;
   }
@@ -1540,10 +1580,19 @@
   }
 
   .co-check-group-body .co-check-item {
-    grid-template-columns: 10px 1fr;
-    gap: 8px;
-    padding: 8px 16px;
+    grid-template-columns: 10px 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "dot id learn"
+      ". msg msg";
+    gap: 2px 8px;
+    padding: 10px 16px;
   }
+
+  .co-check-group-body .co-check-item .co-check-item-dot  { grid-area: dot; }
+  .co-check-group-body .co-check-item .co-check-item-id   { grid-area: id; }
+  .co-check-group-body .co-check-item .co-check-item-msg  { grid-area: msg; font-size: 11px; margin-top: 4px; }
+  .co-check-group-body .co-check-item .co-check-item-learn { grid-area: learn; align-self: center; }
 
   .co-check-item-id {
     font-size: 10px;
@@ -1551,7 +1600,6 @@
 
   .co-check-item-msg {
     font-size: 11px;
-    grid-column: 2;
   }
 
   .co-check-item {

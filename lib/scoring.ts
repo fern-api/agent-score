@@ -2,6 +2,12 @@ export type { Grade, ScoreCap, CheckResult } from 'afdocs';
 export { toGrade } from 'afdocs';
 
 import { computeScore as afdocsComputeScore } from 'afdocs';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+export const AFDOCS_VERSION: string = JSON.parse(
+  readFileSync(join(process.cwd(), 'node_modules/afdocs/package.json'), 'utf-8')
+).version;
 import type { CheckResult, Grade, ScoreCap } from 'afdocs';
 
 export interface ScoreResult {

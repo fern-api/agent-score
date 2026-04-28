@@ -22,6 +22,7 @@ export interface CompanyScore {
   };
   results?: CheckResult[];
   categoryScores?: Record<string, number>;
+  afdocsVersion?: string;
   hidden?: boolean;
   isFern?: boolean;
 }

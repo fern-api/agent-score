@@ -181,6 +181,12 @@ export default async function CompanyPage({ params }: { params: { slug: string }
                   {['C', 'D', 'F'].includes(company.grade) && <GradeCTA />}
                   <div className="co-last-checked">
                     Last checked: {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    {company.afdocsVersion && (
+                      <>
+                        {' · '}
+                        <a href="https://github.com/agent-ecosystem/afdocs" target="_blank" rel="noopener noreferrer" className="co-afdocs-version">afdocs v{company.afdocsVersion}</a>
+                      </>
+                    )}
                     {' · '}
                     <RerunButton url={company.docsUrl} slug={company.slug} />
                     {company.hidden && <LeaderboardRequestButton pageUrl={pageUrl} slug={company.slug} />}
