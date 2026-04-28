@@ -53,6 +53,7 @@ const CHECK_CATEGORY_SLUG: Record<string, string> = {
   'redirect-behavior':  'url-stability',
   // Observability
   'llms-txt-coverage':       'observability',
+  'llms-txt-freshness':      'observability', // legacy name for llms-txt-coverage
   'markdown-content-parity': 'observability',
   'cache-header-hygiene':    'observability',
   // Authentication
@@ -60,10 +61,17 @@ const CHECK_CATEGORY_SLUG: Record<string, string> = {
   'auth-alternative-access':  'authentication',
 };
 
+// Some check IDs were renamed; map them to their canonical anchor.
+const CHECK_ID_ALIAS: Record<string, string> = {
+  'llms-txt-freshness': 'llms-txt-coverage',
+};
+
 function checkDocsUrl(id: string): string | null {
-  const slug = CHECK_CATEGORY_SLUG[formatCheckId(id)];
+  const normalized = formatCheckId(id);
+  const slug = CHECK_CATEGORY_SLUG[normalized];
   if (!slug) return null;
-  return `https://afdocs.dev/checks/${slug}#${formatCheckId(id)}`;
+  const anchor = CHECK_ID_ALIAS[normalized] ?? normalized;
+  return `https://afdocs.dev/checks/${slug}#${anchor}`;
 }
 
 interface Category {
@@ -185,6 +193,7 @@ export default function CategoryCheckGroups({ categories, results, categoryScore
                         onClick={(e) => e.stopPropagation()}
                       >
                         Learn more
+                        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="co-check-item-learn-icon"><path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5"/><path d="M7 1.5h3.5V5"/><path d="M5 7L10.5 1.5"/></svg>
                       </a>
                     )}
                   </div>
