@@ -213,7 +213,7 @@
   font-weight: 500;
   color: var(--fg-mid);
   background: none;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--border);
   padding: 6px 8px;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
