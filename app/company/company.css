@@ -213,7 +213,7 @@
   font-weight: 500;
   color: var(--fg-mid);
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent);
   padding: 6px 8px;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
@@ -254,6 +254,16 @@
   color: var(--fg-mid);
   letter-spacing: 0.3px;
   white-space: nowrap;
+}
+
+.co-afdocs-version {
+  color: var(--fg-mid);
+  text-decoration: underline;
+  transition: color 0.12s;
+}
+
+.co-afdocs-version:hover {
+  color: var(--fg);
 }
 
 .co-lb-request {
@@ -1071,10 +1081,11 @@
 }
 
 /* Individual check item rows inside a group body.
-   Overrides the generic .co-check-item for the group context. */
+   Overrides the generic .co-check-item for the group context.
+   Four columns: dot, id, message (grows), learn (end of row). */
 .co-check-group-body .co-check-item {
   display: grid;
-  grid-template-columns: 12px 1fr 2fr;
+  grid-template-columns: 12px auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 8px 32px;
@@ -1106,17 +1117,29 @@
   line-height: 1.4;
 }
 
+.co-check-group-body .co-check-item .co-check-item-msg {
+  min-width: 0;
+}
+
 .co-check-item-learn {
   font-family: 'Geist Mono', monospace;
   font-size: 11px;
   color: var(--fg-dim);
-  text-decoration: none;
+  text-decoration: underline;
   letter-spacing: 0.3px;
   white-space: nowrap;
-  margin-left: auto;
-  padding-left: 16px;
   flex-shrink: 0;
+  justify-self: end;
   transition: color 0.12s;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.co-check-item-learn-icon {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
 }
 
 .co-check-item-learn:hover {
@@ -1382,7 +1405,7 @@
   }
 
   .co-check-group-body .co-check-item {
-    grid-template-columns: 12px 1fr 2fr;
+    grid-template-columns: 12px auto minmax(0, 1fr) auto;
     gap: 8px;
     padding: 8px 24px;
   }
@@ -1557,9 +1580,14 @@
   }
 
   .co-check-group-body .co-check-item {
-    grid-template-columns: 10px 1fr;
+    grid-template-columns: 10px auto minmax(0, 1fr) auto;
     gap: 8px;
     padding: 8px 16px;
+  }
+
+  .co-check-group-body .co-check-item .co-check-item-msg {
+    grid-column: 3;
+    font-size: 11px;
   }
 
   .co-check-item-id {
