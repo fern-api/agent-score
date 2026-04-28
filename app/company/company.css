@@ -1580,15 +1580,19 @@
   }
 
   .co-check-group-body .co-check-item {
-    grid-template-columns: 10px auto minmax(0, 1fr) auto;
-    gap: 8px;
-    padding: 8px 16px;
+    grid-template-columns: 10px 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "dot id learn"
+      ". msg msg";
+    gap: 2px 8px;
+    padding: 10px 16px;
   }
 
-  .co-check-group-body .co-check-item .co-check-item-msg {
-    grid-column: 3;
-    font-size: 11px;
-  }
+  .co-check-group-body .co-check-item .co-check-item-dot  { grid-area: dot; }
+  .co-check-group-body .co-check-item .co-check-item-id   { grid-area: id; }
+  .co-check-group-body .co-check-item .co-check-item-msg  { grid-area: msg; font-size: 11px; margin-top: 4px; }
+  .co-check-group-body .co-check-item .co-check-item-learn { grid-area: learn; align-self: center; }
 
   .co-check-item-id {
     font-size: 10px;
@@ -1596,7 +1600,6 @@
 
   .co-check-item-msg {
     font-size: 11px;
-    grid-column: 2;
   }
 
   .co-check-item {
