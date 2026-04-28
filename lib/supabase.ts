@@ -27,6 +27,7 @@ export interface ScoreRow {
   checks_fail: number;
   results: CompanyScore['results'];
   category_scores?: Record<string, number> | null;
+  afdocs_version?: string | null;
   hidden?: boolean;
   is_fern?: boolean;
 }
@@ -48,6 +49,7 @@ function rowToCompany(row: ScoreRow): CompanyScore {
     },
     results: row.results,
     categoryScores: row.category_scores ?? undefined,
+    afdocsVersion: row.afdocs_version ?? undefined,
     hidden: row.hidden ?? false,
     isFern: row.is_fern ?? false,
   };
@@ -68,6 +70,7 @@ export async function upsertScore(company: CompanyScore): Promise<void> {
     checks_fail: company.checks.fail,
     results: company.results ?? null,
     category_scores: company.categoryScores ?? null,
+    afdocs_version: company.afdocsVersion ?? null,
   };
   // Only write hidden when explicitly provided — preserves manual overrides
   if (company.hidden !== undefined) payload.hidden = company.hidden;

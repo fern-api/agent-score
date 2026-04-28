@@ -12,6 +12,7 @@
 import { upsertScore } from "../lib/supabase";
 import { inferCategory } from "../lib/categorize";
 import { computeScore } from "afdocs";
+import { AFDOCS_VERSION } from "../lib/scoring";
 
 function elapsed(start: number): string {
   const s = Math.floor((Date.now() - start) / 1000);
@@ -133,6 +134,7 @@ async function main() {
         typeof v === "number" ? v : (v as { score: number }).score,
       ])
     ),
+    afdocsVersion: AFDOCS_VERSION,
   };
 
   console.log(`\nScore: ${score} (${grade})`);
