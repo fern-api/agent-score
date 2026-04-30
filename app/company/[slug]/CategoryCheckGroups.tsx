@@ -131,7 +131,8 @@ export default function CategoryCheckGroups({ categories, results, categoryScore
         const items = [...(groupMap.get(cat.name) || [])].sort(
           (a, b) => statusPriority(a.status) - statusPriority(b.status)
         );
-        const score = categoryScores?.[cat.name] ?? calcCategoryScore(items);
+        const storedScore = categoryScores?.[cat.name];
+        const score = (storedScore != null && storedScore > 0) ? storedScore : calcCategoryScore(items);
         const passCount = items.filter(r => r.status === 'pass').length;
         const warnCount = items.filter(r => r.status === 'warn').length;
         const failCount = items.filter(r => r.status === 'fail' || r.status === 'error').length;
