@@ -991,7 +991,7 @@
 
 .co-check-group-header {
   display: grid;
-  grid-template-columns: 1fr 140px 36px 24px;
+  grid-template-columns: 1fr 140px 24px;
   align-items: center;
   gap: 16px;
   padding: 12px 32px;
@@ -1274,7 +1274,7 @@
   }
 
   .co-check-group-header {
-    grid-template-columns: 1fr 120px 36px 24px;
+    grid-template-columns: 1fr 120px 24px;
     gap: 12px;
     padding: 12px 24px;
   }
@@ -1395,7 +1395,7 @@
   }
 
   .co-check-group-header {
-    grid-template-columns: 1fr 80px 32px 20px;
+    grid-template-columns: 1fr 80px 20px;
     gap: 8px;
     padding: 12px 20px;
   }
@@ -1562,7 +1562,7 @@
   }
 
   .co-check-group-header {
-    grid-template-columns: 1fr 60px 28px 18px;
+    grid-template-columns: 1fr 60px 18px;
     gap: 6px;
     padding: 10px 16px;
   }

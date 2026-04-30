@@ -131,7 +131,8 @@ export default function CategoryCheckGroups({ categories, results, categoryScore
         const items = [...(groupMap.get(cat.name) || [])].sort(
           (a, b) => statusPriority(a.status) - statusPriority(b.status)
         );
-        const score = categoryScores?.[cat.name] ?? calcCategoryScore(items);
+        const storedScore = categoryScores?.[cat.name];
+        const score = (storedScore != null && storedScore > 0) ? storedScore : calcCategoryScore(items);
         const passCount = items.filter(r => r.status === 'pass').length;
         const warnCount = items.filter(r => r.status === 'warn').length;
         const failCount = items.filter(r => r.status === 'fail' || r.status === 'error').length;
@@ -164,7 +165,6 @@ export default function CategoryCheckGroups({ categories, results, categoryScore
                   style={{ width: `${score}%`, background: barColor(score) }}
                 />
               </div>
-              <span className="co-check-group-score">{score}</span>
               <span className={`co-check-group-chevron${isOpen ? ' open' : ''}`} aria-hidden="true">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6,4 10,8 6,12"/>
