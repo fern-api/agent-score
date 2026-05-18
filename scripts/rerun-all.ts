@@ -8,6 +8,7 @@
  *
  * Options (env vars):
  *   SLUGS=stripe,twilio   — only rerun specific slugs (comma-separated)
+ *   FERN_ONLY=true        — only rerun companies where is_fern=true in Supabase
  *   DELAY_MS=2000         — ms to wait between companies (default: 1000)
  */
 
@@ -17,13 +18,18 @@ import { upsertScore } from '../lib/supabase';
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const KEY = process.env.SUPABASE_SECRET_KEY!;
 const DELAY_MS = parseInt(process.env.DELAY_MS ?? '1000', 10);
+const FERN_ONLY = process.env.FERN_ONLY === 'true';
 const DEFAULT_SLUGS = [
   'zendesk', 'ydc', 'workos', 'vercel', 'twilio', 'tanstack-router', 'support',
   'supabase', 'stripe', 'strands-agents-sdk', 'stackby-developer-api-v1', 'square',
   'sonatype-nexus-repository', 'slack-developer', 'shopify', 'shipfox', 'sentry',
   'sap', 'salesforce', 'rootly', 'roboflow', 'resend', 'docs',
 ];
-const FILTER_SLUGS = process.env.SLUGS ? process.env.SLUGS.split(',').map((s) => s.trim()) : DEFAULT_SLUGS;
+const FILTER_SLUGS = process.env.SLUGS
+  ? process.env.SLUGS.split(',').map((s) => s.trim())
+  : FERN_ONLY
+  ? null
+  : DEFAULT_SLUGS;
 
 if (!SUPABASE_URL || !KEY) {
   console.error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY env vars');
@@ -43,6 +49,7 @@ interface StoredRow {
   category: string;
   hidden: boolean;
   scored_at: string | null;
+  is_fern: boolean | null;
 }
 
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -69,10 +76,10 @@ async function main() {
   const { runChecks } = await import('afdocs');
 
   process.stdout.write('Fetching company list from Supabase... ');
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/scores?select=slug,name,docs_url,category,hidden,scored_at&order=name.asc`,
-    { headers }
-  );
+  const query = FERN_ONLY
+    ? `${SUPABASE_URL}/rest/v1/scores?select=slug,name,docs_url,category,hidden,scored_at,is_fern&is_fern=eq.true&order=name.asc`
+    : `${SUPABASE_URL}/rest/v1/scores?select=slug,name,docs_url,category,hidden,scored_at,is_fern&order=name.asc`;
+  const res = await fetch(query, { headers });
   if (!res.ok) {
     console.error('\nFailed to fetch companies:', await res.text());
     process.exit(1);
@@ -100,6 +107,10 @@ async function main() {
 
   if (FILTER_SLUGS) {
     companies = companies.filter((c) => FILTER_SLUGS.includes(c.slug));
+  }
+
+  if (FERN_ONLY) {
+    console.log(`  Filtering to is_fern=true sites`);
   }
 
   console.log(`${companies.length} companies\n`);

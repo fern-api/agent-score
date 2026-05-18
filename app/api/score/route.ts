@@ -16,12 +16,15 @@ const DOCS_PATHS = /\/(docs|api|reference|guides|developer|sdk|learn|manual|docu
 const DOCS_PLATFORMS = /(readme\.io|gitbook\.io|mintlify\.app|buildwithfern\.com\/learn|\.fern\.dev|\.readme\.io|\.gitbook\.io|github\.io|notion\.site)/i;
 
 // ---------------------------------------------------------------------------
-// Rate limiting — cookie-based, 5 scoring requests per hour
+// Rate limiting — cookie-based + IP-based, 5 scoring requests per hour
 // ---------------------------------------------------------------------------
 
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 3_600_000;
 const RL_COOKIE = 'score_rl';
+
+// In-memory IP rate limit store (per serverless instance; supplements cookie RL)
+const ipRateLimitStore = new Map<string, number[]>();
 
 function checkCookieRateLimit(request: Request): { allowed: boolean; timestamps: number[] } {
   const cookieHeader = request.headers.get('cookie') ?? '';
@@ -42,6 +45,27 @@ function checkCookieRateLimit(request: Request): { allowed: boolean; timestamps:
 function buildRateLimitCookie(timestamps: number[]): string {
   const value = encodeURIComponent(JSON.stringify([...timestamps, Date.now()]));
   return `${RL_COOKIE}=${value}; Path=/; Max-Age=3600; HttpOnly; SameSite=Strict`;
+}
+
+function checkIpRateLimit(request: Request): boolean {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : request.headers.get('x-real-ip') ?? 'unknown';
+  if (ip === 'unknown') return true; // can't identify — let cookie RL handle it
+  const now = Date.now();
+  const recent = (ipRateLimitStore.get(ip) ?? []).filter(t => now - t < RATE_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT) {
+    console.log('[score] IP rate limit exceeded:', ip);
+    return false;
+  }
+  ipRateLimitStore.set(ip, [...recent, now]);
+  // Prune old entries to avoid unbounded growth
+  if (ipRateLimitStore.size > 5000) {
+    const cutoff = now - RATE_WINDOW_MS;
+    for (const [k, v] of ipRateLimitStore) {
+      if (v.every(t => t < cutoff)) ipRateLimitStore.delete(k);
+    }
+  }
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -314,12 +338,32 @@ export async function POST(request: Request) {
     const { url: rawUrl, slug: slugParam, name: nameParam, skipDetection, force } = body;
     console.log("[score] POST received", { url: rawUrl, slugParam, skipDetection, force });
 
-    if (!rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string') {
       return NextResponse.json({ error: "url is required" }, { status: 400 });
+    }
+
+    // Reject obviously garbage inputs early — before any async work
+    if (rawUrl.length > 500) {
+      console.log('[score] rejected: url too long', rawUrl.length);
+      return NextResponse.json({ error: "invalid_url", message: "URL is too long." }, { status: 400 });
+    }
+    if (/[<>{}|\\^`\x00-\x1f]/.test(rawUrl)) {
+      console.log('[score] rejected: url contains invalid characters');
+      return NextResponse.json({ error: "invalid_url", message: "URL contains invalid characters." }, { status: 400 });
     }
 
     // Normalize — prepend https:// if no protocol so URL parsing works everywhere
     const url: string = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+
+    // Validate it parses as a real URL with a proper hostname
+    try {
+      const parsed = new URL(url);
+      if (!parsed.hostname || !parsed.hostname.includes('.')) {
+        return NextResponse.json({ error: "invalid_url", message: "Please provide a valid URL." }, { status: 400 });
+      }
+    } catch {
+      return NextResponse.json({ error: "invalid_url", message: "Please provide a valid URL." }, { status: 400 });
+    }
 
     if (isBlockedDomain(url)) {
       try {
@@ -341,16 +385,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "blocked", message: "This site is not eligible for scoring." }, { status: 403 });
     }
 
-    // Rate limiting — cookie-based (skip on localhost)
+    // Rate limiting — cookie-based + IP-based (skip on localhost)
     const host = request.headers.get('host') ?? '';
     const isLocalhost = host.startsWith('localhost') || host.startsWith('127.0.0.1');
-    const { allowed, timestamps } = checkCookieRateLimit(request);
-    if (!isLocalhost && !allowed) {
-      console.log("[score] rate limit exceeded");
-      return NextResponse.json(
-        { error: "rate_limit", message: `You can score up to ${RATE_LIMIT} sites per hour. Try again later.` },
-        { status: 429 }
-      );
+    let rlTimestamps: number[] = [];
+    if (!isLocalhost) {
+      const { allowed, timestamps } = checkCookieRateLimit(request);
+      const ipAllowed = checkIpRateLimit(request);
+      if (!allowed || !ipAllowed) {
+        console.log("[score] rate limit exceeded");
+        return NextResponse.json(
+          { error: "rate_limit", message: `You can score up to ${RATE_LIMIT} sites per hour. Try again later.` },
+          { status: 429 }
+        );
+      }
+      rlTimestamps = timestamps;
     }
 
     // Resolve display name: compare og name vs domain name, pick the shorter
@@ -426,7 +475,7 @@ export async function POST(request: Request) {
 
     // Set updated rate limit cookie
     const response = NextResponse.json({ jobId, slug: effectiveSlug });
-    response.headers.set('Set-Cookie', buildRateLimitCookie(timestamps));
+    response.headers.set('Set-Cookie', buildRateLimitCookie(rlTimestamps));
     return response;
   } catch (error) {
     console.error("[score] POST error:", error instanceof Error ? error.stack : error);
