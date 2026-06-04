@@ -422,22 +422,27 @@ export async function POST(request: Request) {
     // canonical live company entry — otherwise e.g. docusign.ferndocs.com collapses onto the "docusign" slug.
     const isFernHost = (() => { try { return /(^|\.)ferndocs\.com$/i.test(new URL(url).hostname); } catch { return false; } })();
     const rawSlug = slugParam || (effectiveName && !urlPath && !isFernHost ? nameToSlug(effectiveName) : urlToSlug(url));
-    // Redirect known duplicate slugs to the canonical leaderboard entry (e.g. "monday" → "developer-monday-com-apps").
-    const effectiveSlug = resolveSlugAlias(rawSlug);
-    console.log("[score] resolved slug:", effectiveSlug, "name:", effectiveName, rawSlug !== effectiveSlug ? `(aliased from ${rawSlug})` : '');
+    // Alias a likely-typed domain (e.g. "monday" → "developer-monday-com-api-reference") to a curated
+    // leaderboard entry. This is a *redirect for lookups only*: we surface the existing canonical entry
+    // but never score/overwrite it. Actual scoring always stores under the raw slug (see runJob below).
+    const aliasSlug = resolveSlugAlias(rawSlug);
+    console.log("[score] resolved slug:", rawSlug, "name:", effectiveName, rawSlug !== aliasSlug ? `(alias → ${aliasSlug})` : '');
 
-    // Return cached result if company already exists (skip when force=true or in development)
+    // Return cached result if company already exists (skip when force=true or in development).
+    // Prefer the alias target so a typed domain points at the curated entry.
     if (!force && process.env.NODE_ENV !== 'development') {
       try {
-        const existing = await getScoreBySlug(effectiveSlug);
+        const existing =
+          (await getScoreBySlug(aliasSlug)) ??
+          (aliasSlug !== rawSlug ? await getScoreBySlug(rawSlug) : null);
         if (existing) {
-          console.log("[score] company already exists, returning cached result:", effectiveSlug);
+          console.log("[score] company already exists, returning cached result:", existing.slug);
           const jobId = crypto.randomUUID();
           writeJob(jobId, {
             status: "complete",
             score: existing.score,
             grade: existing.grade,
-            slug: effectiveSlug,
+            slug: existing.slug,
             summary: {
               total: existing.checks.total,
               pass: existing.checks.pass,
@@ -446,7 +451,7 @@ export async function POST(request: Request) {
             },
             results: existing.results,
           });
-          return NextResponse.json({ jobId, slug: effectiveSlug, cached: true });
+          return NextResponse.json({ jobId, slug: existing.slug, cached: true });
         }
       } catch { /* Supabase check failed — proceed with scoring */ }
     }
@@ -474,13 +479,13 @@ export async function POST(request: Request) {
     console.log("[score] job created:", jobId);
 
     if (process.env.NODE_ENV === 'development') {
-      runJob(jobId, url, effectiveSlug, effectiveName ?? undefined, hidden).catch(console.error);
+      runJob(jobId, url, rawSlug, effectiveName ?? undefined, hidden).catch(console.error);
     } else {
-      waitUntil(runJob(jobId, url, effectiveSlug, effectiveName ?? undefined, hidden));
+      waitUntil(runJob(jobId, url, rawSlug, effectiveName ?? undefined, hidden));
     }
 
     // Set updated rate limit cookie
-    const response = NextResponse.json({ jobId, slug: effectiveSlug });
+    const response = NextResponse.json({ jobId, slug: rawSlug });
     response.headers.set('Set-Cookie', buildRateLimitCookie(rlTimestamps));
     return response;
   } catch (error) {
