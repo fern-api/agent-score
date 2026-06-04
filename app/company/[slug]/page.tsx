@@ -1,6 +1,7 @@
 import { getCompanyWithFallback } from '@/lib/scores';
 import type { CheckResult } from '@/lib/scores';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { resolveSlugAlias } from '@/lib/slug-aliases';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import ScoreRing from './ScoreRing';
@@ -125,6 +126,10 @@ function buildSummary(company: { name: string; score: number; grade: string; che
 }
 
 export default async function CompanyPage({ params }: { params: { slug: string } }) {
+  // Redirect known duplicate slugs (e.g. /company/monday) to the canonical leaderboard entry.
+  const canonical = resolveSlugAlias(params.slug);
+  if (canonical !== params.slug) redirect(`/agent-score/company/${canonical}`);
+
   const company = await getCompanyWithFallback(params.slug);
   if (!company) notFound();
 
