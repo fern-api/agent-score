@@ -2,7 +2,7 @@
 // Use this when a domain a user is likely to type (e.g. monday.com → "monday") resolves
 // to a weaker entry than the curated leaderboard entry we'd rather surface.
 export const SLUG_ALIASES: Record<string, string> = {
-  monday: 'developer-monday-com-api-reference',
+  // e.g. monday: 'developer-monday-com-api-reference',
 };
 
 export function resolveSlugAlias(slug: string): string {

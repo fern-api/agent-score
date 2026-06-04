@@ -135,13 +135,20 @@ async function detectDocsUrl(url: string): Promise<{ isLikely: boolean; warning?
   if (DOCS_PATHS.test(pathStr)) return { isLikely: true };
   if (DOCS_PLATFORMS.test(host + parsed.pathname)) return { isLikely: true };
 
+  // An llms.txt is a strong docs signal — but marketing sites increasingly ship one
+  // too (e.g. monday.com serves /llms.txt from its product homepage). For a bare apex
+  // root it's not sufficient on its own; defer to the homepage content check below so
+  // a marketing landing page can still be rejected. For any deeper path it stands.
+  const isRoot = parsed.pathname === "/" || parsed.pathname === "";
+  let hasLlms = false;
   try {
     const r = await fetch(`${parsed.origin}/llms.txt`, {
       signal: AbortSignal.timeout(5000),
       headers: { "User-Agent": "Mozilla/5.0 (compatible; AgentScore/1.0)" },
     });
-    if (r.ok) return { isLikely: true };
+    hasLlms = r.ok;
   } catch { /* ignore */ }
+  if (hasLlms && !isRoot) return { isLikely: true };
 
   try {
     const r = await fetch(url, {
@@ -163,6 +170,9 @@ async function detectDocsUrl(url: string): Promise<{ isLikely: boolean; warning?
       suggestion: `docs.${baseDomain}, ${parsed.origin}/docs, or ${parsed.origin}/api`,
     };
   } catch {
+    // Couldn't analyze the page — if it advertised an llms.txt, trust that rather
+    // than reject on a fetch failure (only a *visible* marketing page is rejected).
+    if (hasLlms) return { isLikely: true };
     return {
       isLikely: false,
       warning: `Could not fetch the URL — it may be protected by bot-detection.`,
