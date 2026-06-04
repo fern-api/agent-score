@@ -7,6 +7,7 @@ import { computeScore } from "afdocs";
 import { AFDOCS_VERSION } from "@/lib/scoring";
 import { inferCategory } from "@/lib/categorize";
 import { isBlockedDomain } from "@/lib/blocked-domains";
+import { resolveSlugAlias } from "@/lib/slug-aliases";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -417,8 +418,13 @@ export async function POST(request: Request) {
     // When the URL has a meaningful path (e.g. docs.nvidia.com/dynamo vs docs.nvidia.com/heavyai),
     // use the full URL slug so path-scoped sites don't collide on the domain-derived name slug.
     const urlPath = (() => { try { return new URL(url).pathname.replace(/^\/|\/$/g, ''); } catch { return ''; } })();
-    const effectiveSlug = slugParam || (effectiveName && !urlPath ? nameToSlug(effectiveName) : urlToSlug(url));
-    console.log("[score] resolved slug:", effectiveSlug, "name:", effectiveName);
+    // Fern preview/staging hosts (*.ferndocs.com) always slug by URL so they stay distinct from the
+    // canonical live company entry — otherwise e.g. docusign.ferndocs.com collapses onto the "docusign" slug.
+    const isFernHost = (() => { try { return /(^|\.)ferndocs\.com$/i.test(new URL(url).hostname); } catch { return false; } })();
+    const rawSlug = slugParam || (effectiveName && !urlPath && !isFernHost ? nameToSlug(effectiveName) : urlToSlug(url));
+    // Redirect known duplicate slugs to the canonical leaderboard entry (e.g. "monday" → "developer-monday-com-apps").
+    const effectiveSlug = resolveSlugAlias(rawSlug);
+    console.log("[score] resolved slug:", effectiveSlug, "name:", effectiveName, rawSlug !== effectiveSlug ? `(aliased from ${rawSlug})` : '');
 
     // Return cached result if company already exists (skip when force=true or in development)
     if (!force && process.env.NODE_ENV !== 'development') {

@@ -109,14 +109,14 @@ function matchPatterns(docsUrl: string, name?: string): Category | undefined {
 
 /**
  * Ask Claude to classify the company when pattern-matching returns nothing.
- * Requires OPENAI_API_KEY in the environment.
+ * Requires ANTHROPIC_API_KEY in the environment.
  * Returns null on any failure so the caller can fall back gracefully.
  */
 async function inferCategoryWithLLM(
   docsUrl: string,
   name?: string,
 ): Promise<Category | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
   const prompt = `You are classifying a company's API/developer documentation site into exactly one category.
@@ -132,14 +132,15 @@ Rules:
 - Reply with ONLY the category name, nothing else.`;
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'claude-haiku-4-5',
         max_tokens: 16,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -147,12 +148,12 @@ Rules:
     });
 
     if (!res.ok) {
-      console.warn('[categorize] OpenAI API error:', res.status);
+      console.warn('[categorize] Anthropic API error:', res.status);
       return null;
     }
 
     const data = await res.json();
-    const raw = (data?.choices?.[0]?.message?.content ?? '').trim();
+    const raw = (data?.content?.[0]?.text ?? '').trim();
     const match = CATEGORIES.find(
       (c) => c.toLowerCase() === raw.toLowerCase(),
     );
@@ -166,7 +167,7 @@ Rules:
 /**
  * Infer a category for a docs URL + company name.
  * 1. Fast pattern match — if it hits, return immediately (no API call).
- * 2. Ask GPT-4o mini if patterns don't match.
+ * 2. Ask Claude Haiku if patterns don't match.
  * 3. Fall back to 'Other' if the API call fails or is unavailable.
  */
 export async function inferCategory(
