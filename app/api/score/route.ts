@@ -417,7 +417,10 @@ export async function POST(request: Request) {
     // When the URL has a meaningful path (e.g. docs.nvidia.com/dynamo vs docs.nvidia.com/heavyai),
     // use the full URL slug so path-scoped sites don't collide on the domain-derived name slug.
     const urlPath = (() => { try { return new URL(url).pathname.replace(/^\/|\/$/g, ''); } catch { return ''; } })();
-    const effectiveSlug = slugParam || (effectiveName && !urlPath ? nameToSlug(effectiveName) : urlToSlug(url));
+    // Fern preview/staging hosts (*.ferndocs.com) always slug by URL so they stay distinct from the
+    // canonical live company entry — otherwise e.g. docusign.ferndocs.com collapses onto the "docusign" slug.
+    const isFernHost = (() => { try { return /(^|\.)ferndocs\.com$/i.test(new URL(url).hostname); } catch { return false; } })();
+    const effectiveSlug = slugParam || (effectiveName && !urlPath && !isFernHost ? nameToSlug(effectiveName) : urlToSlug(url));
     console.log("[score] resolved slug:", effectiveSlug, "name:", effectiveName);
 
     // Return cached result if company already exists (skip when force=true or in development)
