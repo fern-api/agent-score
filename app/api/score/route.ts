@@ -438,6 +438,22 @@ export async function POST(request: Request) {
     const aliasSlug = resolveSlugAlias(rawSlug);
     console.log("[score] resolved slug:", rawSlug, "name:", effectiveName, rawSlug !== aliasSlug ? `(alias → ${aliasSlug})` : '');
 
+    // An explicit alias means this domain should ALWAYS surface a curated entry and never be
+    // scored — e.g. the monday.com marketing apex resolves to its developer-docs entry. Resolve
+    // it up front, independent of the force/dev cache path below and before docs detection, so
+    // the user is navigated straight to that entry instead of hitting a "not a docs site"
+    // rejection. Falls through to the normal flow only if the curated entry is missing.
+    if (aliasSlug !== rawSlug) {
+      try {
+        const canonical = await getScoreBySlug(aliasSlug);
+        if (canonical) {
+          console.log("[score] alias redirect:", rawSlug, "→", canonical.slug);
+          return NextResponse.json({ existing: true, slug: canonical.slug });
+        }
+        console.log("[score] alias target not found, falling through:", aliasSlug);
+      } catch { /* lookup failed — fall through to normal flow */ }
+    }
+
     // Return cached result if company already exists (skip when force=true or in development).
     // Prefer the alias target so a typed domain points at the curated entry.
     if (!force && process.env.NODE_ENV !== 'development') {
