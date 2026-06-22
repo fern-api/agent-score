@@ -1,0 +1,66 @@
+# shellcheck shell=bash
+# ===========================================================================
+# agent-score PROD config (DEPLOY_ENV=prod). Source'd by lib.sh.
+#
+#   cp config.prod.sh.example config.prod.sh     # then fill in every CHANGE_ME
+#   chmod +x *.sh
+#   DEPLOY_ENV=prod ./cutover.sh
+#
+# config.prod.sh is GITIGNORED — it holds real PROD Supabase + RDS credentials.
+# Only this *.example template is tracked. Never commit the filled-in copy.
+#
+# agent-score is PROD ONLY (no dev Supabase project). It migrates the single
+# `public.scores` table from the agent-score Supabase project into a NEW
+# database `agent_score` inside the EXISTING prod RDS instance `fern-prod-enc`.
+#
+# !! Do NOT touch the `fdr` or `dashboard` databases on this instance. lib.sh's
+#    RESERVED_DBS guard refuses to target postgres/fdr/dashboard; RDS_TARGET_DB
+#    must be the new `agent_score`.
+#
+# SUPABASE_URL MUST be the DIRECT Postgres connection (db.<ref>.supabase.co),
+# NOT the https PostgREST base the app uses. RDS host/port/user/password must
+# match between RDS_ADMIN_URL and RDS_URL; only the dbname differs.
+# ===========================================================================
+
+# --- DB connections (prod Supabase -> prod RDS) ---------------------------
+# Supabase direct Postgres conn for pg_dump. Password: Supabase dashboard ->
+# Project Settings -> Database -> Connection string (direct, port 5432).
+export SUPABASE_URL="postgres://postgres:CHANGE_ME_SUPABASE_DB_PASSWORD@db.vysquuodppesowrborik.supabase.co:5432/postgres?sslmode=require"
+
+export RDS_TARGET_DB="agent_score"
+# RDS master password: AWS Secrets Manager (prod RDS master secret for
+# fern-prod-enc). Same host/user/password for ADMIN and target; only db differs.
+export RDS_ADMIN_URL="postgres://postgres:CHANGE_ME_RDS_MASTER_PASSWORD@fern-prod-enc.cihbconq6tcp.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require"
+export RDS_URL="postgres://postgres:CHANGE_ME_RDS_MASTER_PASSWORD@fern-prod-enc.cihbconq6tcp.us-east-1.rds.amazonaws.com:5432/${RDS_TARGET_DB}?sslmode=require"
+
+# Schemas to dump/restore. agent-score only uses `public`.
+export DUMP_SCHEMAS="public"
+
+# --- Dump/validate scope --------------------------------------------------
+# Single table: public.scores. The "cluster" abstraction is reused from the
+# dashboard toolkit; agent-score has exactly one.
+declare -A CLUSTERS=(
+  [scores]="public.scores"
+)
+
+# --- Supabase Storage (og-images) -> S3 (used by migrate-og-images.sh) ----
+# The app's https PostgREST/Storage base (project URL), and the service-role
+# key (Vercel env SUPABASE_SECRET_KEY on the fern-agent-score project).
+export SUPABASE_PROJECT_URL="https://vysquuodppesowrborik.supabase.co"
+export SUPABASE_SECRET_KEY="CHANGE_ME_SUPABASE_SERVICE_ROLE_KEY"
+export SUPABASE_OG_BUCKET="og-images"
+# Target S3 bucket (created by the agent-score-deploy CDK stack).
+export OG_S3_BUCKET="agent-score-prod-og-images"
+export OG_S3_REGION="us-east-1"
+
+# --- Vercel (env repoint + redeploy; Vercel is NOT AWS) -------------------
+export VERCEL_PROJECT="fern-agent-score"
+export VERCEL_TEAM_SLUG="buildwithfern"
+
+# --- AWS (read-only describe + snapshot command emission) -----------------
+export AWS_PROFILE="${AWS_PROFILE:-fern}"
+export AWS_REGION="${AWS_REGION:-us-east-1}"
+export RDS_INSTANCE_ID="fern-prod-enc"
+
+# --- Tunables -------------------------------------------------------------
+export SAMPLE_ROWS="${SAMPLE_ROWS:-5}"

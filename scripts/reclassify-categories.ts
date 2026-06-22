@@ -1,16 +1,10 @@
 /**
- * Reclassifies company categories in Supabase.
+ * Reclassifies company categories in the RDS scores table.
+ * (Migrated off Supabase/PostgREST to RDS pg — FER-11415.)
  * Run with: export $(grep -v '^#' .env.local | xargs) && npx tsx scripts/reclassify-categories.ts
  */
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SECRET_KEY!;
-
-const headers = {
-  apikey: KEY,
-  Authorization: `Bearer ${KEY}`,
-  'Content-Type': 'application/json',
-};
+import { query } from '../lib/db';
 
 // slug → new category
 const RECLASSIFICATIONS: Record<string, string> = {
@@ -54,12 +48,9 @@ const RECLASSIFICATIONS: Record<string, string> = {
 
 async function main() {
   console.log('Fetching all scores...');
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/scores?select=slug,name,category`, { headers });
-  if (!res.ok) {
-    console.error('Failed to fetch scores:', await res.text());
-    process.exit(1);
-  }
-  const rows: { slug: string; name: string; category: string }[] = await res.json();
+  const { rows } = await query<{ slug: string; name: string; category: string }>(
+    `SELECT slug, name, category FROM public.scores`
+  );
   console.log(`Found ${rows.length} rows.\n`);
 
   let updated = 0;
@@ -74,20 +65,12 @@ async function main() {
       continue;
     }
 
-    const patch = await fetch(
-      `${SUPABASE_URL}/rest/v1/scores?slug=eq.${encodeURIComponent(row.slug)}`,
-      {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ category: newCategory }),
-      }
-    );
-
-    if (!patch.ok) {
-      console.error(`  ERROR ${row.slug}:`, await patch.text());
-    } else {
+    try {
+      await query(`UPDATE public.scores SET category = $1 WHERE slug = $2`, [newCategory, row.slug]);
       console.log(`  updated  ${row.name.padEnd(30)} ${row.category.padEnd(20)} → ${newCategory}`);
       updated++;
+    } catch (err) {
+      console.error(`  ERROR ${row.slug}:`, err instanceof Error ? err.message : err);
     }
   }
 

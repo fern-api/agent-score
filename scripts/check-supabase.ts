@@ -1,20 +1,23 @@
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Quick health check against the agent-score RDS database (`agent_score`).
+ * Run with: export $(grep -v '^#' .env.local | xargs) && npx tsx scripts/check-supabase.ts
+ * (Name kept for muscle memory; this now talks to RDS, not Supabase — FER-11415.)
+ */
+import { query } from '../lib/db';
 
-const url = process.env.SUPABASE_URL;
-const key = process.env.SUPABASE_SECRET_KEY;
-
-console.log('SUPABASE_URL set:', !!url, url ? url.slice(0, 40) + '...' : 'MISSING');
-console.log('SERVICE_ROLE_KEY set:', !!key);
-
-const sb = createClient(url!, key!);
+const url = process.env.AGENT_SCORE_DATABASE_URL;
+console.log('AGENT_SCORE_DATABASE_URL set:', !!url, url ? url.replace(/:[^:@/]*@/, ':***@').slice(0, 60) + '...' : 'MISSING');
 
 async function main() {
-  const { data, error } = await sb.from('scores').select('slug, score').order('score', { ascending: false });
-  if (error) {
-    console.error('Error:', error.message);
-  } else {
-    console.log('Total rows:', data?.length);
-    data?.slice(0, 5).forEach(r => console.log(' -', r.slug, r.score));
+  try {
+    const { rows } = await query<{ slug: string; score: number }>(
+      `SELECT slug, score FROM public.scores ORDER BY score DESC`
+    );
+    console.log('Total rows:', rows.length);
+    rows.slice(0, 5).forEach(r => console.log(' -', r.slug, r.score));
+  } catch (err) {
+    console.error('Error:', err instanceof Error ? err.message : err);
+    process.exit(1);
   }
 }
 
