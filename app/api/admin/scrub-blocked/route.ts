@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { query } from '@/lib/db';
 import { isBlockedDomain } from '@/lib/blocked-domains';
 
 export const runtime = 'nodejs';
@@ -10,16 +10,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!
-  );
-
-  const { data: rows, error } = await supabase
-    .from('scores')
-    .select('slug, docs_url');
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  let rows: { slug: string; docs_url: string }[];
+  try {
+    const res = await query<{ slug: string; docs_url: string }>(
+      `SELECT slug, docs_url FROM public.scores`
+    );
+    rows = res.rows;
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
+  }
 
   const toDelete = rows
     .filter(r => isBlockedDomain(r.docs_url) || r.slug === 'unknown')
@@ -29,12 +28,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ deleted: 0, slugs: [] });
   }
 
-  const { error: delError } = await supabase
-    .from('scores')
-    .delete()
-    .in('slug', toDelete);
-
-  if (delError) return NextResponse.json({ error: delError.message }, { status: 500 });
+  try {
+    await query(`DELETE FROM public.scores WHERE slug = ANY($1)`, [toDelete]);
+  } catch (delError) {
+    return NextResponse.json({ error: delError instanceof Error ? delError.message : String(delError) }, { status: 500 });
+  }
 
   return NextResponse.json({ deleted: toDelete.length, slugs: toDelete });
 }

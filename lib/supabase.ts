@@ -1,17 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
 import type { CompanyScore } from './scores';
 import { isBlockedDomain } from './blocked-domains';
+import { query } from './db';
 
-let _supabase: ReturnType<typeof createClient> | null = null;
-function getSupabase() {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SECRET_KEY!
-    );
-  }
-  return _supabase;
-}
+// OG-image storage moved from Supabase Storage to S3 (FER-11415). Re-exported
+// here so existing callers (`@/lib/supabase`) keep working unchanged.
+export { uploadOgImage, getOgImagePublicUrl } from './og-storage';
 
 export interface ScoreRow {
   slug: string;
@@ -33,6 +26,12 @@ export interface ScoreRow {
 }
 
 function rowToCompany(row: ScoreRow): CompanyScore {
+  // pg returns timestamptz columns as Date objects; PostgREST returned ISO
+  // strings. Normalise to an ISO string so downstream display/sort is stable.
+  const scoredAt =
+    typeof row.scored_at === 'string'
+      ? row.scored_at
+      : new Date(row.scored_at as unknown as string).toISOString();
   return {
     slug: row.slug,
     name: row.name,
@@ -40,7 +39,7 @@ function rowToCompany(row: ScoreRow): CompanyScore {
     docsUrl: row.docs_url,
     score: row.score,
     grade: row.grade,
-    scoredAt: row.scored_at,
+    scoredAt,
     checks: {
       total: row.checks_total,
       pass: row.checks_pass,
@@ -56,104 +55,105 @@ function rowToCompany(row: ScoreRow): CompanyScore {
 }
 
 export async function upsertScore(company: CompanyScore): Promise<void> {
-  const payload: Record<string, unknown> = {
-    slug: company.slug,
-    name: company.name,
-    category: company.category,
-    docs_url: company.docsUrl,
-    score: company.score,
-    grade: company.grade,
-    scored_at: company.scoredAt,
-    checks_total: company.checks.total,
-    checks_pass: company.checks.pass,
-    checks_warn: company.checks.warn,
-    checks_fail: company.checks.fail,
-    results: company.results ?? null,
-    category_scores: company.categoryScores ?? null,
-    afdocs_version: company.afdocsVersion ?? null,
-  };
-  // Only write hidden when explicitly provided — preserves manual overrides
-  if (company.hidden !== undefined) payload.hidden = company.hidden;
-  if (company.isFern !== undefined) payload.is_fern = company.isFern;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await getSupabase().from('scores').upsert(payload as any, { onConflict: 'slug' });
-  if (error) throw new Error(`Supabase upsert failed: ${error.message}`);
+  // Base columns always written. hidden/is_fern are only written when the
+  // caller explicitly provides them, preserving manual overrides (matches the
+  // previous supabase-js upsert behaviour).
+  const cols: string[] = [
+    'slug', 'name', 'category', 'docs_url', 'score', 'grade', 'scored_at',
+    'checks_total', 'checks_pass', 'checks_warn', 'checks_fail',
+    'results', 'category_scores', 'afdocs_version',
+  ];
+  const vals: unknown[] = [
+    company.slug,
+    company.name,
+    company.category,
+    company.docsUrl,
+    company.score,
+    company.grade,
+    company.scoredAt,
+    company.checks.total,
+    company.checks.pass,
+    company.checks.warn,
+    company.checks.fail,
+    company.results ? JSON.stringify(company.results) : null,
+    company.categoryScores ? JSON.stringify(company.categoryScores) : null,
+    company.afdocsVersion ?? null,
+  ];
+  if (company.hidden !== undefined) { cols.push('hidden'); vals.push(company.hidden); }
+  if (company.isFern !== undefined) { cols.push('is_fern'); vals.push(company.isFern); }
+
+  const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+  // On conflict, update every column we're inserting except the conflict key.
+  const updates = cols
+    .filter((c) => c !== 'slug')
+    .map((c) => `${c} = EXCLUDED.${c}`)
+    .join(', ');
+
+  try {
+    await query(
+      `INSERT INTO public.scores (${cols.join(', ')}) VALUES (${placeholders})
+       ON CONFLICT (slug) DO UPDATE SET ${updates}`,
+      vals
+    );
+  } catch (err) {
+    throw new Error(`scores upsert failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 export async function getScoreBySlug(slug: string): Promise<CompanyScore | null> {
-  const url = `${process.env.SUPABASE_URL}/rest/v1/scores?select=*&slug=eq.${encodeURIComponent(slug)}&order=scored_at.desc&limit=1`;
-  const res = await fetch(url, {
-    cache: 'no-store',
-    headers: {
-      apikey: process.env.SUPABASE_SECRET_KEY!,
-      Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY!}`,
-    },
-  });
-  if (!res.ok) return null;
-  const rows: ScoreRow[] = await res.json();
-  if (!rows.length) return null;
-  const company = rowToCompany(rows[0]);
-  // Never surface blocked-domain records — treat them as not found
-  if (isBlockedDomain(company.docsUrl)) return null;
-  return company;
+  try {
+    const { rows } = await query<ScoreRow>(
+      `SELECT * FROM public.scores WHERE slug = $1 ORDER BY scored_at DESC LIMIT 1`,
+      [slug]
+    );
+    if (!rows.length) return null;
+    const company = rowToCompany(rows[0]);
+    // Never surface blocked-domain records — treat them as not found.
+    if (isBlockedDomain(company.docsUrl)) return null;
+    return company;
+  } catch {
+    return null;
+  }
 }
 
 export async function deleteScoresByFilter(filter: { slugs?: string[]; docsUrls?: string[] }): Promise<void> {
-  const sb = getSupabase();
   if (filter.slugs?.length) {
-    const { error } = await sb.from('scores').delete().in('slug', filter.slugs);
-    if (error) console.error('[supabase] deleteScoresByFilter slugs error:', error.message);
+    try {
+      await query(`DELETE FROM public.scores WHERE slug = ANY($1)`, [filter.slugs]);
+    } catch (err) {
+      console.error('[scores] deleteScoresByFilter slugs error:', err instanceof Error ? err.message : err);
+    }
   }
   if (filter.docsUrls?.length) {
-    const { error } = await sb.from('scores').delete().in('docs_url', filter.docsUrls);
-    if (error) console.error('[supabase] deleteScoresByFilter docsUrls error:', error.message);
+    try {
+      await query(`DELETE FROM public.scores WHERE docs_url = ANY($1)`, [filter.docsUrls]);
+    } catch (err) {
+      console.error('[scores] deleteScoresByFilter docsUrls error:', err instanceof Error ? err.message : err);
+    }
   }
 }
 
 export async function getAllScores(): Promise<CompanyScore[]> {
-  const url = `${process.env.SUPABASE_URL}/rest/v1/scores?select=slug,name,category,docs_url,score,grade,scored_at,checks_total,checks_pass,checks_warn,checks_fail,is_fern&hidden=eq.false&order=scored_at.desc&limit=10000`;
-  const res = await fetch(url, {
-    cache: 'no-store',
-    headers: {
-      apikey: process.env.SUPABASE_SECRET_KEY!,
-      Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY!}`,
-    },
-  });
-  if (!res.ok) {
-    console.error('[supabase] getAllScores fetch error:', res.status, await res.text());
+  try {
+    const { rows } = await query<ScoreRow>(
+      `SELECT slug, name, category, docs_url, score, grade, scored_at,
+              checks_total, checks_pass, checks_warn, checks_fail, is_fern
+       FROM public.scores
+       WHERE hidden = false
+       ORDER BY scored_at DESC
+       LIMIT 10000`
+    );
+    // Deduplicate by slug — keep the most recently scored row (rows already
+    // ordered by scored_at DESC).
+    const seen = new Set<string>();
+    const deduped = rows.filter((row) => {
+      if (seen.has(row.slug)) return false;
+      seen.add(row.slug);
+      return true;
+    });
+    return deduped.map(rowToCompany);
+  } catch (err) {
+    console.error('[scores] getAllScores error:', err instanceof Error ? err.message : err);
     return [];
   }
-  const data: ScoreRow[] = await res.json();
-  // Deduplicate by slug — keep the most recently scored row (data already ordered by scored_at.desc)
-  const seen = new Set<string>();
-  const deduped = data.filter(row => {
-    if (seen.has(row.slug)) return false;
-    seen.add(row.slug);
-    return true;
-  });
-  return deduped.map(rowToCompany);
-}
-
-const OG_BUCKET = 'og-images';
-
-// Ensure bucket exists (called lazily)
-async function ensureOgBucket(): Promise<void> {
-  const { error } = await getSupabase().storage.createBucket(OG_BUCKET, { public: true });
-  // Ignore "already exists" error
-  if (error && !error.message.includes('already exists')) {
-    console.error('[og] bucket create error:', error.message);
-  }
-}
-
-export async function uploadOgImage(slug: string, buffer: Buffer): Promise<void> {
-  await ensureOgBucket();
-  const { error } = await getSupabase().storage
-    .from(OG_BUCKET)
-    .upload(`${slug}.png`, buffer, { contentType: 'image/png', upsert: true });
-  if (error) throw new Error(`OG image upload failed: ${error.message}`);
-}
-
-export function getOgImagePublicUrl(slug: string): string {
-  const { data } = getSupabase().storage.from(OG_BUCKET).getPublicUrl(`${slug}.png`);
-  return data.publicUrl;
 }

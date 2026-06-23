@@ -1,22 +1,22 @@
 /**
- * Re-runs checks and scoring for all companies in Supabase.
- * Fetches the company list from Supabase, re-runs afdocs checks,
+ * Re-runs checks and scoring for all companies in the RDS scores table.
+ * Fetches the company list from RDS, re-runs afdocs checks,
  * and upserts fresh results using the current scoring module.
+ * (Migrated off Supabase/PostgREST to RDS pg — FER-11415.)
  *
  * Run with:
  *   export $(grep -v '^#' .env.local | xargs) && npx tsx scripts/rerun-all.ts
  *
  * Options (env vars):
  *   SLUGS=stripe,twilio   — only rerun specific slugs (comma-separated)
- *   FERN_ONLY=true        — only rerun companies where is_fern=true in Supabase
+ *   FERN_ONLY=true        — only rerun companies where is_fern=true
  *   DELAY_MS=2000         — ms to wait between companies (default: 1000)
  */
 
 import { computeScore } from '../lib/scoring';
 import { upsertScore } from '../lib/supabase';
+import { query as dbQuery } from '../lib/db';
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SECRET_KEY!;
 const DELAY_MS = parseInt(process.env.DELAY_MS ?? '1000', 10);
 const FERN_ONLY = process.env.FERN_ONLY === 'true';
 const DEFAULT_SLUGS = [
@@ -30,17 +30,6 @@ const FILTER_SLUGS = process.env.SLUGS
   : FERN_ONLY
   ? null
   : DEFAULT_SLUGS;
-
-if (!SUPABASE_URL || !KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY env vars');
-  process.exit(1);
-}
-
-const headers = {
-  apikey: KEY,
-  Authorization: `Bearer ${KEY}`,
-  'Content-Type': 'application/json',
-};
 
 interface StoredRow {
   slug: string;
@@ -75,17 +64,18 @@ function startSpinner(label: string): () => void {
 async function main() {
   const { runChecks } = await import('afdocs');
 
-  process.stdout.write('Fetching company list from Supabase... ');
-  const query = FERN_ONLY
-    ? `${SUPABASE_URL}/rest/v1/scores?select=slug,name,docs_url,category,hidden,scored_at,is_fern&is_fern=eq.true&order=name.asc`
-    : `${SUPABASE_URL}/rest/v1/scores?select=slug,name,docs_url,category,hidden,scored_at,is_fern&order=name.asc`;
-  const res = await fetch(query, { headers });
-  if (!res.ok) {
-    console.error('\nFailed to fetch companies:', await res.text());
-    process.exit(1);
-  }
+  process.stdout.write('Fetching company list from RDS... ');
+  const { rows: companiesRaw } = FERN_ONLY
+    ? await dbQuery<StoredRow>(
+        `SELECT slug, name, docs_url, category, hidden, scored_at, is_fern
+         FROM public.scores WHERE is_fern = true ORDER BY name ASC`
+      )
+    : await dbQuery<StoredRow>(
+        `SELECT slug, name, docs_url, category, hidden, scored_at, is_fern
+         FROM public.scores ORDER BY name ASC`
+      );
 
-  let companies: StoredRow[] = await res.json();
+  let companies: StoredRow[] = companiesRaw;
 
   // Deduplicate by slug (keep first occurrence)
   const seen = new Set<string>();

@@ -1,6 +1,7 @@
 /**
  * Compare DB scores against the new scoring mechanism (afdocs 0.8.2).
- * Fetches stored results from Supabase and re-scores them locally — no network checks.
+ * Fetches stored results from RDS and re-scores them locally — no network checks.
+ * (Migrated off Supabase/PostgREST to RDS pg — FER-11415.)
  * Prints a diff table sorted by score delta (largest changes first).
  *
  * Run with:
@@ -13,24 +14,11 @@
 
 import { computeScore } from '../lib/scoring';
 import type { CheckResult } from '../lib/scoring';
-
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SECRET_KEY!;
-
-if (!SUPABASE_URL || !KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY env vars');
-  process.exit(1);
-}
+import { query } from '../lib/db';
 
 const args = process.argv.slice(2);
 const minDelta = Number(args[args.indexOf('--min-delta') + 1] ?? 0) || 0;
 const changedOnly = args.includes('--changed');
-
-const headers = {
-  apikey: KEY,
-  Authorization: `Bearer ${KEY}`,
-  'Content-Type': 'application/json',
-};
 
 interface StoredRow {
   slug: string;
@@ -41,17 +29,10 @@ interface StoredRow {
 }
 
 async function main() {
-  console.log('Fetching all scores from Supabase...');
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/scores?select=slug,name,score,grade,results&order=score.desc`,
-    { headers }
+  console.log('Fetching all scores from RDS...');
+  const { rows } = await query<StoredRow>(
+    `SELECT slug, name, score, grade, results FROM public.scores ORDER BY score DESC`
   );
-  if (!res.ok) {
-    console.error('Failed to fetch:', await res.text());
-    process.exit(1);
-  }
-
-  const rows: StoredRow[] = await res.json();
   console.log(`Loaded ${rows.length} rows. Re-scoring...\n`);
 
   type Row = { name: string; oldScore: number; oldGrade: string; newScore: number; newGrade: string; delta: number };
