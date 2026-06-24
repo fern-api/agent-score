@@ -1,5 +1,5 @@
 /**
- * Score a single URL locally and upload the result to Supabase.
+ * Score a single URL locally and upload the result to the RDS scores table.
  * Useful for sites that time out on the live scorer.
  *
  * Usage:
@@ -9,7 +9,7 @@
  *   npx tsx --env-file=.env.local scripts/score-single.ts https://developers.google.com/maps/ "Google Maps" google-maps "DevTools"
  *   npx tsx --env-file=.env.local scripts/score-single.ts https://developers.google.com/maps/ "Google Maps" google-maps "DevTools" --hidden
  */
-import { upsertScore } from "../lib/supabase";
+import { upsertScore } from "../lib/scores";
 import { inferCategory } from "../lib/categorize";
 import { computeScore } from "afdocs";
 import { AFDOCS_VERSION } from "../lib/scoring";
@@ -140,7 +140,7 @@ async function main() {
   console.log(`\nScore: ${score} (${grade})`);
   console.log(`Checks: ${result.summary.pass}/${result.summary.total} pass`);
 
-  process.stdout.write("Uploading to Supabase ... ");
+  process.stdout.write("Uploading to RDS ... ");
   await upsertScore(companyData);
   process.stdout.write(`done\n`);
   console.log(`slug="${effectiveSlug}"`);
@@ -149,7 +149,7 @@ async function main() {
   try {
     process.stdout.write("Generating OG image ... ");
     const { generateOgImageBuffer } = await import("../lib/og-image-generator");
-    const { uploadOgImage } = await import("../lib/supabase");
+    const { uploadOgImage } = await import("../lib/og-storage");
     const buffer = await generateOgImageBuffer(companyData);
     await uploadOgImage(effectiveSlug, buffer);
     process.stdout.write("uploaded\n");

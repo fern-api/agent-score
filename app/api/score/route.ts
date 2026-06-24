@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import { waitUntil } from "@vercel/functions";
-import { upsertScore, getScoreBySlug } from "@/lib/supabase";
+import { upsertScore, getScoreBySlug } from "@/lib/scores";
 import { fetchOgName, domainToName } from "@/lib/og-name";
 import { computeScore } from "afdocs";
 import { AFDOCS_VERSION } from "@/lib/scoring";
@@ -195,7 +195,7 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
 
     try {
       await upsertScore(companyData);
-      console.log("[score] Supabase upsert complete for:", effectiveSlug);
+      console.log("[score] scores upsert complete for:", effectiveSlug);
       const webhookUrl = process.env.SLACK_DEMO_WEBHOOK_URL;
       if (webhookUrl) {
         const scoredPageUrl = `https://fern-agent-score.vercel.app/agent-score/company/${effectiveSlug}`;
@@ -207,12 +207,12 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
         }).catch(() => {});
       }
     } catch (dbErr) {
-      console.error("[score] Supabase upsert failed:", dbErr instanceof Error ? dbErr.message : dbErr);
+      console.error("[score] scores upsert failed:", dbErr instanceof Error ? dbErr.message : dbErr);
     }
 
     try {
       const { generateOgImageBuffer } = await import("@/lib/og-image-generator");
-      const { uploadOgImage } = await import("@/lib/supabase");
+      const { uploadOgImage } = await import("@/lib/og-storage");
       const buffer = await generateOgImageBuffer(companyData);
       await uploadOgImage(effectiveSlug, buffer);
       console.log("[score] OG image uploaded for:", effectiveSlug);
@@ -388,7 +388,7 @@ export async function POST(request: Request) {
           });
           return NextResponse.json({ jobId, slug: existing.slug, cached: true });
         }
-      } catch { /* Supabase check failed — proceed with scoring */ }
+      } catch { /* scores lookup failed — proceed with scoring */ }
     }
 
     // Docs-site detection

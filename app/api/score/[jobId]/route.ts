@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
-import { getScoreBySlug } from "@/lib/supabase";
+import { getScoreBySlug } from "@/lib/scores";
 
 export const runtime = "nodejs";
 
@@ -13,13 +13,13 @@ export async function GET(req: Request, { params }: { params: { jobId: string } 
   try {
     const raw = fs.readFileSync(`/tmp/score-${jobId}.json`, "utf-8");
     const data = JSON.parse(raw);
-    // Only return terminal states from file — if still "running", fall through to Supabase
+    // Only return terminal states from file — if still "running", fall through to RDS
     if (data.status === 'complete' || data.status === 'error') {
       return NextResponse.json(data);
     }
   } catch { /* file not on this instance */ }
 
-  // Supabase fallback — handles cross-instance polling on Vercel (not needed in dev)
+  // RDS fallback — handles cross-instance polling on Vercel (not needed in dev)
   if (slug && process.env.NODE_ENV !== 'development') {
     try {
       const company = await getScoreBySlug(slug);
@@ -37,7 +37,7 @@ export async function GET(req: Request, { params }: { params: { jobId: string } 
           });
         }
       }
-    } catch { /* Supabase unavailable, keep polling */ }
+    } catch { /* RDS unavailable, keep polling */ }
   }
 
   return NextResponse.json({ status: "running" });

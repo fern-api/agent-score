@@ -113,7 +113,7 @@ export default function ScoreChecker() {
         return;
       }
       jobIdRef.current = data.jobId;
-      // cached=true means slug already exists in Supabase — no since needed
+      // cached=true means slug already exists in the scores DB — no since needed
       // new jobs pass since so the poll only accepts results scored after this run started
       startPolling(data.jobId, data.slug, data.cached ? undefined : Date.now());
     } catch (err) {

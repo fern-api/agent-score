@@ -14,7 +14,7 @@
  */
 
 import { computeScore } from '../lib/scoring';
-import { upsertScore } from '../lib/supabase';
+import { upsertScore } from '../lib/scores';
 import { query as dbQuery } from '../lib/db';
 
 const DELAY_MS = parseInt(process.env.DELAY_MS ?? '1000', 10);
@@ -151,7 +151,7 @@ async function main() {
 
     const scored = computeScore(scorableResults as Parameters<typeof computeScore>[0]);
 
-    const stopSaving = startSpinner('saving to Supabase');
+    const stopSaving = startSpinner('saving to RDS');
     try {
       await upsertScore({
         name: company.name,
