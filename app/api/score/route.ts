@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import { waitUntil } from "@vercel/functions";
-import { upsertScore, getScoreBySlug } from "@/lib/scores";
+import { upsertScore, getScoreBySlug } from "@/lib/database";
 import { fetchOgName, domainToName } from "@/lib/og-name";
 import { computeScore } from "afdocs";
 import { AFDOCS_VERSION } from "@/lib/scoring";
@@ -212,7 +212,7 @@ async function runJob(jobId: string, url: string, slug?: string, name?: string, 
 
     try {
       const { generateOgImageBuffer } = await import("@/lib/og-image-generator");
-      const { uploadOgImage } = await import("@/lib/og-storage");
+      const { uploadOgImage } = await import("@/lib/database");
       const buffer = await generateOgImageBuffer(companyData);
       await uploadOgImage(effectiveSlug, buffer);
       console.log("[score] OG image uploaded for:", effectiveSlug);

@@ -9,7 +9,7 @@
  *   npx tsx --env-file=.env.local scripts/score-single.ts https://developers.google.com/maps/ "Google Maps" google-maps "DevTools"
  *   npx tsx --env-file=.env.local scripts/score-single.ts https://developers.google.com/maps/ "Google Maps" google-maps "DevTools" --hidden
  */
-import { upsertScore } from "../lib/scores";
+import { upsertScore } from "../lib/database";
 import { inferCategory } from "../lib/categorize";
 import { computeScore } from "afdocs";
 import { AFDOCS_VERSION } from "../lib/scoring";
@@ -149,7 +149,7 @@ async function main() {
   try {
     process.stdout.write("Generating OG image ... ");
     const { generateOgImageBuffer } = await import("../lib/og-image-generator");
-    const { uploadOgImage } = await import("../lib/og-storage");
+    const { uploadOgImage } = await import("../lib/database");
     const buffer = await generateOgImageBuffer(companyData);
     await uploadOgImage(effectiveSlug, buffer);
     process.stdout.write("uploaded\n");

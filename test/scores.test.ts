@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the RDS query layer so we can exercise the pure transform/filter logic
-// in lib/scores.ts (rowToCompany normalisation + blocked-domain filtering)
+// in lib/database.ts (rowToCompany normalisation + blocked-domain filtering)
 // without a live database.
 const query = vi.fn();
 vi.mock("@/lib/db", () => ({
   query: (...args: unknown[]) => query(...args),
 }));
 
-import { getScoreBySlug } from "@/lib/scores";
+import { getScoreBySlug } from "@/lib/database";
 
 function makeRow(overrides: Record<string, unknown> = {}) {
   return {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
-import { getScoreBySlug } from "@/lib/scores";
+import { getScoreBySlug } from "@/lib/database";
 
 export const runtime = "nodejs";
 

@@ -14,7 +14,7 @@
  */
 
 import { computeScore } from '../lib/scoring';
-import { upsertScore } from '../lib/scores';
+import { upsertScore } from '../lib/database';
 import { query as dbQuery } from '../lib/db';
 
 const DELAY_MS = parseInt(process.env.DELAY_MS ?? '1000', 10);
