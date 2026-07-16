@@ -28,5 +28,6 @@
   {"name": "HubSpot", "slug": "hubspot", "category": "Business", "docsUrl": "https://developers.hubspot.com/docs"},
   {"name": "Zendesk", "slug": "zendesk", "category": "Business", "docsUrl": "https://developer.zendesk.com/docs"},
   {"name": "Oracle Cloud", "slug": "oracle-cloud", "category": "Infrastructure", "docsUrl": "https://docs.oracle.com/en/cloud"},
-  {"name": "SAP", "slug": "sap", "category": "Business", "docsUrl": "https://developers.sap.com"}
+  {"name": "SAP", "slug": "sap", "category": "Business", "docsUrl": "https://developers.sap.com"},
+  {"name": "Sarvam", "slug": "sarvam", "category": "AI/ML", "docsUrl": "https://docs.sarvam.ai"}
 ]

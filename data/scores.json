@@ -448,5 +448,20 @@
       "warn": 3,
       "fail": 14
     }
+  },
+  "sarvam": {
+    "name": "Sarvam",
+    "slug": "sarvam",
+    "category": "AI/ML",
+    "docsUrl": "https://docs.sarvam.ai",
+    "score": 97,
+    "grade": "A",
+    "scoredAt": "2026-07-16T17:23:18.340Z",
+    "checks": {
+      "total": 23,
+      "pass": 16,
+      "warn": 2,
+      "fail": 4
+    }
   }
 }
