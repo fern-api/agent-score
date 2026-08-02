@@ -210,7 +210,7 @@ export default async function HomePage() {
 
       {/* HERO QUOTES */}
       <section className="hero-quotes">
-        {[testimonials[1], testimonials[0]].map((t, i) => (
+        {[testimonials[5], testimonials[7]].map((t, i) => (
           <div key={t.name} className={`sp-card hero-quote-card${i === 0 ? ' hero-quote-card-left' : ''}`}>
             <div className="hero-quote-header">
               <div className="sp-author">
