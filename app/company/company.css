@@ -253,7 +253,8 @@
   font-size: 11px;
   color: var(--fg-mid);
   letter-spacing: 0.3px;
-  white-space: nowrap;
+  line-height: 1.6;
+  max-width: 520px;
 }
 
 .co-afdocs-version {
