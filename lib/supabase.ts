@@ -116,6 +116,26 @@ export async function getScoreBySlug(slug: string): Promise<CompanyScore | null>
   }
 }
 
+// Finds the slug an already-scored docs URL is stored under, ignoring trailing-slash
+// and case differences. Visible entries win over hidden ones so a curated slug is
+// preferred over a previously auto-generated duplicate.
+export async function getScoreSlugByDocsUrl(docsUrl: string): Promise<string | null> {
+  const normalized = docsUrl.trim().replace(/\/+$/, '').toLowerCase();
+  try {
+    const { rows } = await query<{ slug: string }>(
+      `SELECT slug FROM public.scores
+       WHERE lower(regexp_replace(docs_url, '/+$', '')) = $1
+       ORDER BY hidden ASC, scored_at DESC
+       LIMIT 1`,
+      [normalized]
+    );
+    return rows[0]?.slug ?? null;
+  } catch (err) {
+    console.error('[scores] getScoreSlugByDocsUrl error:', err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
 export async function deleteScoresByFilter(filter: { slugs?: string[]; docsUrls?: string[] }): Promise<void> {
   if (filter.slugs?.length) {
     try {
