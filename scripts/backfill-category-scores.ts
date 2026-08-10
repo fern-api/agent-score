@@ -1,7 +1,8 @@
 /**
- * Backfills category_scores for all companies in Supabase.
+ * Backfills category_scores for all companies in the RDS scores table.
  * Reads existing `results` JSON and re-computes weighted per-category scores
  * using computeScore — no re-fetching of any docs sites.
+ * (Migrated off Supabase/PostgREST to RDS pg — FER-11415.)
  *
  * Run with:
  *   export $(grep -v '^#' .env.local | xargs) && npx tsx scripts/backfill-category-scores.ts
@@ -15,24 +16,11 @@
 import fs from 'fs';
 import { computeScore } from '../lib/scoring';
 import type { CheckResult } from '../lib/scores';
+import { query } from '../lib/db';
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SECRET_KEY!;
 const SKIP_EXISTING = process.env.SKIP_EXISTING !== 'false';
 const LOG_FILE = process.env.LOG_FILE ?? './backfill-category-scores.log';
 const FILTER_SLUGS = process.env.SLUGS ? process.env.SLUGS.split(',').map((s) => s.trim()) : null;
-const PAGE_SIZE = 100;
-
-if (!SUPABASE_URL || !KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY env vars');
-  process.exit(1);
-}
-
-const headers = {
-  apikey: KEY,
-  Authorization: `Bearer ${KEY}`,
-  'Content-Type': 'application/json',
-};
 
 interface StoredRow {
   slug: string;
@@ -48,50 +36,24 @@ function log(msg: string) {
 }
 
 async function fetchAllRows(): Promise<StoredRow[]> {
-  const rows: StoredRow[] = [];
-  let offset = 0;
-
-  while (true) {
-    const url = new URL(`${SUPABASE_URL}/rest/v1/scores`);
-    url.searchParams.set('select', 'slug,name,results,category_scores');
-    url.searchParams.set('order', 'name.asc');
-    url.searchParams.set('limit', String(PAGE_SIZE));
-    url.searchParams.set('offset', String(offset));
-
-    const res = await fetch(url.toString(), { headers });
-    if (!res.ok) {
-      console.error('Failed to fetch rows:', await res.text());
-      process.exit(1);
-    }
-
-    const page: StoredRow[] = await res.json();
-    if (page.length === 0) break;
-    rows.push(...page);
-    if (page.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
-  }
-
+  const { rows } = await query<StoredRow>(
+    `SELECT slug, name, results, category_scores FROM public.scores ORDER BY name ASC`
+  );
   return rows;
 }
 
 async function updateCategoryScores(slug: string, categoryScores: Record<string, number>): Promise<void> {
-  const url = `${SUPABASE_URL}/rest/v1/scores?slug=eq.${encodeURIComponent(slug)}`;
-  const res = await fetch(url, {
-    method: 'PATCH',
-    headers,
-    body: JSON.stringify({ category_scores: categoryScores }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`PATCH failed (${res.status}): ${text}`);
-  }
+  await query(`UPDATE public.scores SET category_scores = $1 WHERE slug = $2`, [
+    JSON.stringify(categoryScores),
+    slug,
+  ]);
 }
 
 async function main() {
   // Clear or create log file for this run
   fs.writeFileSync(LOG_FILE, `=== backfill-category-scores run at ${new Date().toISOString()} ===\n`);
 
-  log('Fetching all companies from Supabase...');
+  log('Fetching all companies from RDS...');
   let rows = await fetchAllRows();
   log(`Fetched ${rows.length} total companies`);
 

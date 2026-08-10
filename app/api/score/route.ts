@@ -8,13 +8,11 @@ import { AFDOCS_VERSION } from "@/lib/scoring";
 import { inferCategory } from "@/lib/categorize";
 import { isBlockedDomain } from "@/lib/blocked-domains";
 import { resolveSlugAlias } from "@/lib/slug-aliases";
+import { detectDocsUrl } from "@/lib/docs-detection";
+import { urlToSlug, nameToSlug } from "@/lib/slug";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
-
-const DOCS_SUBDOMAINS = /^(docs|developer|api|reference|developers|learn)\./i;
-const DOCS_PATHS = /\/(docs|api|reference|guides|developer|sdk|learn|manual|documentation)\//i;
-const DOCS_PLATFORMS = /(readme\.io|gitbook\.io|mintlify\.app|buildwithfern\.com\/learn|\.fern\.dev|\.readme\.io|\.gitbook\.io|github\.io|notion\.site)/i;
 
 // ---------------------------------------------------------------------------
 // Rate limiting — cookie-based + IP-based, 5 scoring requests per hour
@@ -114,95 +112,6 @@ function writeJob(jobId: string, data: Record<string, unknown>) {
   } catch (e) {
     console.error("[score] writeJob failed:", e);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Docs-site detection
-// ---------------------------------------------------------------------------
-
-async function detectDocsUrl(url: string): Promise<{ isLikely: boolean; warning?: string; suggestion?: string }> {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return { isLikely: false, warning: "Invalid URL format." };
-  }
-
-  const host = parsed.hostname;
-  const pathStr = parsed.pathname + "/";
-
-  if (DOCS_SUBDOMAINS.test(host)) return { isLikely: true };
-  if (DOCS_PATHS.test(pathStr)) return { isLikely: true };
-  if (DOCS_PLATFORMS.test(host + parsed.pathname)) return { isLikely: true };
-
-  // An llms.txt is a strong docs signal — but marketing sites increasingly ship one
-  // too (e.g. monday.com serves /llms.txt from its product homepage). For a bare apex
-  // root it's not sufficient on its own; defer to the homepage content check below so
-  // a marketing landing page can still be rejected. For any deeper path it stands.
-  const isRoot = parsed.pathname === "/" || parsed.pathname === "";
-  let hasLlms = false;
-  try {
-    const r = await fetch(`${parsed.origin}/llms.txt`, {
-      signal: AbortSignal.timeout(5000),
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; AgentScore/1.0)" },
-    });
-    hasLlms = r.ok;
-  } catch { /* ignore */ }
-  if (hasLlms && !isRoot) return { isLikely: true };
-
-  try {
-    const r = await fetch(url, {
-      signal: AbortSignal.timeout(8000),
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; AgentScore/1.0)", Accept: "text/html" },
-    });
-    if (!r.ok) {
-      return { isLikely: false, warning: `The URL returned HTTP ${r.status}. Verify it is publicly accessible.` };
-    }
-    const html = await r.text();
-    const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.toLowerCase() ?? "";
-    if (/docs|documentation|api\s|reference|developer|quickstart/i.test(title)) return { isLikely: true };
-    if ((html.match(/<pre|<code/g) ?? []).length >= 3) return { isLikely: true };
-    if (/getting started|api reference|quickstart|sdk reference/i.test(html)) return { isLikely: true };
-    const baseDomain = host.replace(/^www\./, "");
-    return {
-      isLikely: false,
-      warning: `This URL looks like a marketing or product site, not a documentation site.`,
-      suggestion: `docs.${baseDomain}, ${parsed.origin}/docs, or ${parsed.origin}/api`,
-    };
-  } catch {
-    // Couldn't analyze the page — if it advertised an llms.txt, trust that rather
-    // than reject on a fetch failure (only a *visible* marketing page is rejected).
-    if (hasLlms) return { isLikely: true };
-    return {
-      isLikely: false,
-      warning: `Could not fetch the URL — it may be protected by bot-detection.`,
-      suggestion: `docs.${parsed.hostname.replace(/^www\./, "")}`,
-    };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Slug helpers
-// ---------------------------------------------------------------------------
-
-function urlToSlug(url: string): string {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace(/^www\./, "");
-    const pathPart = parsed.pathname.replace(/\//g, "-").replace(/^-+|-+$/g, "");
-    const base = pathPart ? `${host}-${pathPart}` : host;
-    return base.replace(/[^a-z0-9-]/gi, "-").replace(/-+/g, "-").toLowerCase().slice(0, 80);
-  } catch {
-    return "unknown";
-  }
-}
-
-function nameToSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
 }
 
 // ---------------------------------------------------------------------------
@@ -437,6 +346,22 @@ export async function POST(request: Request) {
     // but never score/overwrite it. Actual scoring always stores under the raw slug (see runJob below).
     const aliasSlug = resolveSlugAlias(rawSlug);
     console.log("[score] resolved slug:", rawSlug, "name:", effectiveName, rawSlug !== aliasSlug ? `(alias → ${aliasSlug})` : '');
+
+    // An explicit alias means this domain should ALWAYS surface a curated entry and never be
+    // scored — e.g. the monday.com marketing apex resolves to its developer-docs entry. Resolve
+    // it up front, independent of the force/dev cache path below and before docs detection, so
+    // the user is navigated straight to that entry instead of hitting a "not a docs site"
+    // rejection. Falls through to the normal flow only if the curated entry is missing.
+    if (aliasSlug !== rawSlug) {
+      try {
+        const canonical = await getScoreBySlug(aliasSlug);
+        if (canonical) {
+          console.log("[score] alias redirect:", rawSlug, "→", canonical.slug);
+          return NextResponse.json({ existing: true, slug: canonical.slug });
+        }
+        console.log("[score] alias target not found, falling through:", aliasSlug);
+      } catch { /* lookup failed — fall through to normal flow */ }
+    }
 
     // Return cached result if company already exists (skip when force=true or in development).
     // Prefer the alias target so a typed domain points at the curated entry.

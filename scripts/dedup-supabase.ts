@@ -1,67 +1,36 @@
 /**
- * Removes duplicate rows in Supabase scores table, keeping the most recently scored row per slug.
+ * Removes duplicate rows in the scores table, keeping the most recently scored
+ * row per slug. Talks to RDS (`agent_score`), not Supabase (FER-11415).
  * Run with: export $(grep -v '^#' .env.local | xargs) && npx tsx scripts/dedup-supabase.ts
+ *
+ * Note: on RDS `slug` is the conflict key for upserts, so duplicates by slug
+ * should not normally exist; this remains as a safety/cleanup utility.
  */
-
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SECRET_KEY!;
-
-const headers = {
-  apikey: KEY,
-  Authorization: `Bearer ${KEY}`,
-  'Content-Type': 'application/json',
-};
+import { query } from '../lib/db';
 
 async function main() {
-  // Fetch all rows with their id and scored_at, ordered by scored_at desc
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/scores?select=id,slug,score,scored_at&order=scored_at.desc`,
-    { headers }
+  const before = await query<{ n: string }>(`SELECT count(*)::text AS n FROM public.scores`);
+  const uniq = await query<{ n: string }>(`SELECT count(DISTINCT slug)::text AS n FROM public.scores`);
+  console.log(`Total rows: ${before.rows[0].n}`);
+  console.log(`Unique slugs: ${uniq.rows[0].n}`);
+
+  // Delete every row that is not the newest scored_at for its slug.
+  const del = await query<{ slug: string }>(
+    `DELETE FROM public.scores s
+     USING (SELECT slug, max(scored_at) AS keep FROM public.scores GROUP BY slug) k
+     WHERE s.slug = k.slug AND s.scored_at < k.keep
+     RETURNING s.slug`
   );
-  const rows: { id: number; slug: string; score: number; scored_at: string }[] = await res.json();
-  console.log(`Total rows: ${rows.length}`);
 
-  // Group by slug, keep first (most recent), delete the rest
-  const seen = new Map<string, number>(); // slug -> id to keep
-  const toDelete: number[] = [];
-
-  for (const row of rows) {
-    if (!seen.has(row.slug)) {
-      seen.set(row.slug, row.id);
-    } else {
-      toDelete.push(row.id);
-    }
-  }
-
-  console.log(`Unique slugs: ${seen.size}`);
-  console.log(`Duplicate rows to delete: ${toDelete.length}`);
-
-  if (toDelete.length === 0) {
+  if (del.rowCount === 0) {
     console.log('No duplicates found.');
     return;
   }
-
-  // Show which slugs had duplicates
-  const dupSlugs = new Set<string>();
-  for (const row of rows) {
-    if (toDelete.includes(row.id)) dupSlugs.add(row.slug);
-  }
-  console.log('Duplicate slugs:', [...dupSlugs]);
-
-  // Delete duplicates one by one
-  let deleted = 0;
-  for (const id of toDelete) {
-    const del = await fetch(`${SUPABASE_URL}/rest/v1/scores?id=eq.${id}`, {
-      method: 'DELETE',
-      headers,
-    });
-    if (del.ok) {
-      deleted++;
-    } else {
-      console.error(`Failed to delete id=${id}:`, del.status, await del.text());
-    }
-  }
-  console.log(`Deleted ${deleted} duplicate rows.`);
+  console.log(`Deleted ${del.rowCount} duplicate rows.`);
+  console.log('Affected slugs:', [...new Set(del.rows.map(r => r.slug))]);
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  console.error(err instanceof Error ? err.message : err);
+  process.exit(1);
+});
