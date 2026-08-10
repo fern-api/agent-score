@@ -1,6 +1,7 @@
 /**
- * Re-scores all companies using stored check results from Supabase.
+ * Re-scores all companies using stored check results from the RDS scores table.
  * Recomputes score/grade from stored results WITHOUT re-running network checks.
+ * (Migrated off Supabase/PostgREST to RDS pg — FER-11415.)
  *
  * Run with:
  *   export $(grep -v '^#' .env.local | xargs) && npx tsx scripts/rescore-from-stored.ts
@@ -8,20 +9,7 @@
 
 import { computeScore } from '../lib/scoring';
 import type { CheckResult } from '../lib/scoring';
-
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const KEY = process.env.SUPABASE_SECRET_KEY!;
-
-if (!SUPABASE_URL || !KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY env vars');
-  process.exit(1);
-}
-
-const headers = {
-  apikey: KEY,
-  Authorization: `Bearer ${KEY}`,
-  'Content-Type': 'application/json',
-};
+import { query } from '../lib/db';
 
 interface StoredRow {
   slug: string;
@@ -33,16 +21,9 @@ interface StoredRow {
 
 async function main() {
   console.log('Fetching all scores with stored results...');
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/scores?select=slug,name,score,grade,results&order=score.desc`,
-    { headers }
+  const { rows } = await query<StoredRow>(
+    `SELECT slug, name, score, grade, results FROM public.scores ORDER BY score DESC`
   );
-  if (!res.ok) {
-    console.error('Failed to fetch scores:', await res.text());
-    process.exit(1);
-  }
-
-  const rows: StoredRow[] = await res.json();
   console.log(`Found ${rows.length} rows.\n`);
 
   let updated = 0;
@@ -71,21 +52,13 @@ async function main() {
       continue;
     }
 
-    const patch = await fetch(
-      `${SUPABASE_URL}/rest/v1/scores?slug=eq.${encodeURIComponent(row.slug)}`,
-      {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ score: newScore, grade: newGrade }),
-      }
-    );
-
-    if (!patch.ok) {
-      console.error(`  ERROR    ${row.slug}:`, await patch.text());
-    } else {
+    try {
+      await query(`UPDATE public.scores SET score = $1, grade = $2 WHERE slug = $3`, [newScore, newGrade, row.slug]);
       const arrow = `${String(row.score).padStart(3)} ${row.grade.padEnd(2)} → ${String(newScore).padStart(3)} ${newGrade}`;
       console.log(`  updated  ${row.name.padEnd(35)} ${arrow}`);
       updated++;
+    } catch (err) {
+      console.error(`  ERROR    ${row.slug}:`, err instanceof Error ? err.message : err);
     }
   }
 

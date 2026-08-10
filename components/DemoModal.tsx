@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 
 const DEMO_SUBMITTED_KEY = 'demo_submitted';
 
-export default function DemoModal({ onClose, source }: { onClose: () => void; source?: string }) {
+export default function DemoModal({ onClose, source, url }: { onClose: () => void; source?: string; url?: string }) {
+  const isTimeout = source === 'scoring timeout';
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'success' | 'error' | 'duplicate'>('idle');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,7 +29,7 @@ export default function DemoModal({ onClose, source }: { onClose: () => void; so
       const res = await fetch('/agent-score/api/demo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), source }),
+        body: JSON.stringify({ email: email.trim(), source, url }),
       });
       if (!res.ok) throw new Error();
       sessionStorage.setItem(DEMO_SUBMITTED_KEY, '1');
@@ -99,15 +100,15 @@ export default function DemoModal({ onClose, source }: { onClose: () => void; so
               <path d="M74.3506 187.414H92.248V196.409H74.3506V187.414Z" fill="#51C233"/>
               <path d="M401.863 405.72H419.765V414.714H401.863V405.72Z" fill="#51C233"/>
             </svg>
-            <p className="demo-success-text">We will get back to you to book a demo.</p>
+            <p className="demo-success-text">{isTimeout ? "We'll run your score locally and email you when it's ready." : 'We will get back to you to book a demo.'}</p>
           </div>
         ) : (
           <>
             <svg width="24" height="24" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ color: '#00e87b' }}>
               <path d="M205.949 125.941C193.314 115.26 174.279 110.979 157.408 123.448C156.632 124.012 155.667 123.048 156.255 122.295C160.255 117.143 164.891 111.59 168.632 106.014C172.443 100.298 178.137 96.2039 184.702 94.2041C219.643 83.6172 209.149 32 209.149 32C209.149 32 155.173 35.4819 161.832 82.0409C162.938 89.8282 160.867 97.7567 155.997 103.944C150.02 111.496 143.079 118.719 138.044 123.942C136.985 125.024 135.197 123.989 135.62 122.53C140.491 106.132 144.044 80.7705 127.174 64.4196L103.433 44.7043L98.8681 50.7271C85.2918 68.6308 89.2682 93.8748 107.197 107.426C117.48 115.19 122.138 123.636 121.409 132.905C120.962 138.458 118.444 143.657 114.68 147.774C107.597 155.538 100.986 163.866 95.8799 173.512C95.174 174.853 93.127 174.336 93.1976 172.806C93.927 156.879 92.3976 120.977 65.5745 108.155L35.5515 96.5568L33.2221 103.497C25.6693 125.894 38.022 149.821 60.3981 157.42C79.8566 164.031 86.7977 176.571 82.1154 195.368C81.9037 196.05 78.5155 215.413 78.9861 224H100.562C101.292 210.684 115.268 201.932 127.385 207.367C130.797 208.896 134.303 211.084 137.903 213.907C157.197 229.105 185.62 225.506 200.796 206.19L205.125 200.685L177.832 181.088C159.102 166.36 134.115 173.018 115.621 185.628C114.068 186.687 112.091 184.993 112.962 183.299C135.315 139.446 164.373 139.54 175.761 149.28C189.572 161.09 210.49 158.973 222.207 145.116L225.572 141.14L205.925 125.941H205.949Z" fill="currentColor"/>
             </svg>
-            <p className="demo-label">Book a demo with Fern</p>
-            <p className="demo-subtitle">Enter your email and we&apos;ll set you up with an agent-friendly docs site.</p>
+            <p className="demo-label">{isTimeout ? 'Get my score' : 'Book a demo with Fern'}</p>
+            <p className="demo-subtitle">{isTimeout ? "Your docs site is too large to score in the browser, so we need to run it locally. Drop your email and we'll send you the result." : "Enter your email and we'll set you up with an agent-friendly docs site."}</p>
             <form onSubmit={handleSubmit} className="demo-form">
               <input
                 ref={inputRef}
@@ -119,14 +120,14 @@ export default function DemoModal({ onClose, source }: { onClose: () => void; so
                 required
               />
               <button type="submit" className="demo-submit" disabled={state === 'loading' || state === 'duplicate'}>
-                {state === 'loading' ? 'Sending...' : 'Request demo'}
+                {state === 'loading' ? 'Sending...' : isTimeout ? 'Get my score' : 'Request demo'}
               </button>
             </form>
             {state === 'error' && (
               <p className="demo-error">Something went wrong. Please try again.</p>
             )}
             {state === 'duplicate' && (
-              <p className="demo-error">We&apos;re excited to chat with you too! You can only request to book a demo once.</p>
+              <p className="demo-error">{isTimeout ? "You've already requested a score. We'll be in touch once it's ready." : "We're excited to chat with you too! You can only request to book a demo once."}</p>
             )}
           </>
         )}

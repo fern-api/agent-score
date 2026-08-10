@@ -30,7 +30,7 @@ export default function ScoreChecker() {
   const [stepFrame, setStepFrame] = useState(0);
   const [error, setError] = useState('');
   const [isTimeout, setIsTimeout] = useState(false);
-  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(process.env.NODE_ENV === 'development');
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [result, setResult] = useState<{ score: number; grade: string } | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -207,7 +207,7 @@ export default function ScoreChecker() {
                 {isTimeout ? (
                   <>
                     Wow! That&apos;s a really big site.{' '}
-                    <button className="hsf-timeout-link" onClick={() => setDemoOpen(true)}>Give us your email</button>
+                    <button type="button" className="hsf-timeout-link" onClick={() => setDemoOpen(true)}>Give us your email</button>
                     {' '}and we&apos;ll run the score locally and get back to you.
                   </>
                 ) : (
@@ -222,7 +222,7 @@ export default function ScoreChecker() {
           </form>
         </div>
       </div>
-      {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} source="scoring timeout" />}
+      {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} source="scoring timeout" url={url || scoringUrlRef.current} />}
       {notifyOpen && <NotifyModal url={url} onClose={() => setNotifyOpen(false)} />}
     </>
   );

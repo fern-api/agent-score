@@ -7,25 +7,29 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "generate-scores": "npx tsx scripts/generate-scores.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.658.0",
     "@chenglou/pretext": "^0.0.3",
     "@fontsource/geist-mono": "^5.2.7",
     "@fontsource/inter": "^5.2.8",
-    "@supabase/supabase-js": "^2.99.2",
     "@vercel/functions": "^3.4.3",
     "@vercel/speed-insights": "^2.0.0",
-    "afdocs": "^0.17.1",
+    "afdocs": "^0.18.7",
     "boneyard-js": "^1.6.2",
     "cli-loaders": "^3.0.0",
     "next": "^14.2.0",
+    "pg": "^8.13.1",
     "posthog-js": "^1.369.3",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/pg": "^8.11.10",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.0",
@@ -34,6 +38,7 @@
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
   }
 }

@@ -21,7 +21,10 @@ export async function POST(req: Request) {
   };
 
   let text: string;
-  if (source === 'check results gate' && url) {
+  if (source === 'scoring timeout') {
+    const target = url ? ` \`${url}\`` : '';
+    text = `:hourglass: rerun${target} locally for \`${email}\` (site timed out in prod)`;
+  } else if (source === 'check results gate' && url) {
     text = `:eyes: \`${email}\` requested to see the results on ${url}`;
   } else if (source) {
     const emoji = SOURCE_EMOJI[source] ?? ':calendar:';
