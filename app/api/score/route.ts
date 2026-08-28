@@ -9,7 +9,7 @@ import { inferCategory } from "@/lib/categorize";
 import { isBlockedDomain } from "@/lib/blocked-domains";
 import { resolveSlugAlias } from "@/lib/slug-aliases";
 import { detectDocsUrl } from "@/lib/docs-detection";
-import { urlToSlug, nameToSlug } from "@/lib/slug";
+import { urlToSlug, nameToSlug, isValidSlug, isValidName } from "@/lib/slug";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -272,6 +272,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "invalid_url", message: "URL contains invalid characters." }, { status: 400 });
     }
 
+    // slug/name are stored verbatim, so an unvalidated value creates one
+    // leaderboard row per variant a caller sends.
+    if (slugParam !== undefined && (typeof slugParam !== 'string' || !isValidSlug(slugParam))) {
+      console.log('[score] rejected: invalid slug', slugParam);
+      return NextResponse.json({ error: "invalid_slug", message: "Slug must be lowercase letters, numbers, and dashes." }, { status: 400 });
+    }
+    if (nameParam !== undefined && (typeof nameParam !== 'string' || !isValidName(nameParam))) {
+      console.log('[score] rejected: invalid name', nameParam);
+      return NextResponse.json({ error: "invalid_name", message: "Name contains invalid characters or is too long." }, { status: 400 });
+    }
+
     // Normalize — prepend https:// if no protocol so URL parsing works everywhere
     const url: string = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
 
@@ -403,9 +414,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // New sites are always hidden until manually approved.
-    // Reruns (force=true) pass undefined so upsertScore doesn't overwrite the existing value.
-    const hidden = force ? undefined : true;
+    // New sites are always hidden until manually approved. Only a rerun of an
+    // already-stored slug passes undefined, so upsertScore preserves the
+    // existing visibility instead of letting force=true create a visible row.
+    const isRerun = force ? (await getScoreBySlug(rawSlug)) !== null : false;
+    const hidden = isRerun ? undefined : true;
     console.log("[score] hidden:", hidden, url);
 
     // Start job
