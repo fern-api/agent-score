@@ -4,7 +4,9 @@
 // Extracted from the score route so the logic is unit-testable in isolation
 // (it only depends on the global fetch, which tests can stub).
 
-export const DOCS_SUBDOMAINS = /^(docs|developer|api|reference|developers|learn)\./i;
+export const DOCS_SUBDOMAINS = /^(docs|developer|api|reference|developers|learn|guide|guides|help|support|manual)\./i;
+export const DOCS_TITLE = /docs|documentation|api\s|reference|developer|quickstart|user guide|guide\b|help center|knowledge base|manual/i;
+export const DOCS_GENERATORS = /<meta[^>]+name=["']generator["'][^>]+content=["'][^"']*(gitbook|mintlify|docusaurus|mkdocs|sphinx|readme|fern|vitepress|starlight|nextra|redoc|docsify|hugo docs)/i;
 export const DOCS_PATHS = /\/(docs|api|reference|guides|developer|sdk|learn|manual|documentation)\//i;
 export const DOCS_PLATFORMS = /(readme\.io|gitbook\.io|mintlify\.app|buildwithfern\.com\/learn|\.fern\.dev|\.readme\.io|\.gitbook\.io|github\.io|notion\.site)/i;
 
@@ -54,7 +56,8 @@ export async function detectDocsUrl(url: string): Promise<DocsDetection> {
     }
     const html = await r.text();
     const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.toLowerCase() ?? "";
-    if (/docs|documentation|api\s|reference|developer|quickstart/i.test(title)) return { isLikely: true };
+    if (DOCS_TITLE.test(title)) return { isLikely: true };
+    if (DOCS_GENERATORS.test(html)) return { isLikely: true };
     if ((html.match(/<pre|<code/g) ?? []).length >= 3) return { isLikely: true };
     if (/getting started|api reference|quickstart|sdk reference/i.test(html)) return { isLikely: true };
     const baseDomain = host.replace(/^www\./, "");
