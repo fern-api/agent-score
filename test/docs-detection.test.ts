@@ -91,6 +91,29 @@ describe("detectDocsUrl — apex content signals", () => {
   });
 });
 
+describe("detectDocsUrl — GitBook custom domain (the guide.form.gov.sg case)", () => {
+  const GITBOOK_HTML =
+    '<html><head><meta name="generator" content="GitBook (99984eb)"/><title>What is FormSG? | FormSG User Guide</title></head><body><p>FormSG lets you build forms.</p></body></html>';
+
+  it("accepts a guide. subdomain without fetching", async () => {
+    const f = stubFetch({});
+    expect(await detectDocsUrl("https://guide.form.gov.sg/")).toEqual({ isLikely: true });
+    expect(await detectDocsUrl("https://help.acme.com/")).toEqual({ isLikely: true });
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it("accepts an apex whose title says user guide", async () => {
+    stubFetch({ llms: resp(true, 200), page: resp(true, 200, "<title>Acme User Guide</title>") });
+    expect(await detectDocsUrl("https://acme.com/")).toEqual({ isLikely: true });
+  });
+
+  it("accepts an apex served by a known docs generator (GitBook)", async () => {
+    const html = GITBOOK_HTML.replace("What is FormSG? | FormSG User Guide", "What is FormSG?");
+    stubFetch({ llms: resp(true, 200), page: resp(true, 200, html) });
+    expect(await detectDocsUrl("https://acme.com/")).toEqual({ isLikely: true });
+  });
+});
+
 describe("detectDocsUrl — llms.txt nuance", () => {
   it("treats llms.txt as sufficient for a non-root path (no homepage fetch)", async () => {
     const f = stubFetch({ llms: resp(true, 200) });
