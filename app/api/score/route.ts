@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import { waitUntil } from "@vercel/functions";
-import { upsertScore, getScoreBySlug } from "@/lib/supabase";
+import { upsertScore, getScoreBySlug, getScoreSlugByDocsUrl } from "@/lib/supabase";
 import { fetchOgName, domainToName } from "@/lib/og-name";
 import { computeScore } from "afdocs";
 import { AFDOCS_VERSION } from "@/lib/scoring";
@@ -340,7 +340,14 @@ export async function POST(request: Request) {
     // Fern preview/staging hosts (*.ferndocs.com) always slug by URL so they stay distinct from the
     // canonical live company entry — otherwise e.g. docusign.ferndocs.com collapses onto the "docusign" slug.
     const isFernHost = (() => { try { return /(^|\.)ferndocs\.com$/i.test(new URL(url).hostname); } catch { return false; } })();
-    const rawSlug = slugParam || (effectiveName && !urlPath && !isFernHost ? nameToSlug(effectiveName) : urlToSlug(url));
+    // A URL that is already on the leaderboard keeps its stored slug, so re-submitting it
+    // updates that entry instead of creating a second one under a URL-derived slug (which is
+    // what curated entries with a path — e.g. developer.salesforce.com/docs — would otherwise get).
+    const storedSlugForUrl = slugParam ? null : await getScoreSlugByDocsUrl(url);
+    const rawSlug =
+      slugParam ||
+      storedSlugForUrl ||
+      (effectiveName && !urlPath && !isFernHost ? nameToSlug(effectiveName) : urlToSlug(url));
     // Alias a likely-typed domain (e.g. "monday" → "developer-monday-com-api-reference") to a curated
     // leaderboard entry. This is a *redirect for lookups only*: we surface the existing canonical entry
     // but never score/overwrite it. Actual scoring always stores under the raw slug (see runJob below).
