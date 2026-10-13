@@ -29,6 +29,7 @@ describe("isValidSlug", () => {
     expect(isValidSlug("developer-monday-com-api-reference")).toBe(true);
     expect(isValidSlug(nameToSlug("Acme Pay"))).toBe(true);
     expect(isValidSlug(urlToSlug("https://docs.nvidia.com/dynamo"))).toBe(true);
+    expect(isValidSlug(urlToSlug("https://developer.morningstar.com/direct-web-services/documentation/direct-web-services/about"))).toBe(true);
   });
 
   it("rejects scanner payloads that polluted the leaderboard", () => {

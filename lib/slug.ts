@@ -18,7 +18,8 @@ export function urlToSlug(url: string): string {
 // Shape every stored slug must have: lowercase alphanumerics and dashes only.
 // Client-supplied slugs are checked against this so fuzzed/scanner input can't
 // create a leaderboard row per payload variant.
-const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/;
+// urlToSlug truncates at 80 chars, which can leave a trailing dash, so that's allowed.
+const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,79}$/;
 
 export function isValidSlug(slug: string): boolean {
   return SLUG_PATTERN.test(slug);
