@@ -975,8 +975,9 @@ a.agent-badge:hover img {
 .lb-toolbar {
   padding-bottom: 16px;
   display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   align-items: center;
-  justify-content: space-between;
 }
 
 .lb-grade-section {
@@ -1201,6 +1202,32 @@ a.agent-badge:hover img {
   opacity: 0.8;
 }
 
+.lb-search {
+  width: 280px;
+  max-width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--fg);
+  outline: none;
+  transition: border-color 0.1s;
+}
+
+.lb-search::placeholder { color: var(--fg-dim); }
+.lb-search::-webkit-search-cancel-button { filter: grayscale(1); cursor: pointer; }
+.lb-search:focus { border-color: var(--accent); }
+
+.lb-empty {
+  padding: 48px 20px;
+  text-align: center;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--fg-dim);
+  border-bottom: 1px solid var(--border);
+}
+
 .lb-view-toggle {
   display: flex;
   justify-content: center;
@@ -1232,6 +1259,8 @@ a.agent-badge:hover img {
 
 @media (max-width: 768px) {
   .lb-cat-grid { grid-template-columns: 1fr; }
+  .lb-toolbar { flex-wrap: wrap; gap: 12px; }
+  .lb-search { width: 100%; }
   .lb-panel,
   .lb-panel:nth-child(3n) { border-right: none; }
   .lb-panel { padding: 20px 20px 16px; }

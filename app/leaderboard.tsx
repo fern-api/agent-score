@@ -48,10 +48,13 @@ function Favicon({ docsUrl, name }: { docsUrl: string; name: string }) {
 export default function Leaderboard({ companies, categories }: LeaderboardProps) {
   const [view, setView] = useState<'categories' | 'all'>('categories');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [query, setQuery] = useState('');
 
-  const filtered = activeCategory === 'All'
-    ? companies
-    : companies.filter(c => c.category === activeCategory);
+  const q = query.trim().toLowerCase();
+  const filtered = companies.filter(c =>
+    (activeCategory === 'All' || c.category === activeCategory) &&
+    (!q || c.name.toLowerCase().includes(q) || c.docsUrl.toLowerCase().includes(q))
+  );
 
   const passing = companies.filter(c => c.score >= 80).length;
 
@@ -90,8 +93,19 @@ export default function Leaderboard({ companies, categories }: LeaderboardProps)
             </div>
           </div>
         </div>
-        {view === 'all' && (
-          <div className="lb-toolbar">
+        <div className="lb-toolbar">
+          <input
+            type="search"
+            className="lb-search"
+            placeholder="Search companies"
+            aria-label="Search companies"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              if (e.target.value.trim()) setView('all');
+            }}
+          />
+          {view === 'all' && (
             <div className="lb-filters">
               {['All', ...categories].map(cat => (
                 <button
@@ -103,8 +117,8 @@ export default function Leaderboard({ companies, categories }: LeaderboardProps)
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {view === 'categories' ? (
@@ -141,6 +155,9 @@ export default function Leaderboard({ companies, categories }: LeaderboardProps)
         </>
       ) : (
         <>
+          {filtered.length === 0 && (
+            <div className="lb-empty">No companies match &ldquo;{query.trim()}&rdquo;</div>
+          )}
           {/* Full grid grouped by grade */}
           {(['A+', 'A', 'B', 'C', 'D', 'F'] as const).map((grade) => {
             const gradeLabels: Record<string, string> = {
@@ -182,6 +199,7 @@ export default function Leaderboard({ companies, categories }: LeaderboardProps)
               className="lb-view-toggle-btn"
               onClick={() => {
                 setView('categories');
+                setQuery('');
                 document.getElementById('leaderboard')?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
