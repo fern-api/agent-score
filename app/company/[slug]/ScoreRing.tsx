@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { scoreColor } from '@/lib/gradeColors';
+import { scoreColorVar } from '@/lib/gradeColors';
 
 interface ScoreRingProps {
   score: number;
@@ -16,7 +16,7 @@ export default function ScoreRing({ score, grade }: ScoreRingProps) {
   const r = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * r;
   const offset = circumference - (score / 100) * circumference;
-  const color = scoreColor(score);
+  const color = scoreColorVar(score);
 
   useEffect(() => {
     const el = circleRef.current;
@@ -57,12 +57,11 @@ export default function ScoreRing({ score, grade }: ScoreRingProps) {
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={color}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference}
-          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+          style={{ stroke: color, transform: 'rotate(-90deg)', transformOrigin: 'center' }}
         />
         {/* Score number */}
         <text
@@ -70,7 +69,7 @@ export default function ScoreRing({ score, grade }: ScoreRingProps) {
           y={size / 2}
           textAnchor="middle"
           dominantBaseline="central"
-          fill={color}
+          style={{ fill: color }}
           fontSize="64"
           fontFamily="'Geist Mono', 'Courier New', monospace"
           fontWeight="500"
