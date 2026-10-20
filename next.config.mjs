@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  assetPrefix: process.env.NODE_ENV === 'production' ? 'https://fern-agent-score.vercel.app' : '',
+  assetPrefix: process.env.VERCEL_ENV === 'production' ? 'https://fern-agent-score.vercel.app' : '',
   transpilePackages: ['boneyard-js'],
   images: {
     unoptimized: true,
