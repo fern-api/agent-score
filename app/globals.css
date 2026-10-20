@@ -1809,12 +1809,13 @@ a.agent-badge:hover img {
 }
 
 .theme-toggle-btn {
-  font-family: 'Geist Mono', monospace;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   color: var(--fg-mid);
   border: none;
-  padding: 3px 8px;
+  padding: 4px 6px;
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
 }
