@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import DemoModal from './DemoModal';
+import ThemeToggle from './ThemeToggle';
 
 export default function SiteFooter() {
   const [open, setOpen] = useState(false);
@@ -15,7 +16,8 @@ export default function SiteFooter() {
             Developed by
           </span>
           <a href="https://buildwithfern.com" target="_blank" rel="noopener" style={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/agent-score/fern-labs-dark.svg" alt="fern labs" style={{ height: 13, display: 'block', opacity: 1}} />
+            <img src="/agent-score/fern-labs-dark.svg" alt="fern labs" className="fern-logo-dark" style={{ height: 13, opacity: 1}} />
+            <img src="/agent-score/fern-labs-light.svg" alt="fern labs" className="fern-logo-light" style={{ height: 13, opacity: 1}} />
           </a>
           <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: 'var(--fg-mid)' }}>·</span>
           <button
@@ -43,6 +45,7 @@ export default function SiteFooter() {
           >
             GitHub
           </a>
+          <ThemeToggle />
         </div>
         <div className="footer-cell footer-cell-right">
           <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: 'var(--fg-mid)' }}>
