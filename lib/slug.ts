@@ -15,6 +15,22 @@ export function urlToSlug(url: string): string {
   }
 }
 
+// Shape every stored slug must have: lowercase alphanumerics and dashes only.
+// Client-supplied slugs are checked against this so fuzzed/scanner input can't
+// create a leaderboard row per payload variant.
+// urlToSlug truncates at 80 chars, which can leave a trailing dash, so that's allowed.
+const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,79}$/;
+
+export function isValidSlug(slug: string): boolean {
+  return SLUG_PATTERN.test(slug);
+}
+
+// Display names are shown verbatim on the leaderboard, so keep them short and
+// free of markup/control characters.
+export function isValidName(name: string): boolean {
+  return name.trim().length > 0 && name.length <= 60 && !/[<>{}|\\^`\x00-\x1f]/.test(name);
+}
+
 // Slug from a display name (e.g. "Monday" → "monday"). Used for domain-rooted sites
 // so they collapse onto a single company slug.
 export function nameToSlug(name: string): string {
