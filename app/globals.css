@@ -1793,13 +1793,14 @@ a.agent-badge:hover img {
 
 .footer-link {
   color: var(--fg-mid);
-  text-decoration: underline;
+  text-decoration: none;
   text-underline-offset: 3px;
   transition: color 0.15s;
 }
 
 .footer-link:hover {
   color: var(--accent);
+  text-decoration: underline;
 }
 
 .theme-toggle {
@@ -1823,8 +1824,8 @@ a.agent-badge:hover img {
 .theme-toggle-btn:hover { color: var(--fg); }
 
 .theme-toggle-btn.active {
-  background: var(--fg);
-  color: var(--bg);
+  color: var(--fg);
+  box-shadow: inset 0 0 0 1px var(--fg);
 }
 
 /* ==================
