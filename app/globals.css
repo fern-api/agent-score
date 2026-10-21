@@ -47,6 +47,7 @@
   --dot: #333333;
   --accent-hover: #00cc55;
   --logo-invert: 1;
+  --toggle-active-bg: rgba(255,255,255,0.12);
   --score-a: #00ff66;
   --score-a-alt: #00e87b;
   --score-b: #ccff44;
@@ -91,6 +92,7 @@
   --dot: #d4d4d4;
   --accent-hover: #008a3c;
   --logo-invert: 0;
+  --toggle-active-bg: rgba(0,0,0,0.07);
   --score-a: #00a347;
   --score-a-alt: #00a347;
   --score-b: #6b8f00;
@@ -1784,6 +1786,13 @@ a.agent-badge:hover img {
   display: flex;
   align-items: center;
   gap: 8px;
+  line-height: 1;
+}
+
+.footer-cell > span,
+.footer-cell > button,
+.footer-cell > a:not(:has(img)) {
+  text-box: trim-both cap alphabetic;
 }
 
 .footer-cell-right {
@@ -1825,7 +1834,7 @@ a.agent-badge:hover img {
 
 .theme-toggle-btn.active {
   color: var(--fg);
-  box-shadow: inset 0 0 0 1px var(--fg);
+  background: var(--toggle-active-bg);
 }
 
 /* ==================
