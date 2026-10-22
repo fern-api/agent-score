@@ -5,11 +5,11 @@ interface Category {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return '#00ff66';
-  if (score >= 65) return '#ccff44';
-  if (score >= 45) return '#ffcc00';
-  if (score >= 30) return '#ff8800';
-  return '#ff4444';
+  if (score >= 80) return 'var(--score-a)';
+  if (score >= 65) return 'var(--score-b)';
+  if (score >= 45) return 'var(--score-c)';
+  if (score >= 30) return 'var(--score-d)';
+  return 'var(--score-f)';
 }
 
 export default function CategoryGrid({ categories }: { categories: Category[] }) {

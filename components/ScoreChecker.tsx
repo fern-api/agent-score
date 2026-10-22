@@ -16,11 +16,11 @@ const PROGRESS_STEPS = [
 ];
 
 function scoreColor(s: number): string {
-  if (s >= 90) return '#00ff66';
-  if (s >= 80) return '#ccff44';
-  if (s >= 70) return '#ffcc00';
-  if (s >= 60) return '#ff8800';
-  return '#ff4444';
+  if (s >= 90) return 'var(--score-a)';
+  if (s >= 80) return 'var(--score-b)';
+  if (s >= 70) return 'var(--score-c)';
+  if (s >= 60) return 'var(--score-d)';
+  return 'var(--score-f)';
 }
 
 export default function ScoreChecker() {
@@ -178,7 +178,7 @@ export default function ScoreChecker() {
         <span style={{ fontSize: '40px', fontFamily: "'Geist Mono', monospace", color: scoreColor(result.score) }}>
           {result.score}
         </span>
-        <span style={{ fontSize: '14px', color: '#555', marginLeft: '12px', fontFamily: "'Geist Mono', monospace" }}>
+        <span style={{ fontSize: '14px', color: 'var(--fg-dim)', marginLeft: '12px', fontFamily: "'Geist Mono', monospace" }}>
           {result.score >= 80 ? 'Good readiness' : result.score >= 55 ? 'Improvements needed' : 'Gaps found'}
         </span>
       </div>

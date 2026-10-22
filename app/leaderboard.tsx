@@ -12,11 +12,11 @@ interface LeaderboardProps {
 const PANEL_SIZE = 5;
 
 function scoreColor(s: number): string {
-  if (s >= 90) return '#00ff66';
-  if (s >= 80) return '#ccff44';
-  if (s >= 70) return '#ffcc00';
-  if (s >= 60) return '#ff8800';
-  return '#ff4444';
+  if (s >= 90) return 'var(--score-a)';
+  if (s >= 80) return 'var(--score-b)';
+  if (s >= 70) return 'var(--score-c)';
+  if (s >= 60) return 'var(--score-d)';
+  return 'var(--score-f)';
 }
 
 function Favicon({ docsUrl, name }: { docsUrl: string; name: string }) {

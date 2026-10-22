@@ -19,7 +19,7 @@ import GradeCTA from './GradeCTA';
 import MatrixBackground from '@/components/MatrixBackground';
 import VoiceOrb from '@/components/VoiceOrb';
 import DotDivider from '@/components/DotDivider';
-import { scoreColor } from '@/lib/gradeColors';
+import { scoreColor, scoreColorVar } from '@/lib/gradeColors';
 import '../company.css';
 
 export const dynamic = 'force-dynamic';
@@ -182,7 +182,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
               <div className="co-score-row">
                 <ScoreRing score={company.score} grade={company.grade} />
                 <div className="co-score-row-info">
-                  <div className="co-grade-badge" style={{ color }}>Grade {company.grade}</div>
+                  <div className="co-grade-badge" style={{ color: scoreColorVar(company.score) }}>Grade {company.grade}</div>
                   {['C', 'D', 'F'].includes(company.grade) && <GradeCTA />}
                   <div className="co-last-checked">
                     Last checked: {new Date(company.scoredAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -234,15 +234,15 @@ export default async function CompanyPage({ params }: { params: { slug: string }
         </div>
         <a href="#checks" className="co-stat co-stat-link co-stat-link--pass">
           <span className="co-stat-key">Checks passed</span>
-          <span className="co-stat-val" style={{ color: '#00e87b' }}>{company.checks.pass}/{company.checks.total}</span>
+          <span className="co-stat-val" style={{ color: 'var(--score-a-alt)' }}>{company.checks.pass}/{company.checks.total}</span>
         </a>
         <a href="#checks" className="co-stat co-stat-link co-stat-link--warn">
           <span className="co-stat-key">Warnings</span>
-          <span className="co-stat-val" style={{ color: '#ffcc00' }}>{company.checks.warn}</span>
+          <span className="co-stat-val" style={{ color: 'var(--score-c)' }}>{company.checks.warn}</span>
         </a>
         <a href="#checks" className="co-stat co-stat-link co-stat-link--fail">
           <span className="co-stat-key">Failed</span>
-          <span className="co-stat-val" style={{ color: '#ff4444' }}>{company.checks.fail}</span>
+          <span className="co-stat-val" style={{ color: 'var(--score-f)' }}>{company.checks.fail}</span>
         </a>
       </section>
 
