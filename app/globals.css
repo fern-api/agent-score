@@ -103,6 +103,8 @@
 
 [data-theme="light"] .fern-logo-dark  { display: none; }
 [data-theme="light"] .fern-logo-light { display: block; }
+[data-theme="light"] .hsf-btn { color: #ffffff; }
+[data-theme="light"] .why-cell-video { filter: invert(1) hue-rotate(180deg); }
 
 
 /* ===== BASE STYLES ===== */
