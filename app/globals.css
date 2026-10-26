@@ -35,7 +35,77 @@
   --color-border-subtle: #1a1a1a;
   --color-border-card: #1a1a1a;
   --color-navbar-bg: #000000;
+
+  color-scheme: dark;
+  --fg-body: #888888;
+  --fg-soft: #cccccc;
+  --fg-faint: #333333;
+  --hover-tint: rgba(255,255,255,0.02);
+  --badge-bg: rgba(255,255,255,0.05);
+  --badge-border: rgba(255,255,255,0.12);
+  --kbd-bg: #111111;
+  --dot: #333333;
+  --accent-hover: #00cc55;
+  --logo-invert: 1;
+  --toggle-active-bg: rgba(255,255,255,0.12);
+  --score-a: #00ff66;
+  --score-a-alt: #00e87b;
+  --score-b: #ccff44;
+  --score-c: #ffcc00;
+  --score-d: #ff8800;
+  --score-f: #ff4444;
 }
+
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --fg: #0a0a0a;
+  --fg-dim: #8a8a8a;
+  --fg-mid: #5c5c5c;
+  --accent: #00a347;
+  --accent-dim: rgba(0, 163, 71, 0.08);
+  --grid: #f5f5f5;
+  --border: #e6e6e6;
+
+  --color-bg: #ffffff;
+  --color-surface: #f5f5f5;
+  --color-card: #f5f5f5;
+  --color-text-primary: #0a0a0a;
+  --color-text-heading: #0a0a0a;
+  --color-text-muted: #8a8a8a;
+  --color-text-body: #5c5c5c;
+  --color-accent: #00a347;
+  --color-accent-hover: #008a3c;
+  --color-border: #e6e6e6;
+  --color-border-subtle: #e6e6e6;
+  --color-border-card: #e6e6e6;
+  --color-navbar-bg: #ffffff;
+
+  --fg-body: #5c5c5c;
+  --fg-soft: #333333;
+  --fg-faint: #c8c8c8;
+  --hover-tint: rgba(0,0,0,0.03);
+  --badge-bg: rgba(0,0,0,0.03);
+  --badge-border: rgba(0,0,0,0.12);
+  --kbd-bg: #f0f0f0;
+  --dot: #d4d4d4;
+  --accent-hover: #008a3c;
+  --logo-invert: 0;
+  --toggle-active-bg: rgba(0,0,0,0.07);
+  --score-a: #00a347;
+  --score-a-alt: #00a347;
+  --score-b: #6b8f00;
+  --score-c: #b38600;
+  --score-d: #d26b00;
+  --score-f: #d92b2b;
+}
+
+[data-theme="light"] .fern-logo-dark  { display: none; }
+[data-theme="light"] .fern-logo-light { display: block; }
+[data-theme="light"] .hsf-btn { color: #ffffff; }
+[data-theme="light"] .why-cell-video { filter: invert(1) hue-rotate(180deg); }
+
 
 /* ===== BASE STYLES ===== */
 html {
@@ -46,13 +116,13 @@ html {
 body {
   font-family: 'Inter', sans-serif;
   background: var(--bg);
-  color: #888888;
+  color: var(--fg-body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: #ffffff;
+  color: var(--fg);
 }
 
 button, select {
@@ -185,12 +255,12 @@ a:hover {
   align-items: center;
   gap: 5px;
   color: var(--fg-mid);
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
   border-radius: 100px;
   padding: 2px 10px 2px 7px;
   font-size: 12px;
-  color: #ccc;
+  color: var(--fg-soft);
   white-space: nowrap;
   vertical-align: middle;
   text-decoration: none;
@@ -234,12 +304,14 @@ a.agent-badge:hover img {
 }
 .hero-attribution a:hover { color: var(--accent); }
 
-.hero-attribution .fern-logo-dark {
+.hero-attribution .fern-logo-dark,
+.hero-attribution .fern-logo-light {
   filter: grayscale(1) opacity(0.5);
   transition: filter 0.2s;
 }
 
-.hero-attribution a:hover .fern-logo-dark {
+.hero-attribution a:hover .fern-logo-dark,
+.hero-attribution a:hover .fern-logo-light {
   filter: grayscale(0) opacity(1);
 }
 
@@ -345,7 +417,7 @@ a.agent-badge:hover img {
   height: 100%;
 }
 
-.hsf-btn:hover { background: #00cc55; }
+.hsf-btn:hover { background: var(--accent-hover); }
 
 .hsf-error {
   position: absolute;
@@ -354,7 +426,7 @@ a.agent-badge:hover img {
   right: 32px;
   font-family: 'Geist Mono', 'Courier New', monospace;
   font-size: 12px;
-  color: #ff4444;
+  color: var(--score-f);
   line-height: 1.6;
 }
 
@@ -364,12 +436,12 @@ a.agent-badge:hover img {
   padding: 0;
   font-family: 'Geist Mono', 'Courier New', monospace;
   font-size: 12px;
-  color: #ff4444;
+  color: var(--score-f);
   text-decoration: underline;
   cursor: pointer;
 }
 
-.hsf-timeout-link:hover { color: #fff; }
+.hsf-timeout-link:hover { color: var(--fg); }
 
 
 .hsf-running {
@@ -417,8 +489,8 @@ a.agent-badge:hover img {
 }
 
 .hsf-step.done { color: var(--accent); }
-.hsf-step.active { color: #fff; }
-.hsf-step.pending { color: #333; }
+.hsf-step.active { color: var(--fg); }
+.hsf-step.pending { color: var(--fg-faint); }
 .hsf-step-icon { width: 12px; flex-shrink: 0; }
 
 .hsf-complete {
@@ -559,7 +631,7 @@ a.agent-badge:hover img {
   font-weight: 300;
   letter-spacing: -0.5px;
   line-height: 1.15;
-  color: #ffffff;
+  color: var(--fg);
   margin: 0;
   max-width: 640px;
 }
@@ -587,21 +659,6 @@ a.agent-badge:hover img {
   min-height: 220px;
   padding: 28px;
   position: relative;
-}
-
-/* Subtle scan-line overlay for the pixel art cells */
-.why-cell-img::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 8px,
-    rgba(0, 0, 0, 0.06) 8px,
-    rgba(0, 0, 0, 0.06) 9px
-  );
-  pointer-events: none;
 }
 
 .why-cell-video {
@@ -1468,7 +1525,7 @@ a.agent-badge:hover img {
   align-items: center;
   transition: background 0.15s;
 }
-.cta-built-btn-primary:hover { background: #00cc55; color: #000; }
+.cta-built-btn-primary:hover { background: var(--accent-hover); color: #000; }
 
 .cta-built-btn-secondary {
   background: transparent;
@@ -1506,7 +1563,7 @@ a.agent-badge:hover img {
   height: 22px;
   width: auto;
   opacity: 0.45;
-  filter: brightness(0) invert(1);
+  filter: brightness(0) invert(var(--logo-invert));
 }
 
 .fern-logo-dark  { display: block; }
@@ -1648,7 +1705,7 @@ a.agent-badge:hover img {
 .demo-error {
   font-family: 'Geist Mono', monospace;
   font-size: 12px;
-  color: #ff4444;
+  color: var(--score-f);
   margin: 0;
 }
 
@@ -1716,6 +1773,13 @@ a.agent-badge:hover img {
   display: flex;
   align-items: center;
   gap: 8px;
+  line-height: 1;
+}
+
+.footer-cell > span,
+.footer-cell > button,
+.footer-cell > a:not(:has(img)) {
+  text-box: trim-both cap alphabetic;
 }
 
 .footer-cell-right {
@@ -1725,13 +1789,39 @@ a.agent-badge:hover img {
 
 .footer-link {
   color: var(--fg-mid);
-  text-decoration: underline;
+  text-decoration: none;
   text-underline-offset: 3px;
   transition: color 0.15s;
 }
 
 .footer-link:hover {
   color: var(--accent);
+  text-decoration: underline;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  margin-left: 4px;
+}
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--fg-mid);
+  border: none;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.theme-toggle-btn:hover { color: var(--fg); }
+
+.theme-toggle-btn.active {
+  color: var(--fg);
+  background: var(--toggle-active-bg);
 }
 
 /* ==================
@@ -2000,10 +2090,10 @@ a.agent-badge:hover img {
 
 .tier-badge-grade-a-plus { color: var(--accent); }
 .tier-badge-grade-a { color: var(--accent); }
-.tier-badge-grade-b { color: #ccff44; }
-.tier-badge-grade-c { color: #ffcc00; }
-.tier-badge-grade-d { color: #ff8800; }
-.tier-badge-grade-f { color: #ff4444; }
+.tier-badge-grade-b { color: var(--score-b); }
+.tier-badge-grade-c { color: var(--score-c); }
+.tier-badge-grade-d { color: var(--score-d); }
+.tier-badge-grade-f { color: var(--score-f); }
 
 .tier-grid-compact {
   display: grid;
@@ -2022,7 +2112,7 @@ a.agent-badge:hover img {
   margin: -1px -1px 0 0;
 }
 
-.company-card:hover { background: rgba(255,255,255,0.02); }
+.company-card:hover { background: var(--hover-tint); }
 
 .card-top-row {
   display: flex;
@@ -2056,9 +2146,9 @@ a.agent-badge:hover img {
 }
 
 .card-certified .card-score { color: var(--accent); }
-.card-ready .card-score { color: #ccff44; }
-.card-improving .card-score { color: #ffcc00; }
-.card-needs-work .card-score { color: #ff4444; }
+.card-ready .card-score { color: var(--score-b); }
+.card-improving .card-score { color: var(--score-c); }
+.card-needs-work .card-score { color: var(--score-f); }
 
 .card-bottom-row {
   display: flex;
@@ -2075,10 +2165,10 @@ a.agent-badge:hover img {
 
 .grade-a-plus { color: var(--accent); }
 .grade-a { color: var(--accent); }
-.grade-b { color: #ccff44; }
-.grade-c { color: #ffcc00; }
-.grade-d { color: #ff8800; }
-.grade-f { color: #ff4444; }
+.grade-b { color: var(--score-b); }
+.grade-c { color: var(--score-c); }
+.grade-d { color: var(--score-d); }
+.grade-f { color: var(--score-f); }
 
 .card-checks { display: flex; gap: 4px; }
 
@@ -2090,8 +2180,8 @@ a.agent-badge:hover img {
   font-family: 'Geist Mono', 'Courier New', monospace;
 }
 
-.check-badge-warn { color: #ffcc00; border-color: #ffcc00; }
-.check-badge-fail { color: #ff4444; border-color: #ff4444; }
+.check-badge-warn { color: var(--score-c); border-color: var(--score-c); }
+.check-badge-fail { color: var(--score-f); border-color: var(--score-f); }
 
 .leaderboard-empty {
   font-size: 16px;
@@ -2151,7 +2241,7 @@ a.agent-badge:hover img {
   color: var(--fg);
 }
 
-.leaderboard-table tr:hover td { background: rgba(255,255,255,0.02); }
+.leaderboard-table tr:hover td { background: var(--hover-tint); }
 
 .rank-cell { color: var(--fg-dim) !important; font-size: 14px; letter-spacing: 2px; }
 .company-cell { font-size: 16px; letter-spacing: 2px; text-transform: uppercase; }
@@ -2159,8 +2249,8 @@ a.agent-badge:hover img {
 .grade-cell { font-size: 16px; letter-spacing: 2px; text-transform: uppercase; }
 
 .dot-pass { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-.dot-warn { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ffcc00; }
-.dot-fail { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff4444; }
+.dot-warn { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--score-c); }
+.dot-fail { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--score-f); }
 
 /* ==================
    CONTAINER & SKELETON
@@ -2457,7 +2547,8 @@ a.agent-badge:hover img {
 
   .hero-attribution-x { margin-top: 2px; }
 
-  .hero-attribution .fern-logo-dark {
+  .hero-attribution .fern-logo-dark,
+  .hero-attribution .fern-logo-light {
     width: 66px !important;
     height: 12px !important;
   }

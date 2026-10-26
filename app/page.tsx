@@ -181,6 +181,7 @@ export default async function HomePage() {
                 Developed by
                 <a href="https://buildwithfern.com" target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center'}}>
                   <Image src="/agent-score/fern-labs-dark.svg" alt="Fern Labs" width={77} height={14} className="fern-logo-dark" style={{ marginBottom: '3px' }} />
+                  <Image src="/agent-score/fern-labs-light.svg" alt="Fern Labs" width={77} height={14} className="fern-logo-light" style={{ marginBottom: '3px' }} />
                 </a>
               </span>
               <span style={{display:'inline-flex',alignItems:'center',gap:'6px'}}>
@@ -191,6 +192,7 @@ export default async function HomePage() {
             <p className="hero-attribution hero-attribution-mobile">
               <a href="https://buildwithfern.com" target="_blank" rel="noreferrer" style={{display:'flex',alignItems:'center'}}>
                 <Image src="/agent-score/fern-labs-dark.svg" alt="Fern Labs" width={77} height={14} className="fern-logo-dark" style={{ marginBottom: '3px' }} />
+                  <Image src="/agent-score/fern-labs-light.svg" alt="Fern Labs" width={77} height={14} className="fern-logo-light" style={{ marginBottom: '3px' }} />
               </a>
               <svg className="hero-attribution-x" width="6" height="6" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>

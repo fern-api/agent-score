@@ -5,17 +5,17 @@ import type { CheckResult } from '@/lib/scores';
 import '../company.css';
 
 function barColor(score: number): string {
-  if (score >= 90) return '#00e87b';
-  if (score >= 80) return '#ccff44';
-  if (score >= 70) return '#ffcc00';
-  if (score >= 60) return '#ff8800';
-  return '#ff4444';
+  if (score >= 90) return 'var(--score-a-alt)';
+  if (score >= 80) return 'var(--score-b)';
+  if (score >= 70) return 'var(--score-c)';
+  if (score >= 60) return 'var(--score-d)';
+  return 'var(--score-f)';
 }
 
 function dotColor(status: string): string {
-  if (status === 'pass') return '#00e87b';
-  if (status === 'warn') return '#ffcc00';
-  if (status === 'fail' || status === 'error') return '#ff4444';
+  if (status === 'pass') return 'var(--score-a-alt)';
+  if (status === 'warn') return 'var(--score-c)';
+  if (status === 'fail' || status === 'error') return 'var(--score-f)';
   return 'var(--fg-dim)';
 }
 

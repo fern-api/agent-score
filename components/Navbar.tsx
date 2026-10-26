@@ -148,7 +148,7 @@ export default function Navbar() {
         <kbd style={{
           fontFamily: "'Geist Mono', monospace",
           fontSize: '11px',
-          background: '#111',
+          background: 'var(--kbd-bg)',
           border: '1px solid var(--border)',
           borderRadius: '4px',
           padding: '2px 6px',

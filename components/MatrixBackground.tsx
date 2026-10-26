@@ -152,7 +152,33 @@ function noise(x: number, y: number, t: number) {
 
 type PinnedPhase = number | null;
 
-export default function MatrixBackground({ color = '#ffffff' }: { color?: string }) {
+// Darker equivalents so the canvas stays legible on the light theme's white background.
+const LIGHT_EQUIV: Record<string, string> = {
+  '#ffffff': '#000000',
+  '#00e87b': '#00a347',
+  '#ccff44': '#6b8f00',
+  '#ffcc00': '#b38600',
+  '#ff8800': '#d26b00',
+  '#ff4444': '#d92b2b',
+};
+
+function useIsLightTheme(): boolean {
+  const [light, setLight] = useState(false);
+  useEffect(() => {
+    const el = document.documentElement;
+    const sync = () => setLight(el.dataset.theme === 'light');
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(el, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, []);
+  return light;
+}
+
+export default function MatrixBackground({ color: baseColor = '#ffffff' }: { color?: string }) {
+  const isLight = useIsLightTheme();
+  const color = isLight ? (LIGHT_EQUIV[baseColor.toLowerCase()] ?? baseColor) : baseColor;
+  const bgFill = isLight ? '#ffffff' : '#000000';
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
@@ -219,7 +245,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
 
       if (frame % 20 === 0) setOverlay({ phase: PNAMES[phaseIdx], pct });
 
-      ctx.fillStyle = '#000';
+      ctx.fillStyle = bgFill;
       ctx.fillRect(0, 0, logW, logH);
 
       const SOIL_Y   = 0.78;
@@ -321,7 +347,7 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', resize);
     };
-  }, [color]);
+  }, [color, bgFill]);
 
   return (
     <div ref={containerRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
@@ -336,19 +362,19 @@ const [overlay, setOverlay] = useState({ phase: 'BUD', pct: 0 });
         style={{
           position: 'absolute', bottom: 24, right: 24,
           fontFamily: "'Geist Mono', monospace", fontSize: 12,
-          color: '#555', letterSpacing: '1px',
+          color: 'var(--fg-dim)', letterSpacing: '1px',
           textAlign: 'right',
           cursor: 'pointer', lineHeight: 1.8,
           userSelect: 'none',
         }}
       >
         <span className="matrix-sim-label">Simulation: </span>Fern //{' '}
-        <span style={{ color: '#00ff66' }}>{overlay.phase.toLowerCase()}</span>
+        <span style={{ color: 'var(--accent)' }}>{overlay.phase.toLowerCase()}</span>
         {pinnedPhase !== null && (
-          <span style={{ color: '#00ff66', marginLeft: 4 }}>●</span>
+          <span style={{ color: 'var(--accent)', marginLeft: 4 }}>●</span>
         )}
         <br />
-        Day <span style={{ color: '#888' }}>{overlay.pct}</span>
+        Day <span style={{ color: 'var(--fg-mid)' }}>{overlay.pct}</span>
       </div>
     </div>
   );

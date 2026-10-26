@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { PHProvider } from './posthog-provider';
 import Navbar from '@/components/Navbar';
+import { THEME_STORAGE_KEY } from '@/lib/theme';
 import './globals.css';
 import './bones/registry';
 
@@ -25,8 +26,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('${THEME_STORAGE_KEY}')==='light')document.documentElement.dataset.theme='light'}catch(e){}`,
+          }}
+        />
         <link rel="icon" href="/agent-score/icon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/agent-score/apple-icon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
