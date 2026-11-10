@@ -6,6 +6,9 @@ export const SLUG_ALIASES: Record<string, string> = {
   // entry instead of scoring (or rejecting) the apex. Submitting monday.com navigates
   // here rather than showing a "not eligible" error.
   monday: 'developer-monday-com-api-reference',
+  // URL-derived duplicate of the curated `salesforce` entry — same docs site, so
+  // surface the curated entry instead of a second grade for the same URL.
+  'developer-salesforce-com-docs': 'salesforce',
 };
 
 export function resolveSlugAlias(slug: string): string {
