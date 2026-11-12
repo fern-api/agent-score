@@ -6,6 +6,8 @@ const nextConfig = {
     unoptimized: true,
   },
   experimental: {
+    // Runs instrumentation.ts, which installs the SSRF guard on global fetch.
+    instrumentationHook: true,
     // afdocs is ESM-only. Marking it external prevents webpack from bundling it
     // and emitting require(), which fails for ESM. Instead Next.js leaves it as
     // a native import() which Node.js CAN handle from a CJS context.
