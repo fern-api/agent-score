@@ -10,6 +10,7 @@ import { isBlockedDomain } from "@/lib/blocked-domains";
 import { resolveSlugAlias } from "@/lib/slug-aliases";
 import { detectDocsUrl } from "@/lib/docs-detection";
 import { urlToSlug, nameToSlug, isValidSlug, isValidName } from "@/lib/slug";
+import { resolvesToPublicAddress } from "@/lib/ssrf-guard";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -294,6 +295,11 @@ export async function POST(request: Request) {
       }
     } catch {
       return NextResponse.json({ error: "invalid_url", message: "Please provide a valid URL." }, { status: 400 });
+    }
+
+    if (!(await resolvesToPublicAddress(url))) {
+      console.log('[score] rejected: host does not resolve to a public address', url);
+      return NextResponse.json({ error: "invalid_url", message: "Please provide a publicly reachable URL." }, { status: 400 });
     }
 
     if (isBlockedDomain(url)) {
